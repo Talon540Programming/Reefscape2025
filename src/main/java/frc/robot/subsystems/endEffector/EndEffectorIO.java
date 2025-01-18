@@ -4,19 +4,19 @@ package frc.robot.subsystems.endEffector;
 public interface EndEffectorIO {
 
     public class EndEffectorIO {
-        double endEffectorappledVolts = 0.0;
-        double endEffectorappliedAmps = 0.0;
+        double endEffectorAppledVolts = 0.0;
+        double endEffectorAppliedAmps = 0.0;
         double endEffectorRPM = 0.0;
         double endEffectorAngleDeg = 0.0;
         
     }
 
     public void setEndEffectorVolts(double volts); {
-        double endEffectorappliedVolts = volts;
+        double endEffectorAppliedVolts = volts;
     }
     
     public void setEndEffectorAmps(double amps); {
-        double endEffectorappliedAmps = amps;
+        double endEffectorAppliedAmps = amps;
     }
 
     public void setEndEffectorRPM(double RPM); {
