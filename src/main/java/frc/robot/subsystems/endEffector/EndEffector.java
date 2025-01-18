@@ -9,6 +9,7 @@ import frc.robot.Constants.RobotMode.RobotType;
 
 
 public class EndEffector extends SubsystemBase {
+
     private static final LoggerEntry.Decimal logInputs_endEffectorRPM =
         logInputs.buildDecimal("endEffectorRPM");
 
@@ -18,9 +19,7 @@ public class EndEffector extends SubsystemBase {
     private static final LoggerEntry.Decimal logInputs_endEffectorAppliedAmps =
         logInputs.buildDecimal("endEffectorAppliedAmps");
 
-    private static final LoggerEntry.Decimal logInputs_intakeSideTOFDistanceInches =
-        logInputs.buildDecimal("IntakeSideTOFDistanceInches");
-
-    private static final LoggerEntry.Decimal logInputs_shooterSideTOFDistanceInches =
-        logInputs.buildDecimal("ShooterSideTOFDistanceInches");
+    private static final LoggerEntry.Decimal logInputs_endEffectorAngleDeg =
+        logInputs.buildDecimal("endEffectorAngleDeg");
+        
 }
