@@ -1,16 +1,18 @@
-package frc.robot.constants;
+package frc.robot;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class Constants {
-  private static RobotType kRobotType = RobotType.ROBOT_SIMBOT;
+  private static RobotType kRobotType = RobotType.ROBOT_2025_COMP;
   // Allows tunable values to be changed when enabled. Also adds tunable selectors to AutoSelector
-  public static final boolean TUNING_MODE = false;
+  public static final boolean TUNING_MODE = true;
   // Disable the AdvantageKit logger from running
   public static final boolean ENABLE_LOGGING = true;
 
   public static final double kLoopPeriodSecs = 0.02;
+
+  public static final double LOW_VOLTAGE_WARNING_THRESHOLD = 10.0;
 
   public enum RobotMode {
     REAL,
@@ -20,7 +22,6 @@ public class Constants {
 
   public enum RobotType {
     ROBOT_2025_COMP,
-    ROBOT_2024_OFFSEASON,
     ROBOT_SIMBOT
   }
 
