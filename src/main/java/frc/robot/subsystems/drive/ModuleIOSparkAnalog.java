@@ -19,6 +19,7 @@ import static frc.robot.util.SparkUtil.*;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
+import com.revrobotics.spark.SparkAnalogSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkBase.PersistMode;
@@ -39,16 +40,17 @@ import java.util.function.DoubleSupplier;
 
 /**
  * Module IO implementation for Spark Max drive motor controller, Spark Max turn motor controller,
- * and duty cycle absolute encoder.
+ * and analog absolute encoder.
  */
-public class ModuleIOSpark implements ModuleIO {
+public class ModuleIOSparkAnalog implements ModuleIO {
   private final Rotation2d zeroRotation;
 
   // Hardware objects
   private final SparkBase driveSpark;
   private final SparkBase turnSpark;
   private final RelativeEncoder driveEncoder;
-  private final AbsoluteEncoder turnEncoder;
+  private final SparkAnalogSensor turnEncoder;
+  private final double absoluteEncoderMaxVoltage = 3.3; //TODO
 
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
@@ -63,7 +65,7 @@ public class ModuleIOSpark implements ModuleIO {
   private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
-  public ModuleIOSpark(int module) {
+  public ModuleIOSparkAnalog(int module) {
     zeroRotation =
         switch (module) {
           case 0 -> frontLeftZeroRotation;
@@ -93,7 +95,7 @@ public class ModuleIOSpark implements ModuleIO {
             },
             MotorType.kBrushless);
     driveEncoder = driveSpark.getEncoder();
-    turnEncoder = turnSpark.getAbsoluteEncoder();
+    turnEncoder = turnSpark.getAnalog();
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
@@ -134,25 +136,20 @@ public class ModuleIOSpark implements ModuleIO {
 
     // Configure turn motor
     var turnConfig = new SparkMaxConfig();
+
     turnConfig
         .inverted(turnInverted)
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(turnMotorCurrentLimit)
         .voltageCompensation(12.0);
-    turnConfig
-        .absoluteEncoder
-        .inverted(turnEncoderInverted)
-        .positionConversionFactor(turnEncoderPositionFactor)
-        .velocityConversionFactor(turnEncoderVelocityFactor)
-        .averageDepth(2);
-    turnConfig
-        .closedLoop
-        .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+
+    turnConfig.closedLoop
+        .feedbackSensor(FeedbackSensor.kAnalogSensor)
         .positionWrappingEnabled(true)
         .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
         .pidf(turnKp, 0.0, turnKd, 0.0);
-    turnConfig
-        .signals
+
+    turnConfig.signals
         .absoluteEncoderPositionAlwaysOn(true)
         .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
         .absoluteEncoderVelocityAlwaysOn(true)
@@ -160,6 +157,19 @@ public class ModuleIOSpark implements ModuleIO {
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
+    
+    turnConfig.signals
+        .analogVoltageAlwaysOn(true)
+        .analogPositionAlwaysOn(true)
+        .analogVoltagePeriodMs(20)
+        .analogPositionPeriodMs(20);
+
+    turnConfig.analogSensor
+        .positionConversionFactor(360.0 / absoluteEncoderMaxVoltage)
+        .velocityConversionFactor(360.0 / absoluteEncoderMaxVoltage / 60.0);
+
+
+
     tryUntilOk(
         turnSpark,
         5,
