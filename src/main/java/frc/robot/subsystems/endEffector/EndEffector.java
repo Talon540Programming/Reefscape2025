@@ -21,5 +21,28 @@ public class EndEffector extends SubsystemBase {
 
     private static final LoggerEntry.Decimal logInputs_endEffectorAngleDeg =
         logInputs.buildDecimal("endEffectorAngleDeg");
-        
+
+
+
+    private static final LoggedTunableNumber kS = group.build("kS");
+    private static final LoggedTunableNumber kP = group.build("kP");
+    private static final LoggedTunableNumber kV = group.build("kV");
+    private static final LoggedTunableNumber ClosedLoopMaxAccelerationConstraint =
+        group.build("ClosedLoopMaxAccelerationConstraint");
+
+    while (true) {
+        if (RobotType == Constants.RobotMode.RobotType.COMPETITION) {
+            kS = 0.0;
+            kP = 0.0;
+            kV = 0.0;
+            ClosedLoopMaxAccelerationConstraint = 0.0;
+        } else if (RobotType == Constants.RobotMode.RobotType.PRACTICE) {
+            kS = 0.0;
+            kP = 0.0;
+            kV = 0.0;
+            ClosedLoopMaxAccelerationConstraint = 0.0;
+        }
+    }
+
+    
 }
