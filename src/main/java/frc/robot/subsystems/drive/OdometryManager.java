@@ -1,20 +1,19 @@
 package frc.robot.subsystems.drive;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
+import edu.wpi.first.wpilibj.Notifier;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Supplier;
+import java.util.function.DoubleSupplier;
+import lombok.Getter;
 import org.littletonrobotics.junction.AutoLog;
 
-public class OdometryManager {
-  public static Lock odometryLock = new ReentrantLock();
-  public static double ODOMETRY_FREQUENCY_HZ = 200.0;
+public class OdometryManager implements AutoCloseable {
+  public static Lock odometryLock =
+      new ReentrantLock(); // Prevent conflicts when reading and writing data
 
   private static OdometryManager instance = null;
 
@@ -25,32 +24,57 @@ public class OdometryManager {
     return instance;
   }
 
-  private final Queue<Double> timestampQueue = new ArrayBlockingQueue<>(20);
-  private final List<ModuleSource> m_moduleSources = new ArrayList<>(4);
-  private GyroSource m_gyroSource = null;
+  @Getter private final Queue<Double> timestampQueue = new ArrayBlockingQueue<>(20);
+  private final List<DoubleSupplier> signalSuppliers = new ArrayList<>(9);
+  private final List<Queue<Double>> signalQueues = new ArrayList<>(9);
 
-  public void registerModuleSource(
-      Supplier<Optional<Double>> drivePositionSupplier,
-      Supplier<Optional<Rotation2d>> turnAngleSupplier) {}
+  private final Notifier notifier = new Notifier(this::run);
 
-  public void registerGyroSource(Supplier<Optional<Rotation2d>> robotYawSupplier) {}
+  private OdometryManager() {
+    notifier.setName("Odometry Data Collection Thread");
+  }
 
-  private static void run() {}
+  public Queue<Double> registerSignal(DoubleSupplier signal) {
+    Queue<Double> queue = new ArrayBlockingQueue<>(20);
+    odometryLock.lock();
+    try {
+      signalSuppliers.add(signal);
+      signalQueues.add(queue);
+    } finally {
+      odometryLock.unlock();
+    }
+    return queue;
+  }
 
-  private record ModuleSource(
-      Queue<Double> drivePositionQueue,
-      Supplier<Optional<Double>> drivePositionSupplier,
-      Queue<Rotation2d> turnAngleQueue,
-      Supplier<Optional<Rotation2d>> turnAngleSupplier) {}
+  private void run() {
+    odometryLock.lock();
+    try {
+      for (int i = 0; i < signalSuppliers.size(); i++) {
+        signalQueues.get(i).add(signalSuppliers.get(i).getAsDouble());
+      }
+    } finally {
+      odometryLock.unlock();
+    }
+  }
 
-  private record GyroSource(
-      Queue<Rotation2d> robotYawQueue, Supplier<Optional<Rotation2d>> robotYawSupplier) {}
+  public void start() throws IllegalStateException {
+    // Check that any sources are supplied
+    if (signalSuppliers.isEmpty()) {
+      throw new IllegalStateException(
+          "Tried to start OdometryManager, but not all sources have been set.");
+    }
+
+    notifier.startPeriodic(1.0 / DriveConstants.odometryFrequencyHz);
+  }
+
+  @Override
+  public void close() {
+    notifier.stop();
+    notifier.close();
+  }
 
   @AutoLog
-  public class TimestampInputs {
+  public class OdometryTimestampsInput {
     public double[] timestamps;
-
-    public Rotation2d[] gyroYaws;
-    public SwerveModulePosition[][] modulePositions;
   }
 }

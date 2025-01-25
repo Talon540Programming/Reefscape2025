@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.ExtensionMethod;
 
+// TODO JNI This
 /**
  * Ripped from <a
  * href="https://github.com/Mechanical-Advantage/RobotCode2025Public/blob/8386fec4268a7b57635162dc27fe1e5861a41d6d/src/main/java/org/littletonrobotics/frc2025/util/swerve/SwerveSetpointGenerator.java">6328
@@ -186,7 +187,7 @@ public class SwerveSetpointGenerator {
    * @param desiredState The desired state of motion, such as from the driver sticks or a path
    *     following algorithm.
    * @param dt The loop time.
-   * @return A Setpoint object that satisfies all of the KinematicLimits while converging to
+   * @return A Setpoint object that satisfies all the KinematicLimits while converging to
    *     desiredState quickly.
    */
   public SwerveSetpoint generateSetpoint(

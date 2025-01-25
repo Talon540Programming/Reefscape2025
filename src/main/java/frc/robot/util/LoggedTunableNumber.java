@@ -1,6 +1,6 @@
 package frc.robot.util;
 
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;

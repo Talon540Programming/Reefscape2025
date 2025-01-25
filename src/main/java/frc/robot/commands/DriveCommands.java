@@ -10,7 +10,8 @@ import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
   /**
-   * Field relative drive command using two joysticks (controlling linear and angular velocities).
+   * Field relative drive command using two joysticks (controlling linear and angular
+velocities).
    */
   public static Command joystickDrive(
       DriveBase driveBase,
@@ -20,22 +21,25 @@ public class DriveCommands {
     return Commands.run(() -> {}, driveBase);
   }
 
-  // /**
-  //  * Field relative drive command using joystick for linear control and PID for angular control.
-  //  * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
-  //  * absolute rotation with a joystick.
-  //  */
-  // public static Command joystickDriveAtAngle() {}
-
-  /** Measures the velocity feedforward constants for the drive motors. */
-  public static Command feedforwardCharacterization() {
-    List<Double> velocitySamples = new LinkedList<>();
-    List<Double> voltageSamples = new LinkedList<>();
-    Timer timer = new Timer();
-
-    return Commands.sequence();
-  }
-
-  // /** Measures the robot's wheel radius by spinning in a circle. */
-  // public static Command wheelRadiusCharacterization() {}
+//
+//   // /**
+//   //  * Field relative drive command using joystick for linear control and PID for angular
+// control.
+//   //  * Possible use cases include snapping to an angle, aiming at a vision target, or
+// controlling
+//   //  * absolute rotation with a joystick.
+//   //  */
+//   // public static Command joystickDriveAtAngle() {}
+//
+//   /** Measures the velocity feedforward constants for the drive motors. */
+//   public static Command feedforwardCharacterization() {
+//     List<Double> velocitySamples = new LinkedList<>();
+//     List<Double> voltageSamples = new LinkedList<>();
+//     Timer timer = new Timer();
+//
+//     return Commands.sequence();
+//   }
+//
+//   // /** Measures the robot's wheel radius by spinning in a circle. */
+//   // public static Command wheelRadiusCharacterization() {}
 }

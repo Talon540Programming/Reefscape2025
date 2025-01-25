@@ -2,7 +2,7 @@ package frc.robot.util;
 
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.generated.BuildConstants;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
