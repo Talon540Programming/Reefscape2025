@@ -59,6 +59,8 @@ public class ModuleIOSpark implements ModuleIO {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
+  private boolean hasResetTurnPosition = false;
+
   // Connection debouncers
   private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
@@ -145,12 +147,11 @@ public class ModuleIOSpark implements ModuleIO {
 
     // Configure turn motor
     var turnConfig = new SparkMaxConfig();
-
     turnConfig
-        .inverted(turnInverted)
         .idleMode(IdleMode.kCoast)
-        .smartCurrentLimit(turnMotorCurrentLimit)
-        .voltageCompensation(12.0);
+        .smartCurrentLimit(20)
+        .voltageCompensation(12.0)
+        .inverted(true);
     turnConfig
         .encoder
         .positionConversionFactor(turnEncoderPositionFactor)
@@ -161,9 +162,8 @@ public class ModuleIOSpark implements ModuleIO {
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
-        .positionWrappingInputRange(turnPIDMinInput, turnPIDMaxInput)
+        .positionWrappingInputRange(-Math.PI, Math.PI) // TODO
         .pidf(turnKp, 0.0, turnKd, 0.0);
-
     turnConfig
         .signals
         .primaryEncoderPositionAlwaysOn(true)
@@ -180,9 +180,6 @@ public class ModuleIOSpark implements ModuleIO {
         () ->
             turnSpark.configure(
                 turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-
-    turnEncoder.setPosition(
-        Rotation2d.fromRadians(turnAbsoluteEncoder.get()).minus(zeroRotation).getRadians());
 
     // Create odometry queues
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
@@ -218,6 +215,7 @@ public class ModuleIOSpark implements ModuleIO {
         (values) -> inputs.turnAppliedVolts = values[0] * values[1]);
     ifOk(turnSpark, turnSpark::getOutputCurrent, (value) -> inputs.turnCurrentAmps = value);
     inputs.turnConnected = turnConnectedDebounce.calculate(!sparkStickyFault);
+    inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
 
     // Update odometry inputs
     inputs.odometryTimestamps =
@@ -256,8 +254,17 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void setTurnPosition(Rotation2d rotation) {
-    double setpoint =
-        MathUtil.inputModulus(rotation.plus(zeroRotation).getRadians(), -Math.PI, Math.PI);
-    turnController.setReference(setpoint, ControlType.kPosition);
+    if (!hasResetTurnPosition) {
+      turnEncoder.setPosition(getOffsetAbsoluteAngle().getRadians());
+      hasResetTurnPosition = true;
+    }
+
+    // Ensure Setpoint is within range
+    turnController.setReference(
+        MathUtil.angleModulus(rotation.getRadians()), ControlType.kPosition);
+  }
+
+  private Rotation2d getOffsetAbsoluteAngle() {
+    return Rotation2d.fromRadians(turnAbsoluteEncoder.get()).minus(zeroRotation);
   }
 }
