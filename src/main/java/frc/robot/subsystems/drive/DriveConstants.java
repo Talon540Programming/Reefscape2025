@@ -37,36 +37,40 @@ public class DriveConstants {
         .turnMotorId(2)
         .driveMotorId(3)
         .encoderChannel(2)
-        .encoderOffset(Rotation2d.fromRadians(0.0))
+        .encoderOffset(Rotation2d.fromRadians(0.16028737150729522))
         .driveGearing(mk4iDriveGearing)
         .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
         .build(),
     // FR
     ModuleConfig.builder()
         .turnMotorId(4)
         .driveMotorId(5)
         .encoderChannel(3)
-        .encoderOffset(Rotation2d.fromRadians(0.0))
+        .encoderOffset(Rotation2d.fromRadians(-0.1422097592800296))
         .driveGearing(mk4iDriveGearing)
         .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
         .build(),
     // BL
     ModuleConfig.builder()
         .turnMotorId(6)
         .driveMotorId(7)
         .encoderChannel(1)
-        .encoderOffset(Rotation2d.fromRadians(0.0))
+        .encoderOffset(Rotation2d.fromRadians(-3.009554996093968))
         .driveGearing(mk4iDriveGearing)
         .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
         .build(),
     // BR
     ModuleConfig.builder()
         .turnMotorId(8)
         .driveMotorId(9)
         .encoderChannel(0)
-        .encoderOffset(Rotation2d.fromRadians(0.0))
+        .encoderOffset(Rotation2d.fromRadians(2.559973505647124))
         .driveGearing(mk4iDriveGearing)
         .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
         .build(),
   };
 
@@ -81,7 +85,8 @@ public class DriveConstants {
       int encoderChannel,
       Rotation2d encoderOffset,
       double driveGearing,
-      double turnGearing) {}
+      double turnGearing,
+      boolean turnInverted) {}
 
   public static final ModuleLimits moduleLimitsFree =
       new ModuleLimits(

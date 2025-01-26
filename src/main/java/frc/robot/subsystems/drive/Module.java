@@ -22,10 +22,10 @@ public class Module {
   static {
     switch (Constants.getRobotType()) {
       case ROBOT_2025_COMP -> {
-        drivekS.initDefault(0.0); // TODO
-        drivekV.initDefault(0.0); // TODO
-        drivekP.initDefault(0.0); // TODO
-        drivekD.initDefault(0.0); // TODO
+        drivekS.initDefault(0.19700);
+        drivekV.initDefault(0.12941);
+        drivekP.initDefault(0.005);
+        drivekD.initDefault(0.0);
         turnkP.initDefault(4000.0);
         turnkD.initDefault(50.0);
       }

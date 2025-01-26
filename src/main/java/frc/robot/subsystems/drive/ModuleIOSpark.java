@@ -61,7 +61,7 @@ public class ModuleIOSpark implements ModuleIO {
 
     driveEncoder = driveSpark.getEncoder();
     turnEncoder = turnSpark.getEncoder();
-    turnAbsoluteEncoder = new AnalogEncoder(config.encoderChannel(), Math.PI, -Math.PI);
+    turnAbsoluteEncoder = new AnalogEncoder(config.encoderChannel(), 2 * Math.PI, 0);
 
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
@@ -98,6 +98,7 @@ public class ModuleIOSpark implements ModuleIO {
     var turnConfig = new SparkMaxConfig();
     turnConfig
         .idleMode(IdleMode.kBrake)
+        .inverted(config.turnInverted())
         .smartCurrentLimit(20)
         .voltageCompensation(12.0);
     turnConfig
@@ -110,7 +111,7 @@ public class ModuleIOSpark implements ModuleIO {
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .positionWrappingEnabled(true)
-        .positionWrappingInputRange(-Math.PI, Math.PI) // TODO?
+        .positionWrappingInputRange(-Math.PI, Math.PI)
         .pidf(0.0, 0.0, 0.0, 0.0);
     turnConfig
         .signals
