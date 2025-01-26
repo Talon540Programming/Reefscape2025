@@ -7,18 +7,30 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
+import java.util.Queue;
+
 public class DriveBase extends SubsystemBase {
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged m_gyroInputs = new GyroIOInputsAutoLogged();
+
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
+
+  private final Queue<Double> m_timestampsQueue;
   private final OdometryTimestampsInputAutoLogged m_timestampInputs = new OdometryTimestampsInputAutoLogged();
   private final Alert gyroDisconnectedAlert = new Alert("Disconnected gyro, using kinematic approximation as fallback.", Alert.AlertType.kError);
+
+  private static final LoggedTunableNumber coastWaitTime = new LoggedTunableNumber("Drive/CoastWaitTimeSeconds", 0.5);
+  private static final LoggedTunableNumber coastMetersPerSecondThreshold = new LoggedTunableNumber("Drive/CoastMetersPerSecThreshold", .05);
+
+  private final Timer lastMovementTimer = new Timer();
 
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(DriveConstants.moduleTranslations);
@@ -34,9 +46,8 @@ public class DriveBase extends SubsystemBase {
           });
   private final SwerveSetpointGenerator swerveSetpointGenerator;
 
-  @AutoLogOutput(key = "Drive/VelocityMode")
-  private boolean VELOCITY_MODE = false;
-
+  @AutoLogOutput(key = "Drive/ClosedLoopMode")
+  private boolean CLOSED_LOOP_MODE = false;
   @AutoLogOutput(key = "Drive/BrakeModeEnabled")
   private boolean BRAKE_MODE = true;
 
@@ -55,24 +66,29 @@ public class DriveBase extends SubsystemBase {
     swerveSetpointGenerator =
         new SwerveSetpointGenerator(kinematics, DriveConstants.moduleTranslations);
 
+    m_timestampsQueue = OdometryManager.getInstance().getTimestampQueue();
+
     // Start odometry thread
     OdometryManager.getInstance().start();
+
+    lastMovementTimer.start();
+    setBrakeMode(true);
   }
 
   @Override
   public void periodic() {
     OdometryManager.odometryLock.lock();
     try {
+      // Update and log gyro Inputs
       gyroIO.updateInputs(m_gyroInputs);
       Logger.processInputs("Drive/Gyro", m_gyroInputs);
+      // Update and log only on modules
       for (var module : modules) {
         module.updateInputs();
       }
-      m_timestampInputs.timestamps =
-          OdometryManager.getInstance().getTimestampQueue().stream()
-              .mapToDouble((Double value) -> value)
-              .toArray();
-      OdometryManager.getInstance().getTimestampQueue().clear();
+      // Get current sample timestamps
+      m_timestampInputs.timestamps = m_timestampsQueue.stream().mapToDouble((Double value) -> value).toArray();
+      m_timestampsQueue.clear();
       Logger.processInputs("Drive/OdometryTimestamps", m_timestampInputs);
     } finally {
       OdometryManager.odometryLock.unlock();
@@ -99,25 +115,30 @@ public class DriveBase extends SubsystemBase {
     var timestamps = m_timestampInputs.timestamps;
     var sampleCount = timestamps.length;
 
+    // TODO Odometry
     for(int i = 0; i < sampleCount; i++) {
       SwerveModulePosition[] wheelPositions = new SwerveModulePosition[4];
       for (int j = 0; j < 4; j++) {
         wheelPositions[j] = modules[j].getOdometryPositions()[i];
       }
-
-      Rotation2d gyroAngle;
-      if(m_gyroInputs.connected) {
-        gyroAngle = m_gyroInputs.odometryYawPositions[i];
-      } else {
-
-      }
-
-      // TODO Update Odometry
     }
 
+    // Disable brake mode a short duration after the robot is disabled
+    for (var module : modules) {
+      if(Math.abs(module.getVelocityMetersPerSec()) > coastMetersPerSecondThreshold.get()) {
+        lastMovementTimer.reset();
+        break;
+      }
+    }
+
+    if (DriverStation.isEnabled()) {
+      setBrakeMode(true);
+    } else if (lastMovementTimer.hasElapsed(coastWaitTime.get())) {
+      setBrakeMode(false);
+    }
 
     // Update current setpoint if not in velocity mode
-    if (!VELOCITY_MODE) {
+    if (!CLOSED_LOOP_MODE) {
       currentSetpoint = new SwerveSetpointGenerator.SwerveSetpoint(getChassisSpeeds(), getModuleStates());
     }
 
@@ -141,7 +162,8 @@ public class DriveBase extends SubsystemBase {
    * @param speeds Speeds in meters/sec
    */
   public void runVelocity(ChassisSpeeds speeds) {
-    VELOCITY_MODE = true;
+    CLOSED_LOOP_MODE = true;
+
     // Calculate module setpoints
     ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(speeds, Constants.kLoopPeriodSecs);
     SwerveModuleState[] setpointStatesUnoptimized = kinematics.toSwerveModuleStates(discreteSpeeds);
@@ -164,9 +186,10 @@ public class DriveBase extends SubsystemBase {
     }
   }
 
-  /** Runs the drive in a straight line with the specified drive output. */
+  /** Runs the drive in a straight(ish) line with the specified drive output. */
   public void runCharacterization(double output) {
-    VELOCITY_MODE = false;
+    CLOSED_LOOP_MODE = false;
+
     for (int i = 0; i < 4; i++) {
       modules[i].runCharacterization(output);
     }
