@@ -28,8 +28,8 @@ public class DriveConstants {
 
   public static final double wheelRadius = Units.inchesToMeters(2.0);
 
-  private static final double mk4iDriveGearing = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
-  private static final double mk4iTurnGearing = (150.0 / 7.0);
+  public static final double mk4iDriveGearing = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
+  public static final double mk4iTurnGearing = (150.0 / 7.0);
 
   public static final ModuleConfig[] moduleConfigs = {
     // FL
