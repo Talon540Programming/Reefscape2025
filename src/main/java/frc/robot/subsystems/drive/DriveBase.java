@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotState;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -114,13 +115,17 @@ public class DriveBase extends SubsystemBase {
 
     var timestamps = m_timestampInputs.timestamps;
     var sampleCount = timestamps.length;
-
-    // TODO Odometry
     for(int i = 0; i < sampleCount; i++) {
       SwerveModulePosition[] wheelPositions = new SwerveModulePosition[4];
       for (int j = 0; j < 4; j++) {
         wheelPositions[j] = modules[j].getOdometryPositions()[i];
       }
+      RobotState.getInstance()
+          .addOdometryObservation(
+              wheelPositions,
+              m_gyroInputs.connected ? m_gyroInputs.odometryYawPositions[i] : null,
+              timestamps[i]
+          );
     }
 
     // Disable brake mode a short duration after the robot is disabled
