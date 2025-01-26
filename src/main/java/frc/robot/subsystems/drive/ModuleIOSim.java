@@ -13,8 +13,15 @@ public class ModuleIOSim implements ModuleIO {
   private static final DCMotor driveMotorModel = DCMotor.getNEO(1);
   private static final DCMotor turnMotorModel = DCMotor.getNEO(1);
 
-  private final DCMotorSim driveSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(driveMotorModel, 0.025, DriveConstants.mk4iDriveGearing), driveMotorModel);
-  private final DCMotorSim turnSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(turnMotorModel, 0.004, DriveConstants.mk4iTurnGearing), turnMotorModel);
+  private final DCMotorSim driveSim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(
+              driveMotorModel, 0.025, DriveConstants.mk4iDriveGearing),
+          driveMotorModel);
+  private final DCMotorSim turnSim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(turnMotorModel, 0.004, DriveConstants.mk4iTurnGearing),
+          turnMotorModel);
 
   private boolean driveClosedLoop = false;
   private boolean turnClosedLoop = false;
@@ -36,7 +43,8 @@ public class ModuleIOSim implements ModuleIO {
   public void updateInputs(ModuleIOInputs inputs) {
     // Run closed-loop control
     if (driveClosedLoop) {
-      driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
+      driveAppliedVolts =
+          driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
     } else {
       driveController.reset();
     }

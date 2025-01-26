@@ -12,10 +12,14 @@ import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
-  private static final LoggedTunableNumber drivekS = new LoggedTunableNumber("Drive/Module/DrivekS");
-  private static final LoggedTunableNumber drivekV = new LoggedTunableNumber("Drive/Module/DrivekV");
-  private static final LoggedTunableNumber drivekP = new LoggedTunableNumber("Drive/Module/DrivekP");
-  private static final LoggedTunableNumber drivekD = new LoggedTunableNumber("Drive/Module/DrivekD");
+  private static final LoggedTunableNumber drivekS =
+      new LoggedTunableNumber("Drive/Module/DrivekS");
+  private static final LoggedTunableNumber drivekV =
+      new LoggedTunableNumber("Drive/Module/DrivekV");
+  private static final LoggedTunableNumber drivekP =
+      new LoggedTunableNumber("Drive/Module/DrivekP");
+  private static final LoggedTunableNumber drivekD =
+      new LoggedTunableNumber("Drive/Module/DrivekD");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
@@ -47,15 +51,16 @@ public class Module {
   private final Alert driveDisconnectedAlert;
   private final Alert turnDisconnectedAlert;
 
-  @Getter
-  private SwerveModulePosition[] odometryPositions;
+  @Getter private SwerveModulePosition[] odometryPositions;
 
   public Module(ModuleIO io, int index) {
     m_io = io;
     this.index = index;
 
-    driveDisconnectedAlert = new Alert("Disconnected drive motor on module " + index + ".", AlertType.kError);
-    turnDisconnectedAlert = new Alert("Disconnected turn motor on module " + index + ".", AlertType.kError);
+    driveDisconnectedAlert =
+        new Alert("Disconnected drive motor on module " + index + ".", AlertType.kError);
+    turnDisconnectedAlert =
+        new Alert("Disconnected turn motor on module " + index + ".", AlertType.kError);
   }
 
   public void updateInputs() {
@@ -78,7 +83,7 @@ public class Module {
     // Update Odometry Positions
     int sampleCount = m_inputs.odometryDrivePositionsRad.length;
     odometryPositions = new SwerveModulePosition[sampleCount];
-    for(int i = 0; i < sampleCount; i++) {
+    for (int i = 0; i < sampleCount; i++) {
       double positionMeters = m_inputs.odometryDrivePositionsRad[i] * DriveConstants.wheelRadius;
       Rotation2d angle = m_inputs.odometryTurnPositions[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);

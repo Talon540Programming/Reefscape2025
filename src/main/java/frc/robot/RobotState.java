@@ -37,17 +37,18 @@ public class RobotState {
   @AutoLogOutput(key = "RobotState/EstimatedPose")
   private Pose2d estimatedPose = new Pose2d();
 
-  private final TimeInterpolatableBuffer<Pose2d> poseBuffer = TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
+  private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
+      TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
   private final Matrix<N3, N1> qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
 
   // Odometry
   private final SwerveDriveKinematics kinematics;
   private SwerveModulePosition[] lastWheelPositions =
       new SwerveModulePosition[] {
-          new SwerveModulePosition(),
-          new SwerveModulePosition(),
-          new SwerveModulePosition(),
-          new SwerveModulePosition()
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
       };
   // Assume gyro starts at zero
   private Rotation2d gyroOffset = new Rotation2d();
@@ -69,7 +70,8 @@ public class RobotState {
     poseBuffer.clear();
   }
 
-  public void addOdometryObservation(SwerveModulePosition[] wheelPositions, Rotation2d gyroAngle, double timestamp) {
+  public void addOdometryObservation(
+      SwerveModulePosition[] wheelPositions, Rotation2d gyroAngle, double timestamp) {
     var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
 
     // Update previous state
@@ -79,7 +81,7 @@ public class RobotState {
     // Update Odometry
     odometryPose = odometryPose.exp(twist);
 
-    if(gyroAngle != null) {
+    if (gyroAngle != null) {
       // Use gyro measurement
       // Add offset to measured angle
       Rotation2d angle = gyroAngle.plus(gyroOffset);

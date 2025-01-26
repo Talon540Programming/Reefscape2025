@@ -15,7 +15,6 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.AllianceFlipUtil;
-
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
@@ -38,40 +37,41 @@ public class DriveCommands {
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
   /**
-   * Field relative drive command using two joysticks (controlling linear and angular
-    velocities).
+   * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
       DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
-    return Commands.run(() -> {
-      // Apply deadband
-      double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
-      double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
-      double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
+    return Commands.run(
+        () -> {
+          // Apply deadband
+          double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
+          double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
+          double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
-      // Square rotation value for more precise control
-      x = Math.copySign(Math.pow(x, 2), x);
-      y = Math.copySign(Math.pow(y, 2), y);
-      omega = Math.copySign(Math.pow(omega, 2), omega);
+          // Square rotation value for more precise control
+          x = Math.copySign(Math.pow(x, 2), x);
+          y = Math.copySign(Math.pow(y, 2), y);
+          omega = Math.copySign(Math.pow(omega, 2), omega);
 
-      // Generate robot relative speeds
-      var speeds = new ChassisSpeeds(
-          x * DriveConstants.maxLinearVelocityMetersPerSec,
-          y * DriveConstants.maxLinearVelocityMetersPerSec,
-          omega * DriveConstants.maxAngularVelocityRadPerSec
-      );
+          // Generate robot relative speeds
+          var speeds =
+              new ChassisSpeeds(
+                  x * DriveConstants.maxLinearVelocityMetersPerSec,
+                  y * DriveConstants.maxLinearVelocityMetersPerSec,
+                  omega * DriveConstants.maxAngularVelocityRadPerSec);
 
-      // Convert to field relative
-      Rotation2d rotation = RobotState.getInstance().getRotation();
-      rotation = AllianceFlipUtil.apply(rotation);
-      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
+          // Convert to field relative
+          Rotation2d rotation = RobotState.getInstance().getRotation();
+          rotation = AllianceFlipUtil.apply(rotation);
+          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
-      // Apply speeds
-      driveBase.runVelocity(speeds);
-    }, driveBase);
+          // Apply speeds
+          driveBase.runVelocity(speeds);
+        },
+        driveBase);
   }
 
   /**
@@ -79,42 +79,52 @@ public class DriveCommands {
    * Possible use cases include snapping to an angle, aiming at a vision target, or controlling
    * absolute rotation with a joystick.
    */
-  public static Command joystickDriveAtAngle(DriveBase driveBase,
-                                             DoubleSupplier xSupplier,
-                                             DoubleSupplier ySupplier,
-                                             Supplier<Rotation2d> rotationSupplier) {
-    ProfiledPIDController angleController = new ProfiledPIDController(ANGLE_KP, 0.0, ANGLE_KD,new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
+  public static Command joystickDriveAtAngle(
+      DriveBase driveBase,
+      DoubleSupplier xSupplier,
+      DoubleSupplier ySupplier,
+      Supplier<Rotation2d> rotationSupplier) {
+    ProfiledPIDController angleController =
+        new ProfiledPIDController(
+            ANGLE_KP,
+            0.0,
+            ANGLE_KD,
+            new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-    return Commands.run(() -> {
-      // Apply deadband
-      double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
-      double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
+    return Commands.run(
+            () -> {
+              // Apply deadband
+              double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
+              double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
 
-      // Square rotation value for more precise control
-      x = Math.copySign(Math.pow(x, 2), x);
-      y = Math.copySign(Math.pow(y, 2), y);
+              // Square rotation value for more precise control
+              x = Math.copySign(Math.pow(x, 2), x);
+              y = Math.copySign(Math.pow(y, 2), y);
 
-      // Calculate angular speed
-      Rotation2d rotation = RobotState.getInstance().getRotation();
-      double omega =
-          angleController.calculate(
-              rotation.getRadians(), rotationSupplier.get().getRadians());
+              // Calculate angular speed
+              Rotation2d rotation = RobotState.getInstance().getRotation();
+              double omega =
+                  angleController.calculate(
+                      rotation.getRadians(), rotationSupplier.get().getRadians());
 
-      // Generate robot relative speeds
-      var speeds = new ChassisSpeeds(
-          x * DriveConstants.maxLinearVelocityMetersPerSec,
-          y * DriveConstants.maxLinearVelocityMetersPerSec,
-          omega
-      );
+              // Generate robot relative speeds
+              var speeds =
+                  new ChassisSpeeds(
+                      x * DriveConstants.maxLinearVelocityMetersPerSec,
+                      y * DriveConstants.maxLinearVelocityMetersPerSec,
+                      omega);
 
-      // Convert to field relative
-      rotation = AllianceFlipUtil.apply(rotation);
-      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
+              // Convert to field relative
+              rotation = AllianceFlipUtil.apply(rotation);
+              speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
-      // Apply speeds
-      driveBase.runVelocity(speeds);
-    }, driveBase).beforeStarting(() -> angleController.reset(RobotState.getInstance().getRotation().getRadians()));
+              // Apply speeds
+              driveBase.runVelocity(speeds);
+            },
+            driveBase)
+        .beforeStarting(
+            () -> angleController.reset(RobotState.getInstance().getRotation().getRadians()));
   }
 
   /**
@@ -235,12 +245,16 @@ public class DriveCommands {
 
                       NumberFormat formatter = new DecimalFormat("#0.000");
 
-                      SmartDashboard.getString("Wheel Delta", formatter.format(wheelDelta) + " radians");
-                      SmartDashboard.getString("Gyro Delta", formatter.format(state.gyroDelta) + " radians");
-                      SmartDashboard.getString("Wheel Radius",formatter.format(wheelRadius)
-                          + " meters, "
-                          + formatter.format(Units.metersToInches(wheelRadius))
-                          + " inches");
+                      SmartDashboard.getString(
+                          "Wheel Delta", formatter.format(wheelDelta) + " radians");
+                      SmartDashboard.getString(
+                          "Gyro Delta", formatter.format(state.gyroDelta) + " radians");
+                      SmartDashboard.getString(
+                          "Wheel Radius",
+                          formatter.format(wheelRadius)
+                              + " meters, "
+                              + formatter.format(Units.metersToInches(wheelRadius))
+                              + " inches");
                     })));
   }
 

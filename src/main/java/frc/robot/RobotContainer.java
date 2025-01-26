@@ -23,41 +23,44 @@ public class RobotContainer {
   public RobotContainer() {
     switch (Constants.getRobotMode()) {
       case REAL -> {
-        driveBase = new DriveBase(
-          new GyroIOPigeon2(),
-            new ModuleIOSpark(0),
-            new ModuleIOSpark(1),
-            new ModuleIOSpark(2),
-            new ModuleIOSpark(3)
-        );
+        driveBase =
+            new DriveBase(
+                new GyroIOPigeon2(),
+                new ModuleIOSpark(0),
+                new ModuleIOSpark(1),
+                new ModuleIOSpark(2),
+                new ModuleIOSpark(3));
       }
       case SIM -> {
-        driveBase = new DriveBase(
-            new GyroIO() {},
-            new ModuleIOSim(),
-            new ModuleIOSim(),
-            new ModuleIOSim(),
-            new ModuleIOSim());
+        driveBase =
+            new DriveBase(
+                new GyroIO() {},
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim(),
+                new ModuleIOSim());
       }
       default -> {
-        driveBase = new DriveBase(
-            new GyroIO() {},
-            new ModuleIO() {},
-            new ModuleIO() {},
-            new ModuleIO() {},
-            new ModuleIO() {}
-        );
+        driveBase =
+            new DriveBase(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
       }
-
     }
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
 
-    if(Constants.TUNING_MODE) {
+    if (Constants.TUNING_MODE) {
       // Set up Characterization routines
-      autoChooser.addOption("Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(driveBase));
-      autoChooser.addOption("Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(driveBase));
+      autoChooser.addOption(
+          "Drive Wheel Radius Characterization",
+          DriveCommands.wheelRadiusCharacterization(driveBase));
+      autoChooser.addOption(
+          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(driveBase));
     }
 
     configureButtonBindings();
