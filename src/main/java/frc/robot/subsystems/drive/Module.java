@@ -90,8 +90,7 @@ public class Module {
 
   /** Runs the module with the specified setpoint state. */
   public void runSetpoint(SwerveModuleState state) {
-    double speedRadPerSec = state.speedMetersPerSecond / DriveConstants.wheelRadius;
-    m_io.runDriveVelocity(speedRadPerSec);
+    m_io.runDriveVelocity(state.speedMetersPerSecond / DriveConstants.wheelRadius);
     m_io.runTurnPosition(state.angle);
   }
 

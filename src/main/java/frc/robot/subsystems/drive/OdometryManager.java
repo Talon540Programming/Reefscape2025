@@ -61,7 +61,7 @@ public class OdometryManager implements AutoCloseable {
     // Check that any sources are supplied
     if (signalSuppliers.isEmpty()) {
       throw new IllegalStateException(
-          "Tried to start OdometryManager, but not all sources have been set.");
+          "Tried to start OdometryManager, but no sources have been set.");
     }
 
     notifier.startPeriodic(1.0 / DriveConstants.odometryFrequencyHz);
@@ -74,7 +74,7 @@ public class OdometryManager implements AutoCloseable {
   }
 
   @AutoLog
-  public class OdometryTimestampsInput {
+  public static class OdometryTimestampsInput {
     public double[] timestamps;
   }
 }

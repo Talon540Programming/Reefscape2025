@@ -45,8 +45,6 @@ public class ModuleIOSpark implements ModuleIO {
   private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
-  private boolean hasResetTurnPosition = false;
-
   public ModuleIOSpark(int index) {
     switch (Constants.getRobotType()) {
       case ROBOT_2025_COMP -> {
@@ -125,6 +123,9 @@ public class ModuleIOSpark implements ModuleIO {
 
     turnSpark.configure(turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
+    // We run PID on the controller, so its requires to tell it what the current true position is based on the AbsoluteEncoder
+    turnEncoder.setPosition(getOffsetAbsoluteAngle().getRadians());
+
     drivePositionQueue = OdometryManager.getInstance().registerSignal(driveEncoder::getPosition);
     turnPositionQueue = OdometryManager.getInstance().registerSignal(turnEncoder::getPosition);
   }
@@ -146,8 +147,8 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.turnConnected = turnConnectedDebounce.calculate(turnSpark.hasActiveFault());
 
     inputs.odometryDrivePositionsRad = drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
-    inputs.odometryTurnPositions = drivePositionQueue.stream().map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);
     drivePositionQueue.clear();
+    inputs.odometryTurnPositions = turnPositionQueue.stream().map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);
     turnPositionQueue.clear();
   }
 
@@ -174,12 +175,7 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void runTurnPosition(Rotation2d rotation) {
-    if(!hasResetTurnPosition) {
-      turnEncoder.setPosition(getOffsetAbsoluteAngle().getRadians());
-      hasResetTurnPosition = true;
-    }
-
-    // Ensure Setpoint is within range
+    // Because internal encoder is relative, we want to wrap to the range -π to π radians.
     var updatedSetpoint = MathUtil.angleModulus(rotation.getRadians());
     turnController.setReference(updatedSetpoint, ControlType.kPosition);
   }
