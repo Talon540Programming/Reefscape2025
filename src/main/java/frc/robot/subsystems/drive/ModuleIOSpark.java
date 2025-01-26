@@ -16,6 +16,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import frc.robot.Constants;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -39,6 +40,10 @@ public class ModuleIOSpark implements ModuleIO {
   // Queue inputs from odometry thread
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
+
+  // Connection debouncers
+  private final Debouncer driveConnectedDebounce = new Debouncer(0.5);
+  private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
   private boolean hasResetTurnPosition = false;
 
@@ -135,6 +140,9 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
     inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
+
+    inputs.driveConnected = driveConnectedDebounce.calculate(driveSpark.hasActiveFault());
+    inputs.turnConnected = turnConnectedDebounce.calculate(turnSpark.hasActiveFault());
 
     inputs.odometryDrivePositionsRad = drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
     inputs.odometryTurnPositions = drivePositionQueue.stream().map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);

@@ -4,6 +4,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
 import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
@@ -42,12 +44,18 @@ public class Module {
   private final ModuleIOInputsAutoLogged m_inputs = new ModuleIOInputsAutoLogged();
   private final int index;
 
+  private final Alert driveDisconnectedAlert;
+  private final Alert turnDisconnectedAlert;
+
   @Getter
   private SwerveModulePosition[] odometryPositions;
 
   public Module(ModuleIO io, int index) {
     m_io = io;
     this.index = index;
+
+    driveDisconnectedAlert = new Alert("Disconnected drive motor on module " + index + ".", AlertType.kError);
+    turnDisconnectedAlert = new Alert("Disconnected turn motor on module " + index + ".", AlertType.kError);
   }
 
   public void updateInputs() {
@@ -75,6 +83,9 @@ public class Module {
       Rotation2d angle = m_inputs.odometryTurnPositions[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
+
+    driveDisconnectedAlert.set(!m_inputs.driveConnected);
+    turnDisconnectedAlert.set(!m_inputs.turnConnected);
   }
 
   /** Runs the module with the specified setpoint state. */
