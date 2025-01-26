@@ -93,4 +93,8 @@ public class RobotState {
     Twist2d finalTwist = lastOdometryPose.log(odometryPose);
     estimatedPose = estimatedPose.exp(finalTwist);
   }
+
+  public Rotation2d getRotation() {
+    return estimatedPose.getRotation();
+  }
 }

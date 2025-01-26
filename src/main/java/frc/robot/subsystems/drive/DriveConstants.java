@@ -15,7 +15,7 @@ public class DriveConstants {
 
   public static final double maxLinearVelocityMetersPerSec = Units.feetToMeters(15.1);
   public static final double maxLinearAccelerationMetersPerSecSquared = Units.feetToMeters(75.0);
-  public static final double maxAngularSpeedRadPerSec =
+  public static final double maxAngularVelocityRadPerSec =
       maxLinearVelocityMetersPerSec / driveBaseRadius;
   public static final double maxAngularAccelerationRadPerSecSquared = 2.0 * Math.PI;
 
