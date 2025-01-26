@@ -32,7 +32,7 @@ public class DriveCommands {
 
   // Characterization
   private static final double FF_START_DELAY = 2.0; // Secs
-  private static final double FF_RAMP_RATE = 0.1; // Volts/Sec
+  private static final double FF_RAMP_RATE = 0.85; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
@@ -184,8 +184,8 @@ public class DriveCommands {
                   double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
 
                   NumberFormat formatter = new DecimalFormat("#0.00000");
-                  SmartDashboard.getString("kS", formatter.format(kS));
-                  SmartDashboard.getString("kV", formatter.format(kV));
+                  SmartDashboard.putString("kS", formatter.format(kS));
+                  SmartDashboard.putString("kV", formatter.format(kV));
                 }));
   }
 
@@ -245,11 +245,11 @@ public class DriveCommands {
 
                       NumberFormat formatter = new DecimalFormat("#0.000");
 
-                      SmartDashboard.getString(
+                      SmartDashboard.putString(
                           "Wheel Delta", formatter.format(wheelDelta) + " radians");
-                      SmartDashboard.getString(
+                      SmartDashboard.putString(
                           "Gyro Delta", formatter.format(state.gyroDelta) + " radians");
-                      SmartDashboard.getString(
+                      SmartDashboard.putString(
                           "Wheel Radius",
                           formatter.format(wheelRadius)
                               + " meters, "

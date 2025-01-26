@@ -8,6 +8,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
+import java.util.Queue;
 
 public class ModuleIOSim implements ModuleIO {
   private static final DCMotor driveMotorModel = DCMotor.getNEO(1);
@@ -34,9 +35,18 @@ public class ModuleIOSim implements ModuleIO {
   private double driveFFVolts = 0.0;
   private double turnAppliedVolts = 0.0;
 
+  // Queue inputs from odometry thread
+  private final Queue<Double> drivePositionQueue;
+  private final Queue<Double> turnPositionQueue;
+
   public ModuleIOSim() {
     // Enable wrapping for turn PID
     turnController.enableContinuousInput(-Math.PI, Math.PI);
+
+    drivePositionQueue =
+        OdometryManager.getInstance().registerSignal(driveSim::getAngularPositionRad);
+    turnPositionQueue =
+        OdometryManager.getInstance().registerSignal(turnSim::getAngularPositionRad);
   }
 
   @Override
@@ -75,8 +85,12 @@ public class ModuleIOSim implements ModuleIO {
     inputs.turnAppliedVolts = turnAppliedVolts;
     inputs.turnCurrentAmps = Math.abs(turnSim.getCurrentDrawAmps());
 
-    inputs.odometryDrivePositionsRad = new double[] {inputs.drivePositionRad};
-    inputs.odometryTurnPositions = new Rotation2d[] {inputs.turnPosition};
+    inputs.odometryDrivePositionsRad =
+        drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
+    drivePositionQueue.clear();
+    inputs.odometryTurnPositions =
+        turnPositionQueue.stream().map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);
+    turnPositionQueue.clear();
   }
 
   @Override

@@ -34,12 +34,12 @@ public class Module {
         turnkD.initDefault(50.0);
       }
       default -> {
-        drivekS.initDefault(0.0); // TODO
-        drivekV.initDefault(0.0); // TODO
-        drivekP.initDefault(0.0); // TODO
-        drivekD.initDefault(0.0); // TODO
-        turnkP.initDefault(0.0); // TODO
-        turnkD.initDefault(0.0); // TODO
+        drivekS.initDefault(0.11400);
+        drivekV.initDefault(0.84144);
+        drivekP.initDefault(0.1);
+        drivekD.initDefault(0.0);
+        turnkP.initDefault(10.0);
+        turnkD.initDefault(0.0);
       }
     }
   }

@@ -11,6 +11,9 @@ import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
+  // Load RobotState class
+  private final RobotState robotState = RobotState.getInstance();
+
   // Subsystems
   private final DriveBase driveBase;
 

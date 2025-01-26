@@ -3,11 +3,13 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants;
 import frc.robot.util.swerve.SwerveSetpointGenerator.ModuleLimits;
 import lombok.Builder;
 
 public class DriveConstants {
-  public static final double odometryFrequencyHz = 250;
+  public static final double odometryFrequencyHz =
+      Constants.getRobotMode() == Constants.RobotMode.SIM ? 50 : 250;
 
   public static final double trackWidthX = Units.inchesToMeters(20.75);
   public static final double trackWidthY = Units.inchesToMeters(20.75);

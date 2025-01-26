@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotController;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
@@ -49,6 +50,11 @@ public class OdometryManager implements AutoCloseable {
   private void run() {
     odometryLock.lock();
     try {
+      // Get sample timestamp
+      double timestamp = RobotController.getFPGATime() / 1e6;
+      timestampQueue.add(timestamp);
+
+      // Read signals and provide them to queues
       for (int i = 0; i < signalSuppliers.size(); i++) {
         signalQueues.get(i).add(signalSuppliers.get(i).getAsDouble());
       }
