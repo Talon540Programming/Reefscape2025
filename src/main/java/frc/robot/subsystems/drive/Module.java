@@ -30,8 +30,8 @@ public class Module {
         drivekV.initDefault(0.12941);
         drivekP.initDefault(0.005);
         drivekD.initDefault(0.0);
-        turnkP.initDefault(4000.0);
-        turnkD.initDefault(50.0);
+        turnkP.initDefault(2.0);
+        turnkD.initDefault(0.05);
       }
       default -> {
         drivekS.initDefault(0.11400);

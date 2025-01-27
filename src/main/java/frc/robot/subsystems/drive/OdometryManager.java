@@ -52,11 +52,11 @@ public class OdometryManager implements AutoCloseable {
     try {
       // Get sample timestamp
       double timestamp = RobotController.getFPGATime() / 1e6;
-      timestampQueue.add(timestamp);
+      timestampQueue.offer(timestamp);
 
       // Read signals and provide them to queues
       for (int i = 0; i < signalSuppliers.size(); i++) {
-        signalQueues.get(i).add(signalSuppliers.get(i).getAsDouble());
+        signalQueues.get(i).offer(signalSuppliers.get(i).getAsDouble());
       }
     } finally {
       odometryLock.unlock();

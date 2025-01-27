@@ -6,7 +6,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 public class Constants {
   private static RobotType kRobotType = RobotType.ROBOT_2025_COMP;
   // Allows tunable values to be changed when enabled. Also adds tunable selectors to AutoSelector
-  public static final boolean TUNING_MODE = false;
+  public static final boolean TUNING_MODE = true;
   // Disable the AdvantageKit logger from running
   public static final boolean ENABLE_LOGGING = true;
 
