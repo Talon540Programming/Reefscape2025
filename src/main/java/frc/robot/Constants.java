@@ -12,6 +12,8 @@ public class Constants {
 
   public static final double kLoopPeriodSecs = 0.02;
 
+  public static final double LOW_VOLTAGE_WARNING_THRESHOLD = 10.0;
+
   public enum RobotMode {
     REAL,
     SIM,
