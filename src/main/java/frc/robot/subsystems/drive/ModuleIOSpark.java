@@ -35,7 +35,7 @@ public class ModuleIOSpark implements ModuleIO {
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;
-  private SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
+  private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
 
   // Queue inputs from odometry thread
   private final Queue<Double> drivePositionQueue;
@@ -46,13 +46,13 @@ public class ModuleIOSpark implements ModuleIO {
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
   public ModuleIOSpark(int index) {
-    switch (Constants.getRobotType()) {
-      case ROBOT_2025_COMP -> {
+    switch (Constants.getRobot()) {
+      case COMPBOT -> {
         config = moduleConfigs[index];
       }
       default ->
           throw new IllegalStateException(
-              "Unexpected RobotType for Spark Module: " + Constants.getRobotType());
+              "Unexpected RobotType for Spark Module: " + Constants.getRobot());
     }
 
     // Initialize Hardware Devices
@@ -134,15 +134,17 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.driveVelocityRadPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSpark.getAppliedOutput() * driveSpark.getBusVoltage();
     inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
+    inputs.driveTempCelsius = driveSpark.getMotorTemperature();
 
     inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
     inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition());
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
     inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
+    inputs.turnTempCelsius = turnSpark.getMotorTemperature();
 
-    inputs.driveConnected = driveConnectedDebounce.calculate(driveSpark.hasActiveFault());
-    inputs.turnConnected = turnConnectedDebounce.calculate(turnSpark.hasActiveFault());
+    inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
+    inputs.turnConnected = turnConnectedDebounce.calculate(!turnSpark.hasActiveFault());
 
     inputs.odometryDrivePositionsRad =
         drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
@@ -191,7 +193,8 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void setDriveFF(double kS, double kV) {
-    driveFeedforward = new SimpleMotorFeedforward(kS, kV);
+    driveFeedforward.setKs(kS);
+    driveFeedforward.setKv(kV);
   }
 
   @Override

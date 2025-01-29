@@ -7,12 +7,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.*;
+import frc.robot.util.AlertsUtil;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
-  // Load RobotState class
-  private final RobotState robotState = RobotState.getInstance();
+  // Load PoseEstimator class
+  private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
   // Subsystems
   private final DriveBase driveBase;
@@ -24,7 +25,7 @@ public class RobotContainer {
   private final LoggedDashboardChooser<Command> autoChooser;
 
   public RobotContainer() {
-    switch (Constants.getRobotMode()) {
+    switch (Constants.getMode()) {
       case REAL -> {
         driveBase =
             new DriveBase(
@@ -60,10 +61,10 @@ public class RobotContainer {
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
       autoChooser.addOption(
-          "Drive Wheel Radius Characterization",
-          DriveCommands.wheelRadiusCharacterization(driveBase));
+          "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
-          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(driveBase));
+          "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+    }
     }
 
     configureButtonBindings();
@@ -91,16 +92,16 @@ public class RobotContainer {
     // Switch to X pattern when X button is pressed
     controller.x().onTrue(Commands.runOnce(driveBase::stopWithX, driveBase));
 
-    // Reset gyro to 0° when B button is pressed
+    // Reset gyro to 0° when B button is pressed
     controller
         .b()
         .onTrue(
             Commands.runOnce(
                     () ->
-                        RobotState.getInstance()
+                        PoseEstimator.getInstance()
                             .resetPose(
                                 new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
                                     AllianceFlipUtil.apply(new Rotation2d()))),
                     driveBase)
                 .ignoringDisable(true));
