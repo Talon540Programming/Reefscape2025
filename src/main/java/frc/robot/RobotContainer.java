@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -22,6 +23,9 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+
+  // Alerts
+  private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", Alert.AlertType.kInfo);
 
   public RobotContainer() {
     switch (Constants.getRobotMode()) {
@@ -58,6 +62,8 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
 
     if (Constants.TUNING_MODE) {
+      tuningModeAlert.set(true);
+
       // Set up Characterization routines
       autoChooser.addOption(
           "Drive Wheel Radius Characterization",
