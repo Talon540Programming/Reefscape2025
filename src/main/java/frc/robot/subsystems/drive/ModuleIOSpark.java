@@ -141,8 +141,8 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
     inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
 
-    inputs.driveConnected = driveConnectedDebounce.calculate(driveSpark.hasActiveFault());
-    inputs.turnConnected = turnConnectedDebounce.calculate(turnSpark.hasActiveFault());
+    inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
+    inputs.turnConnected = turnConnectedDebounce.calculate(!turnSpark.hasActiveFault());
 
     inputs.odometryDrivePositionsRad =
         drivePositionQueue.stream().mapToDouble((Double value) -> value).toArray();
