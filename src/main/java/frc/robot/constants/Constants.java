@@ -20,7 +20,6 @@ public class Constants {
 
   public enum RobotType {
     ROBOT_2025_COMP,
-    ROBOT_2024_OFFSEASON,
     ROBOT_SIMBOT
   }
 

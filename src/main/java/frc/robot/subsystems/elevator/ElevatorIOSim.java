@@ -11,24 +11,16 @@ public class ElevatorIOSim implements ElevatorIO {
   private final DCMotor m_motorModel = DCMotor.getNEO(2);
   private double appliedVoltage = 0.0;
 
-  private static final double kElevatorGearing = 18.0;
-  private static final double minHeightMeters = 0.8382; // TODO
-  private static final double maxHeightMeters = 1.457325; // TODO
-  private static final double startingHeightMeters = 0.8382; // TODO
-
   public ElevatorIOSim() {
 
     m_sim =
         new ElevatorSim(
-            LinearSystemId.createDCMotorSystem(
-                m_motorModel,
-                0.001, // TODO
-                kElevatorGearing),
+            LinearSystemId.createDCMotorSystem(m_motorModel, ElevatorConstants.moi, ElevatorConstants.kElevatorGearing),
             m_motorModel,
-            minHeightMeters,
-            maxHeightMeters,
+            ElevatorConstants.minHeightMeters,
+            ElevatorConstants.maxHeightMeters,
             true,
-            startingHeightMeters,
+            ElevatorConstants.startingHeightMeters,
             0.0);
   }
 
