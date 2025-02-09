@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.util.LoggedTunableNumber;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -95,28 +94,27 @@ public class Elevator extends SubsystemBase {
     }
 
     if (maxVelocity.hasChanged(0) || maxAcceleration.hasChanged(0)) {
-        feedback.setConstraints(new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get()));
+      feedback.setConstraints(
+          new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get()));
     }
 
     if (DriverStation.isDisabled()) {
-        setpoint = ElevatorState.STARTING_STATE;
+      setpoint = ElevatorState.STARTING_STATE;
 
-        io.stop();
+      io.stop();
 
-        feedback.reset(inputs.positionMeters, inputs.velocityRadPerSec);
+      feedback.reset(inputs.positionMeters, inputs.velocityRadPerSec);
     } else if (setpoint != null) {
-        double measurement = inputs.positionMeters;
-        double goal = setpoint.positionMeters();
+      double measurement = inputs.positionMeters;
+      double goal = setpoint.positionMeters();
 
-        io.setVoltage(
-            MathUtil.clamp(
-                feedforward.calculate(goal, 0.0) + feedback.calculate(measurement, goal), -12, 12
-            )
-        );
+      io.setVoltage(
+          MathUtil.clamp(
+              feedforward.calculate(goal, 0.0) + feedback.calculate(measurement, goal), -12, 12));
     }
 
     if (setpoint != null) {
-        // Update visualizers TODO
+      // Update visualizers TODO
     }
   }
 
@@ -146,7 +144,6 @@ public class Elevator extends SubsystemBase {
   public Command characterizeDynamic(SysIdRoutine.Direction direction) {
     return handleCharacterization().andThen(sysId.dynamic(direction));
   }
-
 
   private Command handleCharacterization() {
     return Commands.runOnce(

@@ -15,7 +15,8 @@ public class ElevatorIOSim implements ElevatorIO {
 
     m_sim =
         new ElevatorSim(
-            LinearSystemId.createDCMotorSystem(m_motorModel, ElevatorConstants.moi, ElevatorConstants.kElevatorGearing),
+            LinearSystemId.createDCMotorSystem(
+                m_motorModel, ElevatorConstants.moi, ElevatorConstants.kElevatorGearing),
             m_motorModel,
             ElevatorConstants.minHeightMeters,
             ElevatorConstants.maxHeightMeters,
