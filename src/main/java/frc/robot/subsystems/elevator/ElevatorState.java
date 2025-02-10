@@ -5,7 +5,7 @@ import frc.robot.constants.Constants;
 import frc.robot.util.LoggedTunableNumber;
 
 public record ElevatorState(double positionMeters) implements StructSerializable {
-  public static final ElevatorState STARTING_STATE = new ElevatorState(0);
+  public static final ElevatorState STARTING_STATE = new ElevatorState(ElevatorConstants.minElevatorHeightMeters);
   public static final ElevatorState CORAL_INTAKE_STATE = new ElevatorState(0); // TODO
   public static final ElevatorState L1_STATE = new ElevatorState(0); // TODO
   public static final ElevatorState L2_STATE = new ElevatorState(0); // TODO

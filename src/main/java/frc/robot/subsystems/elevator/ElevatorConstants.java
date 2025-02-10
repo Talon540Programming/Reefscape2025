@@ -1,11 +1,20 @@
 package frc.robot.subsystems.elevator;
 
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+
 public class ElevatorConstants {
   public static final double kElevatorGearing = 3.0 / 1.0;
-  public static final double minHeightMeters = 0;
-  public static final double maxHeightMeters = 1.5367 - 0.2681224;
-  public static final double startingHeightMeters = 0.2681224;
+  public static final double maxElevatorHeightMeters = 1.5617210066;
+  public static final double minElevatorHeightMeters = 0.2934208;
   public static final double moi = 0.000367;
+  public static final Pose3d elevatorOriginPose3d =
+      new Pose3d(new Translation3d(0.089, 0, 0.070), new Rotation3d(84.5, 0, 0));
+  public static final Pose3d elevatorExtensionOriginPose3d =
+      elevatorOriginPose3d.plus(
+          new Transform3d(new Translation3d(0.028123, 0.0, 0.29207), new Rotation3d()));
 
   public static final int leaderId = 0; // TODO
   public static final int followerId = 0; // TODO

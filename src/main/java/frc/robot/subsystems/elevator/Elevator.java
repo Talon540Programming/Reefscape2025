@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
+import frc.robot.util.ElevatorMechanismVisualizer;
 import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -52,6 +53,24 @@ public class Elevator extends SubsystemBase {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
   private final SysIdRoutine sysId;
+
+  private final ElevatorMechanismVisualizer setpointVisualizer =
+      new ElevatorMechanismVisualizer(
+          "Elevator",
+          "Setpoint",
+          ElevatorConstants.minElevatorHeightMeters,
+          ElevatorConstants.elevatorExtensionOriginPose3d,
+          2,
+          2);
+
+  private final ElevatorMechanismVisualizer measuredVisualizer =
+      new ElevatorMechanismVisualizer(
+          "Elevator",
+          "Measured",
+          ElevatorConstants.minElevatorHeightMeters,
+          ElevatorConstants.elevatorExtensionOriginPose3d,
+          2,
+          2);
 
   private Constraints elevatorConstraints =
       new TrapezoidProfile.Constraints(maxVelocity.get(), maxAcceleration.get());
@@ -111,8 +130,9 @@ public class Elevator extends SubsystemBase {
     }
 
     if (setpoint != null) {
-      // Update visualizers TODO
+      setpointVisualizer.update(setpoint.positionMeters());
     }
+    measuredVisualizer.update(inputs.positionMeters);
   }
 
   public void setSetpoint(ElevatorState state) {
