@@ -33,18 +33,18 @@ public class Elevator extends SubsystemBase {
   static {
     switch (Constants.getRobotType()) {
       case ROBOT_2025_COMP -> {
-        kP.initDefault(0); // TODO
-        kD.initDefault(0); // TODO
-        kS.initDefault(0); // TODO
-        kG.initDefault(0); // TODO
-        kV.initDefault(0); // TODO
+        kP.initDefault(ElevatorConstants.Real.kP);
+        kD.initDefault(ElevatorConstants.Real.kD);
+        kS.initDefault(ElevatorConstants.Real.kS);
+        kG.initDefault(ElevatorConstants.Real.kG);
+        kV.initDefault(ElevatorConstants.Real.kV);
       }
       case ROBOT_SIMBOT -> {
-        kP.initDefault(0); // TODO
-        kD.initDefault(0); // TODO
-        kS.initDefault(0); // TODO
-        kG.initDefault(0); // TODO
-        kV.initDefault(0); // TODO
+        kP.initDefault(ElevatorConstants.Sim.kP);
+        kD.initDefault(ElevatorConstants.Sim.kD);
+        kS.initDefault(ElevatorConstants.Sim.kS);
+        kG.initDefault(ElevatorConstants.Sim.kG);
+        kV.initDefault(ElevatorConstants.Sim.kV);
       }
     }
   }
@@ -62,7 +62,6 @@ public class Elevator extends SubsystemBase {
 
   public Elevator(ElevatorIO elevatorIO) {
     this.io = elevatorIO;
-    io.setBrakeMode(true);
 
     sysId =
         new SysIdRoutine(
@@ -79,10 +78,6 @@ public class Elevator extends SubsystemBase {
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
-
-    // if (DriverStation.isDisabled()) {
-    //     Logger.recordOutput("Elevator/Setpoint", new ElevatorState(0))
-    // }
 
     if (kS.hasChanged(0) || kG.hasChanged(0) || kV.hasChanged(0)) {
       feedforward = new ElevatorFeedforward(kS.get(), kG.get(), kV.get());
@@ -110,7 +105,9 @@ public class Elevator extends SubsystemBase {
 
       io.setVoltage(
           MathUtil.clamp(
-              feedforward.calculate(goal, 0.0) + feedback.calculate(measurement, goal), -12, 12));
+              feedforward.calculate(0) + feedback.calculate(measurement, goal),
+              -12,
+              12)); // TODO idk what to do here but maybe this is right???
     }
 
     if (setpoint != null) {

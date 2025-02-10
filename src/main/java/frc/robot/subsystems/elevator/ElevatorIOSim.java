@@ -22,7 +22,7 @@ public class ElevatorIOSim implements ElevatorIO {
             ElevatorConstants.maxHeightMeters,
             true,
             ElevatorConstants.startingHeightMeters,
-            0.0);
+            new double[] {0.0, 0.0});
   }
 
   @Override

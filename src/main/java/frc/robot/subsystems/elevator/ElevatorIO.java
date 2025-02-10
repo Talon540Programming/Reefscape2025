@@ -20,6 +20,4 @@ public interface ElevatorIO {
   public default void setVoltage(double voltage) {}
 
   public default void stop() {}
-
-  public default void setBrakeMode(boolean enable) {}
 }
