@@ -13,26 +13,26 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.constants.Constants;
+import frc.robot.oi.ControlsInterface;
+import frc.robot.oi.SimKeyboard;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorIO;
-import frc.robot.subsystems.elevator.ElevatorIOSim;
-import frc.robot.subsystems.elevator.ElevatorIOSpark;
+// import frc.robot.subsystems.elevator.Elevator;
+// import frc.robot.subsystems.elevator.ElevatorIO;
+// import frc.robot.subsystems.elevator.ElevatorIOSim;
+// import frc.robot.subsystems.elevator.ElevatorIOSpark;
+// import frc.robot.subsystems.elevator.ElevatorState;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -44,10 +44,12 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
-  private final Elevator elevator;
+  //   private final Elevator elevator;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  //   private final CommandXboxController controller = new CommandXboxController(0);
+  //   private final ControlsInterface controlsInterface = new SingleXbox(0);
+  private final ControlsInterface controlsInterface = new SimKeyboard(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -64,7 +66,7 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
-        elevator = new Elevator(new ElevatorIOSpark());
+        // elevator = new Elevator(new ElevatorIOSpark());
         break;
 
       case SIM:
@@ -76,7 +78,7 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
-        elevator = new Elevator(new ElevatorIOSim());
+        // elevator = new Elevator(new ElevatorIOSim());
         break;
 
       default:
@@ -88,7 +90,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-        elevator = new Elevator(new ElevatorIO() {});
+        // elevator = new Elevator(new ElevatorIO() {});
         break;
     }
 
@@ -111,18 +113,18 @@ public class RobotContainer {
     autoChooser.addOption(
         "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
-    autoChooser.addOption(
-        "Elevator SysId (Quasistatic Forward)",
-        elevator.characterizeQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Elevator SysId (Quasistatic Reverse)",
-        elevator.characterizeQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Elevator SysId (Dynamic Forward)",
-        elevator.characterizeDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Elevator SysId (Dynamic Reverse)",
-        elevator.characterizeDynamic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Elevator SysId (Quasistatic Forward)",
+    //     elevator.characterizeQuasistatic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Elevator SysId (Quasistatic Reverse)",
+    //     elevator.characterizeQuasistatic(SysIdRoutine.Direction.kReverse));
+    // autoChooser.addOption(
+    //     "Elevator SysId (Dynamic Forward)",
+    //     elevator.characterizeDynamic(SysIdRoutine.Direction.kForward));
+    // autoChooser.addOption(
+    //     "Elevator SysId (Dynamic Reverse)",
+    //     elevator.characterizeDynamic(SysIdRoutine.Direction.kReverse));
 
     // Configure the button bindings
     configureButtonBindings();
@@ -139,33 +141,79 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> controlsInterface.getDriveX(),
+            () -> controlsInterface.getDriveY(),
+            () -> controlsInterface.getDriveTheta()));
 
     // Lock to 0° when A button is held
-    controller
-        .a()
+    controlsInterface
+        .robotRelativeOverride()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> controlsInterface.getDriveY(),
+                () -> controlsInterface.getDriveX(),
                 () -> new Rotation2d()));
 
-    // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    // Set to L1 deposit state
+    // controlsInterface
+    //     .depositL1()
+    //     .onTrue(
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   elevator.setSetpoint(ElevatorState.L1_STATE);
+    //                 },
+    //                 elevator),
+    //             Commands.waitUntil(() -> elevator.atSetpoint())));
 
-    // Reset gyro to 0° when B button is pressed
-    controller
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                    drive)
-                .ignoringDisable(true));
+    // // Set to L2 left deposit state
+    // controlsInterface
+    //     .depositL2left()
+    //     .onTrue(
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   elevator.setSetpoint(ElevatorState.L2_STATE);
+    //                 },
+    //                 elevator),
+    //             Commands.waitUntil(() -> elevator.atSetpoint())));
+
+    // // Set to L2 right deposit state
+    // controlsInterface
+    //     .depositL2right()
+    //     .onTrue(
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   elevator.setSetpoint(ElevatorState.L2_STATE);
+    //                 },
+    //                 elevator),
+    //             Commands.waitUntil(() -> elevator.atSetpoint())));
+
+    // // Set to L1 deposit state
+    // controlsInterface
+    //     .depositL3left()
+    //     .onTrue(
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   elevator.setSetpoint(ElevatorState.L3_STATE);
+    //                 },
+    //                 elevator),
+    //             Commands.waitUntil(() -> elevator.atSetpoint())));
+
+    // // Set to L1 deposit state
+    // controlsInterface
+    //     .depositL3right()
+    //     .onTrue(
+    //         Commands.sequence(
+    //             Commands.runOnce(
+    //                 () -> {
+    //                   elevator.setSetpoint(ElevatorState.L3_STATE);
+    //                 },
+    //                 elevator),
+    //             Commands.waitUntil(() -> elevator.atSetpoint())));
   }
 
   /**

@@ -30,14 +30,14 @@ public class ElevatorIOSim implements ElevatorIO {
     if (DriverStation.isDisabled()) {}
 
     m_sim.update(Constants.kLoopPeriodSecs);
-    inputs.positionMeters = m_sim.getPositionMeters();
+    inputs.positionRad = m_sim.getPositionMeters();
     inputs.velocityRadPerSec = m_sim.getVelocityMetersPerSecond();
-    inputs.appliedVolts = appliedVoltage;
+    inputs.appliedVolts = new double[] {appliedVoltage};
     inputs.currentAmps = new double[] {m_sim.getCurrentDrawAmps()};
   }
 
   @Override
-  public void setVoltage(double volts) {
+  public void runOpenLoop(double volts) {
     appliedVoltage = volts;
     m_sim.setInputVoltage(appliedVoltage);
   }

@@ -1,72 +1,82 @@
-// package frc.robot.oi;
+package frc.robot.oi;
 
-// import edu.wpi.first.wpilibj.GenericHID;
-// import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-// import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-// public class SimKeyboard implements ControlsInterface {
-//     private final GenericHID hid = new GenericHID(0);
+public class SimKeyboard implements ControlsInterface {
 
-//     @Override
-//     public double getDriveX() {
-//         return -controller.getLeftY();
-//     }
+  private final GenericHID hid;
 
-//     @Override
-//     public double getDriveY() {
-//         return -controller.getLeftX();
-//     }
+  public SimKeyboard(int port) {
+    hid = new GenericHID(port);
+  }
 
-//     @Override
-//     public double getDriveTheta() {
-//         return -controller.getRightX();
-//     }
+  @Override
+  public double getDriveX() {
+    return -hid.getRawAxis(1);
+  }
 
-//     @Override
-//     public Trigger robotRelativeOverride() {
-//         return controller.leftBumper();
-//     }
+  @Override
+  public double getDriveY() {
+    return -hid.getRawAxis(0);
+  }
 
-//     @Override
-//     public Trigger depositL1() {
-//         return controller.povDown();
-//     };
+  @Override
+  public double getDriveTheta() {
+    return -hid.getRawAxis(2);
+  }
 
+  @Override
+  public Trigger robotRelativeOverride() {
+    return new Trigger(() -> false);
+  }
 
-//     @Override
-//     public Trigger depositL2left() {
-//         return controller.povDownLeft();
-//     };
+  @Override
+  public Trigger depositL1() {
+    System.out.println("CHECKPOINT");
+    return new Trigger(() -> hid.getRawAxis(1) != 0);
+  }
+  ;
 
-//     @Override
-//     public Trigger depositL2right() {
-//         return controller.povDownRight();
-//     };
+  @Override
+  public Trigger depositL2left() {
+    return new Trigger(() -> hid.getRawButton(2));
+  }
+  ;
 
-//     @Override
-//     public Trigger removeL2Algae() {
-//         return controller.povLeft();
-//     };
+  @Override
+  public Trigger depositL2right() {
+    return new Trigger(() -> false);
+  }
+  ;
 
+  @Override
+  public Trigger removeL2Algae() {
+    return new Trigger(() -> false);
+  }
+  ;
 
-//     @Override
-//     public Trigger depositL3left() {
-//         return controller.povUpLeft();
-//     };
+  @Override
+  public Trigger depositL3left() {
+    return new Trigger(() -> hid.getRawButton(3));
+  }
+  ;
 
-//     @Override
-//     public Trigger depositL3right() {
-//         return controller.povUpRight();
-//     };
+  @Override
+  public Trigger depositL3right() {
+    return new Trigger(() -> false);
+  }
+  ;
 
-//     @Override
-//     public Trigger removeL3Algae() {
-//         return controller.povRight();
-//     };
-    
+  @Override
+  public Trigger removeL3Algae() {
+    return new Trigger(() -> false);
+  }
+  ;
 
-//     @Override
-//     public Trigger intake() {
-//         return controller.rightBumper();
-//     };
-// }
+  @Override
+  public Trigger intake() {
+    return new Trigger(() -> hid.getRawButton(4));
+  }
+  ;
+}
