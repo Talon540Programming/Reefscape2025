@@ -14,11 +14,16 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.util.ElevatorMechanismVisualizer;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
+
+import static edu.wpi.first.units.Units.Volts;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -66,6 +71,8 @@ public class Elevator extends SubsystemBase {
   private BooleanSupplier disabledOverride = () -> false;
 
   @AutoLogOutput private boolean brakeModeEnabled = true;
+
+  private final SysIdRoutine sysId;
 
   private TrapezoidProfile profile;
   @Getter private State setpoint = new State();
@@ -116,6 +123,17 @@ public class Elevator extends SubsystemBase {
         new TrapezoidProfile(
             new TrapezoidProfile.Constraints(
                 maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
+    
+    sysId = new SysIdRoutine(
+      new SysIdRoutine.Config(
+        null,
+        null,
+        null,
+        (state) -> Logger.recordOutput("Elevator/SysIdState", state.toString())
+      ),
+      new SysIdRoutine.Mechanism(
+        (voltage) -> io.runOpenLoop(voltage.in(Volts)), null, this)
+    );
   }
 
   public void periodic() {
@@ -244,5 +262,13 @@ public class Elevator extends SubsystemBase {
 
   public double getGoalMeters() {
     return goal.get().position;
+  }
+
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> sysId.quasistatic(direction));
+  }
+
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> sysId.dynamic(direction));
   }
 }

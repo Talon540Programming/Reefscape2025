@@ -81,7 +81,6 @@ public class Drive extends SubsystemBase {
     // Start odometry thread
     SparkOdometryThread.getInstance().start();
 
-    // Configure AutoBuilder for PathPlanner
     // Configure SysId
     sysId =
         new SysIdRoutine(
