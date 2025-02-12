@@ -18,8 +18,8 @@ import frc.robot.util.SparkUtil;
 import java.util.function.DoubleSupplier;
 
 public class ElevatorIOSpark implements ElevatorIO {
-  private final SparkBase leader;
-  private final SparkBase follower;
+  private final SparkBase leaderSpark;
+  private final SparkBase followerSpark;
   private final RelativeEncoder encoder;
   private final SparkClosedLoopController controller;
   private final SparkMaxConfig leaderConfig;
@@ -29,11 +29,11 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer connectedDebounce = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-    leader = new SparkMax(ElevatorConstants.leaderId, MotorType.kBrushless);
-    follower = new SparkMax(ElevatorConstants.followerId, MotorType.kBrushless);
+    leaderSpark = new SparkMax(ElevatorConstants.leaderId, MotorType.kBrushless);
+    followerSpark = new SparkMax(ElevatorConstants.followerId, MotorType.kBrushless);
 
-    encoder = leader.getEncoder();
-    controller = leader.getClosedLoopController();
+    encoder = leaderSpark.getEncoder();
+    controller = leaderSpark.getClosedLoopController();
 
     globalConfig = new SparkMaxConfig();
     globalConfig
@@ -62,49 +62,49 @@ public class ElevatorIOSpark implements ElevatorIO {
         .primaryEncoderVelocityPeriodMs(20);
 
     SparkUtil.tryUntilOk(
-        leader,
+        leaderSpark,
         5,
         () ->
-            leader.configure(
+            leaderSpark.configure(
                 leaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     followerConfig = new SparkMaxConfig();
-    followerConfig.apply(globalConfig).follow(leader);
+    followerConfig.apply(globalConfig).follow(leaderSpark);
 
     SparkUtil.tryUntilOk(
-        follower,
+        followerSpark,
         5,
         () ->
-            follower.configure(
+            followerSpark.configure(
                 followerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
   }
 
   @Override
   public void updateInputs(ElevatorIOInputs inputs) {
-    SparkUtil.ifOk(leader, encoder::getPosition, (position) -> inputs.positionRad = position);
+    SparkUtil.ifOk(leaderSpark, encoder::getPosition, (position) -> inputs.positionRad = position);
 
-    SparkUtil.ifOk(leader, encoder::getVelocity, (vel) -> inputs.velocityRadPerSec = vel);
+    SparkUtil.ifOk(leaderSpark, encoder::getVelocity, (vel) -> inputs.velocityRadPerSec = vel);
 
     SparkUtil.ifOk(
-        leader,
-        new DoubleSupplier[] {leader::getAppliedOutput, leader::getBusVoltage},
+        leaderSpark,
+        new DoubleSupplier[] {leaderSpark::getAppliedOutput, leaderSpark::getBusVoltage},
         (values) -> inputs.appliedVolts[0] = values[0] * values[1]);
 
     SparkUtil.ifOk(
-        follower,
-        new DoubleSupplier[] {follower::getAppliedOutput, follower::getBusVoltage},
+        followerSpark,
+        new DoubleSupplier[] {followerSpark::getAppliedOutput, followerSpark::getBusVoltage},
         (values) -> inputs.appliedVolts[1] = values[0] * values[1]);
 
-    SparkUtil.ifOk(leader, leader::getOutputCurrent, (current) -> inputs.currentAmps[0] = current);
+    SparkUtil.ifOk(leaderSpark, leaderSpark::getOutputCurrent, (current) -> inputs.currentAmps[0] = current);
     SparkUtil.ifOk(
-        follower, follower::getOutputCurrent, (current) -> inputs.currentAmps[1] = current);
+        followerSpark, followerSpark::getOutputCurrent, (current) -> inputs.currentAmps[1] = current);
 
     inputs.connected = connectedDebounce.calculate(true);
   }
 
   @Override
   public void runOpenLoop(double output) {
-    leader.setVoltage(output);
+    leaderSpark.setVoltage(output);
   }
 
   @Override
@@ -119,6 +119,6 @@ public class ElevatorIOSpark implements ElevatorIO {
 
   @Override
   public void stop() {
-    leader.stopMotor();
+    leaderSpark.stopMotor();
   }
-} // TODO
+}

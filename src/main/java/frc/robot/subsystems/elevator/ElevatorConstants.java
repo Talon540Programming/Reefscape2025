@@ -4,10 +4,16 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class ElevatorConstants {
+  public static final DCMotor gearbox = DCMotor.getNEO(2);
+
   public static final double drumRadius = Units.inchesToMeters(1.0);
+  public static final double carriageMassKg = Units.lbsToKilograms(6.0);
+  public static final double stagesMassKg = Units.lbsToKilograms(12.0);
+
   public static final double kElevatorGearing = 3.0 / 1.0;
   public static final double maxElevatorHeightMeters = 1.5617210066;
   public static final double minElevatorHeightMeters = 0.2934208;
@@ -32,10 +38,10 @@ public class ElevatorConstants {
   public static final double encoderVelocityFactor = 0.0; // TODO
 
   public static class Sim {
-    public static final double kP = 1000; // TODO
-    public static final double kD = 20; // TODO
-    public static final double kG = 0.3; // TODO
-    public static final double kS = 0.0; // TODO
+    public static final double kP = 10; // TODO
+    public static final double kD = .1; // TODO
+    public static final double kG = 0; // TODO
+    public static final double kS = 0; // TODO
   }
 
   public static class Real {
@@ -43,6 +49,5 @@ public class ElevatorConstants {
     public static final double kD = 0.0; // TODO
     public static final double kG = 0.0; // TODO
     public static final double kS = 0.0; // TODO
-    public static final double kV = 0.0; // TODO
   }
 }

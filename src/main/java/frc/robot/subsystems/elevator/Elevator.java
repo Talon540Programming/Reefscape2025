@@ -14,8 +14,6 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.Constants;
 import frc.robot.util.ElevatorMechanismVisualizer;
@@ -39,12 +37,6 @@ public class Elevator extends SubsystemBase {
       new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 2.0);
   private static final LoggedTunableNumber maxAccelerationMetersPerSec2 =
       new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 10);
-  private static final LoggedTunableNumber homingVolts =
-      new LoggedTunableNumber("Elevator/HomingVolts", -2.0);
-  private static final LoggedTunableNumber homingTimeSecs =
-      new LoggedTunableNumber("Elevator/HomingTimeSecs", 0.25);
-  private static final LoggedTunableNumber homingVelocityThresh =
-      new LoggedTunableNumber("Elevator/HomingVelocityThresh", 5.0);
   private static final LoggedTunableNumber tolerance =
       new LoggedTunableNumber("Elevator/Tolerance", 0.2);
 
@@ -86,8 +78,6 @@ public class Elevator extends SubsystemBase {
   private double homedPosition = 0.0;
 
   @AutoLogOutput @Getter private boolean homed = false;
-
-  private Debouncer homingDebouncer = new Debouncer(homingTimeSecs.get());
 
   private Debouncer toleranceDebouncer = new Debouncer(0.25, DebounceType.kRising);
 
@@ -175,16 +165,16 @@ public class Elevator extends SubsystemBase {
               + kG.get() * Math.sin(ElevatorConstants.elevatorAngle));
       // Check at goal
       atGoal =
-          EqualsUtil.epsilonEquals(setpoint.position, goalState.position, 0.001)
-              && EqualsUtil.epsilonEquals(setpoint.velocity, goalState.velocity, 0.001);
+          EqualsUtil.epsilonEquals(setpoint.position, goalState.position, 0.01)
+              && EqualsUtil.epsilonEquals(setpoint.velocity, goalState.velocity, 0.01);
 
       atSetpoint =
           EqualsUtil.epsilonEquals(
-                  setpoint.position, inputs.positionRad * ElevatorConstants.drumRadius, 0.001)
+                  setpoint.position, inputs.positionRad * ElevatorConstants.drumRadius, 0.01)
               && EqualsUtil.epsilonEquals(
                   setpoint.velocity,
                   inputs.velocityRadPerSec * ElevatorConstants.drumRadius,
-                  0.001);
+                  0.01);
 
       // Stop running elevator down when in stow
       if (stowed && atGoal) {
@@ -244,33 +234,6 @@ public class Elevator extends SubsystemBase {
   public void setOverrides(BooleanSupplier coastOverride, BooleanSupplier disabledOverride) {
     this.coastOverride = coastOverride;
     this.disabledOverride = disabledOverride;
-  }
-
-  public Command homingSequence() {
-    return Commands.startRun(
-            () -> {
-              stopProfile = true;
-              homed = false;
-              homingDebouncer = new Debouncer(homingTimeSecs.get());
-              homingDebouncer.calculate(false);
-            },
-            () -> {
-              if (disabledOverride.getAsBoolean() || coastOverride.getAsBoolean()) return;
-              io.runVolts(homingVolts.get());
-              homed =
-                  homingDebouncer.calculate(
-                      Math.abs(inputs.velocityRadPerSec) <= homingVelocityThresh.get());
-            })
-        .until(() -> homed)
-        .andThen(
-            () -> {
-              homedPosition = inputs.positionRad;
-              homed = true;
-            })
-        .finallyDo(
-            () -> {
-              stopProfile = false;
-            });
   }
 
   /** Get position of elevator in meters with 0 at home */

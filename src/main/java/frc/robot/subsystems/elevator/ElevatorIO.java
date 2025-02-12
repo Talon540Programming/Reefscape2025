@@ -19,9 +19,7 @@ public interface ElevatorIO {
 
   public default void runPosition(double positionRad, double feedforward) {}
 
-  public default void runVolts(double voltage) {}
+  public default void runOpenLoop(double output) {}
 
   public default void stop() {}
-
-  public default void runOpenLoop(double output) {}
 }

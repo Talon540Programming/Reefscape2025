@@ -13,12 +13,9 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.NumericalIntegration;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
 import frc.robot.constants.Constants;
 
 public class ElevatorIOSimMA implements ElevatorIO {
-  public static final double carriageMassKg = Units.lbsToKilograms(6.0);
-  public static final double stagesMassKg = Units.lbsToKilograms(12.0);
   public static final DCMotor gearbox =
       DCMotor.getNEO(2).withReduction(ElevatorConstants.kElevatorGearing);
 
@@ -32,12 +29,14 @@ public class ElevatorIOSimMA implements ElevatorIO {
           -gearbox.KtNMPerAmp
               / (gearbox.rOhms
                   * Math.pow(ElevatorConstants.drumRadius, 2)
-                  * (carriageMassKg + stagesMassKg)
+                  * (ElevatorConstants.carriageMassKg + ElevatorConstants.stagesMassKg)
                   * gearbox.KvRadPerSecPerVolt));
   public static final Vector<N2> B =
       VecBuilder.fill(
           0.0,
-          gearbox.KtNMPerAmp / (ElevatorConstants.drumRadius * (carriageMassKg + stagesMassKg)));
+          gearbox.KtNMPerAmp
+              / (ElevatorConstants.drumRadius
+                  * (ElevatorConstants.carriageMassKg + ElevatorConstants.stagesMassKg)));
 
   // State given by elevator carriage position and velocity
   // Input given by torque current to motor
@@ -74,16 +73,9 @@ public class ElevatorIOSimMA implements ElevatorIO {
     inputs.currentAmps = new double[] {Math.copySign(inputTorqueCurrent, appliedVolts)};
   }
 
-  @Override
   public void runOpenLoop(double output) {
     closedLoop = false;
     setInputTorqueCurrent(output);
-  }
-
-  @Override
-  public void runVolts(double volts) {
-    closedLoop = false;
-    setInputVoltage(volts);
   }
 
   @Override
