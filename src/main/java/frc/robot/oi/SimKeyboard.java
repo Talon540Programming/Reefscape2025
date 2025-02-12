@@ -32,7 +32,6 @@
 //         return controller.povDown();
 //     };
 
-
 //     @Override
 //     public Trigger depositL2left() {
 //         return controller.povDownLeft();
@@ -48,7 +47,6 @@
 //         return controller.povLeft();
 //     };
 
-
 //     @Override
 //     public Trigger depositL3left() {
 //         return controller.povUpLeft();
@@ -63,7 +61,6 @@
 //     public Trigger removeL3Algae() {
 //         return controller.povRight();
 //     };
-    
 
 //     @Override
 //     public Trigger intake() {

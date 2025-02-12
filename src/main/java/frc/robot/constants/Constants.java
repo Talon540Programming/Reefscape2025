@@ -12,6 +12,8 @@ public class Constants {
 
   public static final double kLoopPeriodSecs = 0.02;
 
+  public static final double G = 9.807;
+
   public enum RobotMode {
     REAL,
     SIM,
