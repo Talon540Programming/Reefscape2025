@@ -1,113 +1,98 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
-// TODO
 package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants;
+import frc.robot.util.swerve.SwerveSetpointGenerator.ModuleLimits;
+import lombok.Builder;
 
 public class DriveConstants {
-  public static final double maxSpeedMetersPerSec = 4.8;
-  public static final double odometryFrequency = 100.0; // Hz
-  public static final double trackWidth = Units.inchesToMeters(22.75);
-  public static final double wheelBase = Units.inchesToMeters(22.75);
-  public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);
-  public static final Translation2d[] moduleTranslations =
-      new Translation2d[] {
-        new Translation2d(trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0)
-      };
+  public static final double odometryFrequencyHz =
+      Constants.getMode() == Constants.Mode.SIM ? 50 : 250;
 
-  //   // Zeroed rotation values for each module, see setup instructions
-  //   public static final Rotation2d frontLeftZeroRotation = new Rotation2d(0.07709961857367231);
-  //   public static final Rotation2d frontRightZeroRotation =
-  //       new Rotation2d(3.069966630478959);
-  //   public static final Rotation2d backLeftZeroRotation = new Rotation2d(1.633997476530679);
-  //   public static final Rotation2d backRightZeroRotation = new Rotation2d(1.273714169847585);
+  public static final double trackWidthX = Units.inchesToMeters(20.75);
+  public static final double trackWidthY = Units.inchesToMeters(20.75);
+  public static final double driveBaseRadius = Math.hypot(trackWidthX / 2, trackWidthY / 2);
 
-  public static final Rotation2d frontLeftZeroRotation = new Rotation2d(0.16028737150729522);
-  public static final Rotation2d frontRightZeroRotation = new Rotation2d(-0.1422097592800296);
-  public static final Rotation2d backLeftZeroRotation = new Rotation2d(-3.009554996093968);
-  public static final Rotation2d backRightZeroRotation = new Rotation2d(2.559973505647124);
+  public static final double maxLinearVelocityMetersPerSec = Units.feetToMeters(15.1);
+  public static final double maxLinearAccelerationMetersPerSecSquared = Units.feetToMeters(75.0);
+  public static final double maxAngularVelocityRadPerSec =
+      maxLinearVelocityMetersPerSec / driveBaseRadius;
+  public static final double maxAngularAccelerationRadPerSecSquared = 2.0 * Math.PI;
 
-  // Device CAN ID
-  public static final int frontLeftTurnCanId = 2;
-  public static final int frontLeftDriveCanId = 3;
+  public static final Translation2d[] moduleTranslations = {
+    new Translation2d(trackWidthX / 2, trackWidthY / 2),
+    new Translation2d(trackWidthX / 2, -trackWidthY / 2),
+    new Translation2d(-trackWidthX / 2, trackWidthY / 2),
+    new Translation2d(-trackWidthX / 2, -trackWidthY / 2)
+  };
 
-  public static final int frontRightTurnCanId = 4;
-  public static final int frontRightDriveCanId = 5;
+  public static final double wheelRadius = Units.inchesToMeters(2.0);
 
-  public static final int backLeftTurnCanId = 6;
-  public static final int backLeftDriveCanId = 7;
+  public static final double mk4iDriveGearing = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
+  public static final double mk4iTurnGearing = (150.0 / 7.0);
 
-  public static final int backRightTurnCanId = 8;
-  public static final int backRightDriveCanId = 9;
+  public static final ModuleConfig[] moduleConfigs = {
+    // FL
+    ModuleConfig.builder()
+        .turnMotorId(2)
+        .driveMotorId(3)
+        .encoderChannel(2)
+        .encoderOffset(Rotation2d.fromRadians(0.16028737150729522))
+        .driveGearing(mk4iDriveGearing)
+        .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
+        .build(),
+    // FR
+    ModuleConfig.builder()
+        .turnMotorId(4)
+        .driveMotorId(5)
+        .encoderChannel(3)
+        .encoderOffset(Rotation2d.fromRadians(-0.1422097592800296))
+        .driveGearing(mk4iDriveGearing)
+        .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
+        .build(),
+    // BL
+    ModuleConfig.builder()
+        .turnMotorId(6)
+        .driveMotorId(7)
+        .encoderChannel(1)
+        .encoderOffset(Rotation2d.fromRadians(-3.009554996093968))
+        .driveGearing(mk4iDriveGearing)
+        .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
+        .build(),
+    // BR
+    ModuleConfig.builder()
+        .turnMotorId(8)
+        .driveMotorId(9)
+        .encoderChannel(0)
+        .encoderOffset(Rotation2d.fromRadians(2.559973505647124))
+        .driveGearing(mk4iDriveGearing)
+        .turnGearing(mk4iTurnGearing)
+        .turnInverted(true)
+        .build(),
+  };
 
-  public static final int pigeonCanId = 10;
+  public static class PigeonConstants {
+    public static final int id = 10;
+  }
 
-  public static final int frontLeftEncoder = 2;
-  public static final int frontRightEncoder = 3;
-  public static final int backLeftEncoder = 1;
-  public static final int backRightEncoder = 0;
+  @Builder
+  public record ModuleConfig(
+      int turnMotorId,
+      int driveMotorId,
+      int encoderChannel,
+      Rotation2d encoderOffset,
+      double driveGearing,
+      double turnGearing,
+      boolean turnInverted) {}
 
-  // Drive motor configuration
-  public static final int driveMotorCurrentLimit = 50;
-  public static final double wheelRadiusMeters = Units.inchesToMeters(1.5);
-  public static final double driveMotorReduction = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
-  public static final DCMotor driveGearbox = DCMotor.getNEO(1);
-
-  // Drive encoder configuration
-  public static final double driveEncoderPositionFactor =
-      2 * Math.PI / driveMotorReduction; // Rotor Rotations -> Wheel Radians
-  public static final double driveEncoderVelocityFactor =
-      (2 * Math.PI) / 60.0 / driveMotorReduction; // Rotor RPM -> Wheel Rad/Sec
-
-  // Drive PID configuration
-  public static final double driveKp = 0.005;
-  public static final double driveKd = 0.0;
-  public static final double driveKs = 0.19700;
-  public static final double driveKv = 0.12941;
-  public static final double driveSimP = 0.05;
-  public static final double driveSimD = 0.0;
-  public static final double driveSimKs = 0.0;
-  public static final double driveSimKv = 0.0789;
-
-  //   0.11891 0.13199
-
-  // Turn motor configuration
-  public static final boolean turnInverted = false;
-  public static final int turnMotorCurrentLimit = 20;
-  public static final double turnMotorReduction = 150.0 / 7.0;
-  public static final DCMotor turnGearbox = DCMotor.getNEO(1);
-
-  // Turn encoder configuration
-  public static final boolean turnEncoderInverted = true;
-  public static final double turnEncoderPositionFactor =
-      2 * Math.PI / turnMotorReduction; // Rotations -> Radians
-  public static final double turnEncoderVelocityFactor =
-      (2 * Math.PI) / 60.0 / turnMotorReduction; // RPM -> Rad/Sec
-
-  // Turn PID configuration
-  public static final double turnKp = 2.0;
-  public static final double turnKd = 0.05;
-
-  public static final double turnSimP = 8.0;
-  public static final double turnSimD = 0.0;
-  public static final double turnPIDMinInput = 0; // Radians
-  public static final double turnPIDMaxInput = 2 * Math.PI; // Radians
+  public static final ModuleLimits moduleLimitsFree =
+      new ModuleLimits(
+          maxLinearVelocityMetersPerSec,
+          maxLinearAccelerationMetersPerSecSquared,
+          Units.degreesToRadians(1080.0));
 }

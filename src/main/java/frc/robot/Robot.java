@@ -13,11 +13,15 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.generated.BuildConstants;
-import frc.robot.constants.Constants;
+import frc.robot.util.LoggerUtil;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -33,142 +37,133 @@ import org.littletonrobotics.urcl.URCL;
  * project.
  */
 public class Robot extends LoggedRobot {
+  private static final double LOW_VOLTAGE_WARNING_THRESHOLD = 11.75;
+
   private Command autonomousCommand;
-  private RobotContainer robotContainer;
+  private final RobotContainer robotContainer;
+
+  // System Alerts
+  private final Alert canErrorAlert =
+      new Alert("CAN errors detected, robot may not be controllable.", AlertType.kError);
+  private final Debouncer canErrorDebouncer = new Debouncer(0.5);
+
+  private final Alert lowBatteryVoltageAlert =
+      new Alert("Battery voltage is too low, change the battery", Alert.AlertType.kWarning);
+  private final Debouncer batteryVoltageDebouncer = new Debouncer(1.5);
 
   public Robot() {
-    // Record metadata
-    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
-    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
-    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
-    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
-    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
-    switch (BuildConstants.DIRTY) {
-      case 0:
-        Logger.recordMetadata("GitDirty", "All changes committed");
-        break;
-      case 1:
-        Logger.recordMetadata("GitDirty", "Uncomitted changes");
-        break;
-      default:
-        Logger.recordMetadata("GitDirty", "Unknown");
-        break;
-    }
+    super(Constants.kLoopPeriodSecs);
 
-    // Set up data receivers & replay source
-    switch (Constants.getRobotMode()) {
-      case REAL:
-        // Running on a real robot, log to a USB stick ("/U/logs")
-        Logger.addDataReceiver(new WPILOGWriter());
+    LoggerUtil.initializeLoggerMetadata();
+
+    switch (Constants.getMode()) {
+      case REAL -> {
+        // Running on a real robot, log to a USB stick
+        var loggerPath = LoggerUtil.getLogPath();
+        if (loggerPath.isPresent()) {
+          Logger.addDataReceiver(new WPILOGWriter(loggerPath.get().toString()));
+        } else {
+          DriverStation.reportWarning("Logging USB Drive Not Found. Disabling File Logging", false);
+        }
+
         Logger.addDataReceiver(new NT4Publisher());
-        break;
-
-      case SIM:
-        // Running a physics simulator, log to NT
+      }
+      case SIM -> {
         Logger.addDataReceiver(new NT4Publisher());
-        break;
-
-      case REPLAY:
-        // Replaying a log, set up replay source
+      }
+      case REPLAY -> {
         setUseTiming(false); // Run as fast as possible
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-        break;
+      }
     }
 
     // Initialize URCL
     Logger.registerURCL(URCL.startExternal());
 
     // Start AdvantageKit logger
-    Logger.start();
+    if (Constants.ENABLE_LOGGING) Logger.start();
 
-    // Instantiate our RobotContainer. This will perform all our button bindings,
-    // and put our autonomous chooser on the dashboard.
+    // Configure brownout voltage
+    RobotController.setBrownoutVoltage(6.0);
+
+    // Create RobotConatiner
     robotContainer = new RobotContainer();
   }
 
-  /** This function is called periodically during all modes. */
   @Override
   public void robotPeriodic() {
     // Switch thread to high priority to improve loop timing
     Threads.setCurrentThreadPriority(true, 99);
 
-    // Runs the Scheduler. This is responsible for polling buttons, adding
-    // newly-scheduled commands, running already-scheduled commands, removing
-    // finished or interrupted commands, and running subsystem periodic() methods.
-    // This must be called from the robot's periodic block in order for anything in
-    // the Command-based framework to work.
+    // Run command scheduler
     CommandScheduler.getInstance().run();
+
+    // Check CAN status
+    var canStatus = RobotController.getCANStatus();
+    canErrorAlert.set(
+        canErrorDebouncer.calculate(
+            canStatus.transmitErrorCount > 0 || canStatus.receiveErrorCount > 0));
+
+    // Update Battery Voltage Alert
+    lowBatteryVoltageAlert.set(
+        batteryVoltageDebouncer.calculate(
+            RobotController.getBatteryVoltage() <= LOW_VOLTAGE_WARNING_THRESHOLD));
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
   }
 
-  // @Override
-  // public void robotPeriodic() {
-  //   Logger.recordOutput("RobotPose", new Pose2d());
-  //   Logger.recordOutput("zeroedComponentPoses", new Pose3d[] {new Pose3d()});
-  //   Logger.recordOutput(
-  //       "FinalComponentPoses",
-  //       new Pose3d[] {new Pose3d(0.0888492, 0, 0.0699008, new Rotation3d(0, 0, 0))});
-  // }
-
-  /** This function is called once when the robot is disabled. */
   @Override
   public void disabledInit() {}
 
-  /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {}
 
-  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
+  @Override
+  public void disabledExit() {}
+
   @Override
   public void autonomousInit() {
     autonomousCommand = robotContainer.getAutonomousCommand();
 
-    // schedule the autonomous command (example)
     if (autonomousCommand != null) {
       autonomousCommand.schedule();
     }
   }
 
-  /** This function is called periodically during autonomous. */
   @Override
   public void autonomousPeriodic() {}
 
-  /** This function is called once when teleop is enabled. */
   @Override
-  public void teleopInit() {
-    // This makes sure that the autonomous stops running when
-    // teleop starts running. If you want the autonomous to
-    // continue until interrupted by another command, remove
-    // this line or comment it out.
+  public void autonomousExit() {
     if (autonomousCommand != null) {
       autonomousCommand.cancel();
     }
   }
 
-  /** This function is called periodically during operator control. */
+  @Override
+  public void teleopInit() {}
+
   @Override
   public void teleopPeriodic() {}
 
-  /** This function is called once when test mode is enabled. */
   @Override
-  public void testInit() {
-    // Cancels all running commands at the start of test mode.
-    CommandScheduler.getInstance().cancelAll();
-  }
+  public void teleopExit() {}
 
-  /** This function is called periodically during test mode. */
+  @Override
+  public void testInit() {}
+
   @Override
   public void testPeriodic() {}
 
-  /** This function is called once when the robot is first started up. */
+  @Override
+  public void testExit() {}
+
   @Override
   public void simulationInit() {}
 
-  /** This function is called periodically whilst in simulation. */
   @Override
   public void simulationPeriodic() {}
 }

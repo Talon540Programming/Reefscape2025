@@ -13,16 +13,17 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
-import frc.robot.constants.Constants;
 import frc.robot.oi.*;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
@@ -33,6 +34,7 @@ import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOSpark;
+import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -43,24 +45,31 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  private final Drive drive;
-  private final Elevator elevator;
 
   // Controller
   //   private final CommandXboxController controller = new CommandXboxController(0);
   private final ControlsInterface controlsInterface = new SingleXbox(0);
   // private final ControlsInterface controlsInterface = new SimKeyboard(0);
+  // Load RobotState class
+  private final RobotState robotState = RobotState.getInstance();
+
+  // Subsystems
+  private final DriveBase driveBase;
+  private final Elevator elevator;
+
+  // Controller
+  private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
-    switch (Constants.getRobotMode()) {
+    switch (Constants.getMode()) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
-        drive =
-            new Drive(
+        driveBase =
+            new DriveBase(
                 new GyroIOPigeon2(),
                 new ModuleIOSpark(0),
                 new ModuleIOSpark(1),
@@ -71,8 +80,8 @@ public class RobotContainer {
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        drive =
-            new Drive(
+        driveBase =
+            new DriveBase(
                 new GyroIO() {},
                 new ModuleIOSim(),
                 new ModuleIOSim(),
@@ -83,8 +92,8 @@ public class RobotContainer {
 
       default:
         // Replayed robot, disable IO implementations
-        drive =
-            new Drive(
+        driveBase =
+            new DriveBase(
                 new GyroIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
@@ -95,34 +104,29 @@ public class RobotContainer {
     }
 
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("AutoChooser");
+    autoChooser = new LoggedDashboardChooser<>("Auto Choices");
 
-    // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    if (Constants.TUNING_MODE) {
+      // Set up Characterization routines
+      autoChooser.addOption(
+          "Drive Wheel Radius Characterization",
+          DriveCommands.wheelRadiusCharacterization(driveBase));
+      autoChooser.addOption(
+          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(driveBase));
 
-    autoChooser.addOption(
-        "Elevator SysId (Quasistatic Forward)",
-        elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Elevator SysId (Quasistatic Reverse)",
-        elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Elevator SysId (Dynamic Forward)", elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Elevator SysId (Dynamic Reverse)", elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Elevator SysId (Quasistatic Forward)",
+          elevator.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Elevator SysId (Quasistatic Reverse)",
+          elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Elevator SysId (Dynamic Forward)",
+          elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Elevator SysId (Dynamic Reverse)",
+          elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+    }
 
     // Configure the button bindings
     configureButtonBindings();
@@ -136,9 +140,9 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
-    drive.setDefaultCommand(
+    driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
-            drive,
+            driveBase,
             () -> controlsInterface.getDriveX(),
             () -> controlsInterface.getDriveY(),
             () -> controlsInterface.getDriveTheta()));
@@ -148,10 +152,25 @@ public class RobotContainer {
         .robotRelativeOverride()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> controlsInterface.getDriveY(),
-                () -> controlsInterface.getDriveX(),
-                () -> new Rotation2d()));
+                driveBase,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> Rotation2d.kZero));
+
+    controlsInterface.stopWithX().onTrue(Commands.runOnce(driveBase::stopWithX, driveBase));
+
+    controlsInterface
+        .resetGyro()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        RobotState.getInstance()
+                            .resetPose(
+                                new Pose2d(
+                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    AllianceFlipUtil.apply(new Rotation2d()))),
+                    driveBase)
+                .ignoringDisable(true));
 
     // Set to L1 deposit state
     controlsInterface
@@ -165,61 +184,8 @@ public class RobotContainer {
                     },
                     elevator),
                 Commands.waitUntil(() -> elevator.isAtGoal())));
-
-    // // Set to L2 left deposit state
-    // controlsInterface
-    //     .depositL2left()
-    //     .onTrue(
-    //         Commands.sequence(
-    //             Commands.runOnce(
-    //                 () -> {
-    //                   elevator.setSetpoint(ElevatorState.L2_STATE);
-    //                 },
-    //                 elevator),
-    //             Commands.waitUntil(() -> elevator.atSetpoint())));
-
-    // // Set to L2 right deposit state
-    // controlsInterface
-    //     .depositL2right()
-    //     .onTrue(
-    //         Commands.sequence(
-    //             Commands.runOnce(
-    //                 () -> {
-    //                   elevator.setSetpoint(ElevatorState.L2_STATE);
-    //                 },
-    //                 elevator),
-    //             Commands.waitUntil(() -> elevator.atSetpoint())));
-
-    // // Set to L1 deposit state
-    // controlsInterface
-    //     .depositL3left()
-    //     .onTrue(
-    //         Commands.sequence(
-    //             Commands.runOnce(
-    //                 () -> {
-    //                   elevator.setSetpoint(ElevatorState.L3_STATE);
-    //                 },
-    //                 elevator),
-    //             Commands.waitUntil(() -> elevator.atSetpoint())));
-
-    // // Set to L1 deposit state
-    // controlsInterface
-    //     .depositL3right()
-    //     .onTrue(
-    //         Commands.sequence(
-    //             Commands.runOnce(
-    //                 () -> {
-    //                   elevator.setSetpoint(ElevatorState.L3_STATE);
-    //                 },
-    //                 elevator),
-    //             Commands.waitUntil(() -> elevator.atSetpoint())));
   }
 
-  /**
-   * Use this to pass the autonomous command to the main {@link Robot} class.
-   *
-   * @return the command to run in autonomous
-   */
   public Command getAutonomousCommand() {
     return autoChooser.get();
   }

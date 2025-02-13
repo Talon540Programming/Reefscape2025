@@ -1,102 +1,129 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.subsystems.drive;
-
-import static frc.robot.subsystems.drive.DriveConstants.*;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.Constants;
+import frc.robot.util.LoggedTunableNumber;
+import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
-  private final ModuleIO moduleIO;
-  private final ModuleIOInputsAutoLogged moduleInputs = new ModuleIOInputsAutoLogged();
+  private static final LoggedTunableNumber drivekS =
+      new LoggedTunableNumber("Drive/Module/DrivekS");
+  private static final LoggedTunableNumber drivekV =
+      new LoggedTunableNumber("Drive/Module/DrivekV");
+  private static final LoggedTunableNumber drivekP =
+      new LoggedTunableNumber("Drive/Module/DrivekP");
+  private static final LoggedTunableNumber drivekD =
+      new LoggedTunableNumber("Drive/Module/DrivekD");
+  private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
+  private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
+
+  static {
+    switch (Constants.getRobot()) {
+      case COMPBOT -> {
+        drivekS.initDefault(0.19700);
+        drivekV.initDefault(0.12941);
+        drivekP.initDefault(0.005);
+        drivekD.initDefault(0.0);
+        turnkP.initDefault(2.0);
+        turnkD.initDefault(0.05);
+      }
+      default -> {
+        drivekS.initDefault(0.113190);
+        drivekV.initDefault(0.841640);
+        drivekP.initDefault(0.1);
+        drivekD.initDefault(0.0);
+        turnkP.initDefault(10.0);
+        turnkD.initDefault(0.0);
+      }
+    }
+  }
+
+  private final ModuleIO m_io;
+  private final ModuleIOInputsAutoLogged m_inputs = new ModuleIOInputsAutoLogged();
   private final int index;
 
   private final Alert driveDisconnectedAlert;
   private final Alert turnDisconnectedAlert;
-  private SwerveModulePosition[] odometryPositions = new SwerveModulePosition[] {};
+
+  @Getter private SwerveModulePosition[] odometryPositions;
 
   public Module(ModuleIO io, int index) {
-    this.moduleIO = io;
+    m_io = io;
     this.index = index;
+
     driveDisconnectedAlert =
-        new Alert(
-            "Disconnected drive motor on module " + Integer.toString(index) + ".",
-            AlertType.kError);
+        new Alert("Disconnected drive motor on module " + index + ".", AlertType.kError);
     turnDisconnectedAlert =
-        new Alert(
-            "Disconnected turn motor on module " + Integer.toString(index) + ".", AlertType.kError);
+        new Alert("Disconnected turn motor on module " + index + ".", AlertType.kError);
+  }
+
+  public void updateInputs() {
+    m_io.updateInputs(m_inputs);
+    Logger.processInputs("Drive/Module" + index, m_inputs);
   }
 
   public void periodic() {
-    moduleIO.updateInputs(moduleInputs);
-    Logger.processInputs("Drive/Module" + Integer.toString(index), moduleInputs);
+    // Update tunable numbers
+    if (drivekS.hasChanged(hashCode()) || drivekV.hasChanged(hashCode())) {
+      m_io.setDriveFF(drivekS.get(), drivekV.get());
+    }
+    if (drivekP.hasChanged(hashCode()) || drivekD.hasChanged(hashCode())) {
+      m_io.setDrivePID(drivekP.get(), 0, drivekD.get());
+    }
+    if (turnkP.hasChanged(hashCode()) || turnkD.hasChanged(hashCode())) {
+      m_io.setTurnPID(turnkP.get(), 0, turnkD.get());
+    }
 
-    // Calculate positions for odometry
-    int sampleCount = moduleInputs.odometryTimestamps.length; // All signals are sampled together
+    // Update Odometry Positions
+    int sampleCount = m_inputs.odometryDrivePositionsRad.length;
     odometryPositions = new SwerveModulePosition[sampleCount];
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = moduleInputs.odometryDrivePositionsRad[i] * wheelRadiusMeters;
-      Rotation2d angle = moduleInputs.odometryTurnPositions[i];
+      double positionMeters = m_inputs.odometryDrivePositionsRad[i] * DriveConstants.wheelRadius;
+      Rotation2d angle = m_inputs.odometryTurnPositions[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
 
-    // Update alerts
-    driveDisconnectedAlert.set(!moduleInputs.driveConnected);
-    turnDisconnectedAlert.set(!moduleInputs.turnConnected);
+    driveDisconnectedAlert.set(!m_inputs.driveConnected);
+    turnDisconnectedAlert.set(!m_inputs.turnConnected);
   }
 
-  /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
+  /** Runs the module with the specified setpoint state. */
   public void runSetpoint(SwerveModuleState state) {
-    // Optimize velocity setpoint
-    state.optimize(getAngle());
-    state.cosineScale(moduleInputs.turnPosition);
-
-    // Apply setpoints
-    moduleIO.setDriveVelocity(state.speedMetersPerSecond / wheelRadiusMeters);
-    moduleIO.setTurnPosition(state.angle);
+    m_io.runDriveVelocity(state.speedMetersPerSecond / DriveConstants.wheelRadius);
+    m_io.runTurnPosition(state.angle);
   }
 
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runCharacterization(double output) {
-    moduleIO.setDriveOpenLoop(output);
-    moduleIO.setTurnPosition(new Rotation2d());
+    m_io.runDriveOpenLoop(output);
+    m_io.runTurnPosition(Rotation2d.kZero);
   }
 
   /** Disables all outputs to motors. */
   public void stop() {
-    moduleIO.setDriveOpenLoop(0.0);
-    moduleIO.setTurnOpenLoop(0.0);
+    m_io.runDriveOpenLoop(0.0);
+    m_io.runTurnOpenLoop(0.0);
   }
 
   /** Returns the current turn angle of the module. */
   public Rotation2d getAngle() {
-    return moduleInputs.turnPosition;
+    return m_inputs.turnPosition;
   }
 
   /** Returns the current drive position of the module in meters. */
   public double getPositionMeters() {
-    return moduleInputs.drivePositionRad * wheelRadiusMeters;
+    return m_inputs.drivePositionRad * DriveConstants.wheelRadius;
   }
 
   /** Returns the current drive velocity of the module in meters per second. */
   public double getVelocityMetersPerSec() {
-    return moduleInputs.driveVelocityRadPerSec * wheelRadiusMeters;
+    return m_inputs.driveVelocityRadPerSec * DriveConstants.wheelRadius;
   }
 
   /** Returns the module position (turn angle and drive position). */
@@ -109,27 +136,18 @@ public class Module {
     return new SwerveModuleState(getVelocityMetersPerSec(), getAngle());
   }
 
-  public SwerveModuleState getAbsoluteState() {
-    return new SwerveModuleState(getVelocityMetersPerSec(), moduleInputs.turnAbsolutePosition);
-  }
-
-  /** Returns the module positions received this cycle. */
-  public SwerveModulePosition[] getOdometryPositions() {
-    return odometryPositions;
-  }
-
-  /** Returns the timestamps of the samples received this cycle. */
-  public double[] getOdometryTimestamps() {
-    return moduleInputs.odometryTimestamps;
-  }
-
   /** Returns the module position in radians. */
   public double getWheelRadiusCharacterizationPosition() {
-    return moduleInputs.drivePositionRad;
+    return m_inputs.drivePositionRad;
   }
 
-  /** Returns the module velocity in rad/sec. */
+  /** Returns the module velocity in rotations/sec (Phoenix native units). */
   public double getFFCharacterizationVelocity() {
-    return moduleInputs.driveVelocityRadPerSec;
+    return Units.radiansToRotations(m_inputs.driveVelocityRadPerSec);
+  }
+
+  /* Sets brake mode to {@code enabled} */
+  public void setDriveBrakeMode(boolean enabled) {
+    m_io.setDriveBrakeMode(enabled);
   }
 }

@@ -1,6 +1,6 @@
 package frc.robot.util;
 
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,13 +20,38 @@ public class LoggedTunableNumber {
 
   private LoggedNetworkNumber dashboardNumber;
 
+  private final boolean ntPubEnabled;
+
+  /**
+   * Create a new LoggedTunableNumber
+   *
+   * @param dashboardKey Key on dashboard
+   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
+   */
+  public LoggedTunableNumber(String dashboardKey, boolean alwaysEnabled) {
+    this.key = tableKey + "/" + dashboardKey;
+    this.ntPubEnabled = alwaysEnabled;
+  }
+
   /**
    * Create a new LoggedTunableNumber
    *
    * @param dashboardKey Key on dashboard
    */
   public LoggedTunableNumber(String dashboardKey) {
-    this.key = tableKey + "/" + dashboardKey;
+    this(dashboardKey, Constants.TUNING_MODE);
+  }
+
+  /**
+   * Create a new LoggedTunableNumber with the default value
+   *
+   * @param dashboardKey Key on dashboard
+   * @param defaultValue Default value
+   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
+   */
+  public LoggedTunableNumber(String dashboardKey, double defaultValue, boolean alwaysEnabled) {
+    this(dashboardKey, alwaysEnabled);
+    initDefault(defaultValue);
   }
 
   /**
@@ -55,7 +80,7 @@ public class LoggedTunableNumber {
     }
 
     this.defaultValue = defaultValue;
-    if (Constants.TUNING_MODE) {
+    if (ntPubEnabled) {
       dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
     }
   }
@@ -74,7 +99,7 @@ public class LoggedTunableNumber {
               key));
     }
 
-    return Constants.TUNING_MODE ? dashboardNumber.get() : defaultValue;
+    return ntPubEnabled ? dashboardNumber.get() : defaultValue;
   }
 
   /**

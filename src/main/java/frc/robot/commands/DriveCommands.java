@@ -1,108 +1,87 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.RobotState;
+import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.util.AllianceFlipUtil;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class DriveCommands {
+  // Drive
   private static final double DEADBAND = 0.1;
+
+  private static final LoggedNetworkNumber LINEAR_VELOCITY_SCALAR =
+      new LoggedNetworkNumber("TeleopDrive/LinearVelocityScalar", 1.0);
+  private static final LoggedNetworkNumber ANGULAR_VELOCITY_SCALAR =
+      new LoggedNetworkNumber("TeleopDrive/AngularVelocityScalar", 0.7);
+
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
+
+  // Characterization
   private static final double FF_START_DELAY = 2.0; // Secs
-  private static final double FF_RAMP_RATE = 0.75; // Volts/Sec
+  private static final double FF_RAMP_RATE = 0.85; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
-
-  private DriveCommands() {}
-
-  private static Translation2d getLinearVelocityFromJoysticks(double x, double y) {
-    // Apply deadband
-    double linearMagnitude = MathUtil.applyDeadband(Math.hypot(x, y), DEADBAND);
-    Rotation2d linearDirection = new Rotation2d(Math.atan2(y, x));
-
-    // Square magnitude for more precise control
-    linearMagnitude = linearMagnitude * linearMagnitude;
-
-    // Return new linear velocity
-    return new Pose2d(new Translation2d(), linearDirection)
-        .transformBy(new Transform2d(linearMagnitude, 0.0, new Rotation2d()))
-        .getTranslation();
-  }
 
   /**
    * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
-      Drive drive,
+      DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier) {
     return Commands.run(
         () -> {
-          // Get linear velocity
-          Translation2d linearVelocity =
-              getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
-
-          // Apply rotation deadband
+          // Apply deadband
+          double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
+          double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
           double omega = MathUtil.applyDeadband(omegaSupplier.getAsDouble(), DEADBAND);
 
           // Square rotation value for more precise control
-          omega = Math.copySign(omega * omega, omega);
+          x = Math.copySign(Math.pow(x, 2), x);
+          y = Math.copySign(Math.pow(y, 2), y);
+          omega = Math.copySign(Math.pow(omega, 2), omega);
 
-          // Convert to field relative speeds & send command
-          ChassisSpeeds speeds =
+          // Generate robot relative speeds
+          double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
+          double angularVelocityScalar = ANGULAR_VELOCITY_SCALAR.get();
+
+          var speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                  omega * drive.getMaxAngularSpeedRadPerSec());
+                  x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                  y * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                  omega * DriveConstants.maxAngularVelocityRadPerSec * angularVelocityScalar);
 
-          boolean isFlipped =
-              DriverStation.getAlliance().isPresent()
-                  && DriverStation.getAlliance().get() == Alliance.Red;
-          drive.runVelocity(
-              ChassisSpeeds.fromFieldRelativeSpeeds(
-                  speeds,
-                  isFlipped
-                      ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                      : drive.getRotation()));
+          // Convert to field relative
+          Rotation2d rotation = RobotState.getInstance().getRotation();
+          rotation = AllianceFlipUtil.apply(rotation);
+          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
+
+          // Apply speeds
+          driveBase.runVelocity(speeds);
         },
-        drive);
+        driveBase);
   }
 
   /**
@@ -111,12 +90,10 @@ public class DriveCommands {
    * absolute rotation with a joystick.
    */
   public static Command joystickDriveAtAngle(
-      Drive drive,
+      DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> rotationSupplier) {
-
-    // Create PID controller
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
@@ -125,38 +102,40 @@ public class DriveCommands {
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // Construct command
     return Commands.run(
             () -> {
-              // Get linear velocity
-              Translation2d linearVelocity =
-                  getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+              // Apply deadband
+              double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
+              double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
+
+              // Square rotation value for more precise control
+              x = Math.copySign(Math.pow(x, 2), x);
+              y = Math.copySign(Math.pow(y, 2), y);
 
               // Calculate angular speed
+              Rotation2d rotation = RobotState.getInstance().getRotation();
               double omega =
                   angleController.calculate(
-                      drive.getRotation().getRadians(), rotationSupplier.get().getRadians());
+                      rotation.getRadians(), rotationSupplier.get().getRadians());
 
-              // Convert to field relative speeds & send command
-              ChassisSpeeds speeds =
+              // Generate robot relative speeds
+              double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
+              var speeds =
                   new ChassisSpeeds(
-                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                      x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                      y * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
                       omega);
-              boolean isFlipped =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get() == Alliance.Red;
-              drive.runVelocity(
-                  ChassisSpeeds.fromFieldRelativeSpeeds(
-                      speeds,
-                      isFlipped
-                          ? drive.getRotation().plus(new Rotation2d(Math.PI))
-                          : drive.getRotation()));
-            },
-            drive)
 
-        // Reset PID controller when command starts
-        .beforeStarting(() -> angleController.reset(drive.getRotation().getRadians()));
+              // Convert to field relative
+              rotation = AllianceFlipUtil.apply(rotation);
+              speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
+
+              // Apply speeds
+              driveBase.runVelocity(speeds);
+            },
+            driveBase)
+        .beforeStarting(
+            () -> angleController.reset(RobotState.getInstance().getRotation().getRadians()));
   }
 
   /**
@@ -164,7 +143,7 @@ public class DriveCommands {
    *
    * <p>This command should only be used in voltage control mode.
    */
-  public static Command feedforwardCharacterization(Drive drive) {
+  public static Command feedforwardCharacterization(DriveBase drive) {
     List<Double> velocitySamples = new LinkedList<>();
     List<Double> voltageSamples = new LinkedList<>();
     Timer timer = new Timer();
@@ -216,14 +195,13 @@ public class DriveCommands {
                   double kV = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
 
                   NumberFormat formatter = new DecimalFormat("#0.00000");
-
-                  SmartDashboard.putString("kS Output", formatter.format(kS));
-                  SmartDashboard.putString("kV Output", formatter.format(kV));
+                  SmartDashboard.putString("kS", formatter.format(kS));
+                  SmartDashboard.putString("kV", formatter.format(kV));
                 }));
   }
 
   /** Measures the robot's wheel radius by spinning in a circle. */
-  public static Command wheelRadiusCharacterization(Drive drive) {
+  public static Command wheelRadiusCharacterization(DriveBase drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 
@@ -253,14 +231,14 @@ public class DriveCommands {
             Commands.runOnce(
                 () -> {
                   state.positions = drive.getWheelRadiusCharacterizationPositions();
-                  state.lastAngle = drive.getRotation();
+                  state.lastAngle = drive.getGyroRotation();
                   state.gyroDelta = 0.0;
                 }),
 
             // Update gyro delta
             Commands.run(
                     () -> {
-                      var rotation = drive.getRotation();
+                      var rotation = drive.getGyroRotation();
                       state.gyroDelta += Math.abs(rotation.minus(state.lastAngle).getRadians());
                       state.lastAngle = rotation;
                     })
@@ -277,15 +255,14 @@ public class DriveCommands {
                           (state.gyroDelta * DriveConstants.driveBaseRadius) / wheelDelta;
 
                       NumberFormat formatter = new DecimalFormat("#0.000");
-                      System.out.println(
-                          "********** Wheel Radius Characterization Results **********");
-                      System.out.println(
-                          "\tWheel Delta: " + formatter.format(wheelDelta) + " radians");
-                      System.out.println(
-                          "\tGyro Delta: " + formatter.format(state.gyroDelta) + " radians");
-                      System.out.println(
-                          "\tWheel Radius: "
-                              + formatter.format(wheelRadius)
+
+                      SmartDashboard.putString(
+                          "Wheel Delta", formatter.format(wheelDelta) + " radians");
+                      SmartDashboard.putString(
+                          "Gyro Delta", formatter.format(state.gyroDelta) + " radians");
+                      SmartDashboard.putString(
+                          "Wheel Radius",
+                          formatter.format(wheelRadius)
                               + " meters, "
                               + formatter.format(Units.metersToInches(wheelRadius))
                               + " inches");
