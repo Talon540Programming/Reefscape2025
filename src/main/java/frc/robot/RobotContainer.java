@@ -24,9 +24,6 @@ public class RobotContainer {
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
-  // Alerts
-  private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", Alert.AlertType.kInfo);
-
   public RobotContainer() {
     switch (Constants.getMode()) {
       case REAL -> {
@@ -62,7 +59,7 @@ public class RobotContainer {
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
 
     if (Constants.TUNING_MODE) {
-      tuningModeAlert.set(true);
+      new Alert("Robot in Tuning Mode", Alert.AlertType.kInfo).set(true);
 
       // Set up Characterization routines
       autoChooser.addOption(
