@@ -67,8 +67,6 @@ public class DriveCommands {
           double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
           double angularVelocityScalar = ANGULAR_VELOCITY_SCALAR.get();
 
-          SmartDashboard.putNumber("current_linear_scalar", LINEAR_VELOCITY_SCALAR.get());
-
           var speeds =
               new ChassisSpeeds(
                   x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
