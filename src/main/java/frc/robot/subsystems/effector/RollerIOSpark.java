@@ -2,22 +2,19 @@ package frc.robot.subsystems.effector;
 
 import static frc.robot.subsystems.effector.EffectorConstants.*;
 
-import java.util.function.DoubleSupplier;
-
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
 import frc.robot.Constants;
-import frc.robot.subsystems.effector.IndexerIO.IndexerIOInputs;
 import frc.robot.util.SparkUtil;
+import java.util.function.DoubleSupplier;
 
 public class RollerIOSpark implements RollerIO {
   private final SparkBase spark;

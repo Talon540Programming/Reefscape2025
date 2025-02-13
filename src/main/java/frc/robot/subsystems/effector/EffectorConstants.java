@@ -6,7 +6,7 @@ public class EffectorConstants {
   public static final DCMotor indexerMotorModel = DCMotor.getNEO(1);
   public static final DCMotor rollerMotorModel = DCMotor.getNEO(1);
 
-  public static final double indexerGearing = 0.0; // TODO
+  public static final double indexerGearing = 4.0 / 1.0; // TODO
   public static final double indexerMoI = 0.0; // TODO
 
   public static final double rollerGearing = 0.0;

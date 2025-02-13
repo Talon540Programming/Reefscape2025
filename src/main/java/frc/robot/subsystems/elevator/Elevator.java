@@ -27,7 +27,6 @@ import frc.robot.subsystems.elevator.ElevatorConstants.Sim;
 import frc.robot.util.ElevatorMechanismVisualizer;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
-import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -145,10 +144,7 @@ public class Elevator extends SubsystemBase {
     }
 
     // Run profile
-    final boolean shouldRunProfile =
-        !stopProfile
-            && !isEStopped
-            && DriverStation.isEnabled();
+    final boolean shouldRunProfile = !stopProfile && !isEStopped && DriverStation.isEnabled();
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
     // Check if out of tolerance
     boolean outOfTolerance = Math.abs(getPositionMeters() - setpoint.position) > tolerance.get();
@@ -224,12 +220,12 @@ public class Elevator extends SubsystemBase {
     this.goal = goal;
   }
 
-
   /** Get position of elevator in meters with 0 at home */
   @AutoLogOutput(key = "Elevator/MeasuredHeightMeters")
   public double getPositionMeters() {
     return (inputs.positionRad - homedPosition) * drumRadius;
   }
+
 
   public double getGoalMeters() {
     return goal.get().position;

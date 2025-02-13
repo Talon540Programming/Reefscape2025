@@ -23,7 +23,7 @@ public class SingleXbox implements ControlsInterface {
 
   @Override
   public double getDriveTheta() {
-    return -controller.getRawAxis(2);
+    return -controller.getRightX();
   }
 
   @Override

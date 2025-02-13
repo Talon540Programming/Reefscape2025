@@ -20,7 +20,6 @@ public class IndexerIOSpark implements IndexerIO {
   private final RelativeEncoder encoder;
   private final SparkMaxConfig config;
 
-
   private final Debouncer connectedDebounce = new Debouncer(0.5);
 
   public IndexerIOSpark() {
