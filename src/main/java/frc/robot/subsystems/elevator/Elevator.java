@@ -7,23 +7,29 @@
 
 package frc.robot.subsystems.elevator;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
+import edu.wpi.first.units.Unit;
+import edu.wpi.first.units.VelocityUnit;
+import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.MutVelocity;
+import edu.wpi.first.units.measure.Velocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.constants.Constants;
 import frc.robot.util.ElevatorMechanismVisualizer;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
-
-import static edu.wpi.first.units.Units.Volts;
-
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -31,6 +37,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
+import com.ctre.phoenix6.controls.VelocityVoltage;
 
 public class Elevator extends SubsystemBase {
   // Tunable numbers
@@ -123,17 +131,15 @@ public class Elevator extends SubsystemBase {
         new TrapezoidProfile(
             new TrapezoidProfile.Constraints(
                 maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
-    
-    sysId = new SysIdRoutine(
-      new SysIdRoutine.Config(
-        null,
-        null,
-        null,
-        (state) -> Logger.recordOutput("Elevator/SysIdState", state.toString())
-      ),
-      new SysIdRoutine.Mechanism(
-        (voltage) -> io.runOpenLoop(voltage.in(Volts)), null, this)
-    );
+
+    sysId =
+        new SysIdRoutine(
+            new SysIdRoutine.Config(
+                null,
+                null,
+                null,
+                (state) -> Logger.recordOutput("Elevator/SysIdState", state.toString())),
+            new SysIdRoutine.Mechanism((voltage) -> io.runOpenLoop(voltage.in(Volts)), null, this));
   }
 
   public void periodic() {
@@ -157,7 +163,9 @@ public class Elevator extends SubsystemBase {
             && !coastOverride.getAsBoolean()
             && !disabledOverride.getAsBoolean()
             // && homed
-            && !isEStopped;
+            && !isEStopped
+            && DriverStation.isEnabled()
+            ;
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
     // Check if out of tolerance
     boolean outOfTolerance = Math.abs(getPositionMeters() - setpoint.position) > tolerance.get();
@@ -190,9 +198,7 @@ public class Elevator extends SubsystemBase {
           EqualsUtil.epsilonEquals(
                   setpoint.position, inputs.positionRad * ElevatorConstants.drumRadius, 0.01)
               && EqualsUtil.epsilonEquals(
-                  setpoint.velocity,
-                  inputs.velocityRadPerSec * ElevatorConstants.drumRadius,
-                  0.01);
+                  setpoint.velocity, inputs.velocityRadPerSec * ElevatorConstants.drumRadius, 0.01);
 
       // Stop running elevator down when in stow
       if (stowed && atGoal) {
@@ -223,10 +229,6 @@ public class Elevator extends SubsystemBase {
     }
     if (isEStopped) {
       io.stop();
-    }
-
-    if (DriverStation.isDisabled()) {
-      setGoal(() -> 0.0);
     }
 
     // Log state
@@ -265,10 +267,19 @@ public class Elevator extends SubsystemBase {
   }
 
   public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> sysId.quasistatic(direction));
+    return setForCharacterization().andThen(sysId.quasistatic(direction));
   }
 
   public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> sysId.dynamic(direction));
+    return setForCharacterization().andThen(sysId.dynamic(direction));
+  }
+
+  public Command setForCharacterization() {
+    return Commands.runOnce(
+      () -> {
+        setGoal(() -> 0.0);
+      },
+      this
+    );
   }
 }

@@ -95,9 +95,12 @@ public class ElevatorIOSpark implements ElevatorIO {
         new DoubleSupplier[] {followerSpark::getAppliedOutput, followerSpark::getBusVoltage},
         (values) -> inputs.appliedVolts[1] = values[0] * values[1]);
 
-    SparkUtil.ifOk(leaderSpark, leaderSpark::getOutputCurrent, (current) -> inputs.currentAmps[0] = current);
     SparkUtil.ifOk(
-        followerSpark, followerSpark::getOutputCurrent, (current) -> inputs.currentAmps[1] = current);
+        leaderSpark, leaderSpark::getOutputCurrent, (current) -> inputs.currentAmps[0] = current);
+    SparkUtil.ifOk(
+        followerSpark,
+        followerSpark::getOutputCurrent,
+        (current) -> inputs.currentAmps[1] = current);
 
     inputs.connected = connectedDebounce.calculate(true);
   }

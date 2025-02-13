@@ -120,11 +120,9 @@ public class RobotContainer {
         "Elevator SysId (Quasistatic Reverse)",
         elevator.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     autoChooser.addOption(
-        "Elevator SysId (Dynamic Forward)",
-        elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
+        "Elevator SysId (Dynamic Forward)", elevator.sysIdDynamic(SysIdRoutine.Direction.kForward));
     autoChooser.addOption(
-        "Elevator SysId (Dynamic Reverse)",
-        elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+        "Elevator SysId (Dynamic Reverse)", elevator.sysIdDynamic(SysIdRoutine.Direction.kReverse));
 
     // Configure the button bindings
     configureButtonBindings();
