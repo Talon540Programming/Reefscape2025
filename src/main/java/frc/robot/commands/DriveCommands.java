@@ -15,22 +15,22 @@ import frc.robot.RobotState;
 import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.AllianceFlipUtil;
-import frc.robot.util.LoggedTunableNumber;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class DriveCommands {
   // Drive
   private static final double DEADBAND = 0.1;
 
-  private static final LoggedTunableNumber LINEAR_VELOCITY_SCALAR =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 1.0, true);
-  private static final LoggedTunableNumber ANGULAR_VELOCITY_SCALAR =
-      new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 1.0, true);
+  private static final LoggedNetworkNumber LINEAR_VELOCITY_SCALAR =
+      new LoggedNetworkNumber("TeleopDrive/LinearVelocityScalar", 1.0);
+  private static final LoggedNetworkNumber ANGULAR_VELOCITY_SCALAR =
+      new LoggedNetworkNumber("TeleopDrive/AngularVelocityScalar", 0.7);
 
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -66,6 +66,7 @@ public class DriveCommands {
           // Generate robot relative speeds
           double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
           double angularVelocityScalar = ANGULAR_VELOCITY_SCALAR.get();
+
           var speeds =
               new ChassisSpeeds(
                   x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,

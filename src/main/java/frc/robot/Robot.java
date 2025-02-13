@@ -15,6 +15,7 @@ package frc.robot;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
@@ -36,19 +37,26 @@ import org.littletonrobotics.urcl.URCL;
  * project.
  */
 public class Robot extends LoggedRobot {
+  private static final double LOW_VOLTAGE_WARNING_THRESHOLD = 11.75;
+
   private Command autonomousCommand;
   private final RobotContainer robotContainer;
 
+  // System Alerts
+  private final Alert canErrorAlert =
+      new Alert("CAN errors detected, robot may not be controllable.", AlertType.kError);
+  private final Debouncer canErrorDebouncer = new Debouncer(0.5);
+
   private final Alert lowBatteryVoltageAlert =
       new Alert("Battery voltage is too low, change the battery", Alert.AlertType.kWarning);
-  private final Debouncer batteryVoltageDebouncer = new Debouncer(0.5);
+  private final Debouncer batteryVoltageDebouncer = new Debouncer(1.5);
 
   public Robot() {
     super(Constants.kLoopPeriodSecs);
 
     LoggerUtil.initializeLoggerMetadata();
 
-    switch (Constants.getRobotMode()) {
+    switch (Constants.getMode()) {
       case REAL -> {
         // Running on a real robot, log to a USB stick
         var loggerPath = LoggerUtil.getLogPath();
@@ -92,10 +100,16 @@ public class Robot extends LoggedRobot {
     // Run command scheduler
     CommandScheduler.getInstance().run();
 
+    // Check CAN status
+    var canStatus = RobotController.getCANStatus();
+    canErrorAlert.set(
+        canErrorDebouncer.calculate(
+            canStatus.transmitErrorCount > 0 || canStatus.receiveErrorCount > 0));
+
     // Update Battery Voltage Alert
     lowBatteryVoltageAlert.set(
         batteryVoltageDebouncer.calculate(
-            RobotController.getBatteryVoltage() <= Constants.LOW_VOLTAGE_WARNING_THRESHOLD));
+            RobotController.getBatteryVoltage() <= LOW_VOLTAGE_WARNING_THRESHOLD));
 
     // Return to normal thread priority
     Threads.setCurrentThreadPriority(false, 10);
