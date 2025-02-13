@@ -61,6 +61,8 @@ public class IndexerIOSpark implements IndexerIO {
         new DoubleSupplier[] {spark::getAppliedOutput, spark::getBusVoltage},
         (values) -> inputs.appliedVolts = values[0] * values[1]);
     SparkUtil.ifOk(spark, spark::getOutputCurrent, (current) -> inputs.currentAmps = current);
+
+    inputs.connected = connectedDebounce.calculate(true);
   }
 
   @Override

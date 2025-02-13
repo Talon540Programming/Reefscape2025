@@ -6,8 +6,6 @@ public interface ElevatorIO {
   @AutoLog
   public static class ElevatorIOInputs {
     public boolean connected = true;
-    public boolean collapsedBeamBreakBroken = false;
-    public boolean extendedBeamBreakBroken = false;
 
     public double[] appliedVolts = new double[] {};
     public double velocityRadPerSec = 0.0;
