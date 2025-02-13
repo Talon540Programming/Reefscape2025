@@ -8,25 +8,25 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class ElevatorConstants {
-  public static final DCMotor gearbox = DCMotor.getNEO(2);
+  public static final DCMotor elevatorMotorModel = DCMotor.getNEO(2);
 
   public static final double drumRadius = Units.inchesToMeters(1.0);
   public static final double carriageMassKg = Units.lbsToKilograms(6.0);
   public static final double stagesMassKg = Units.lbsToKilograms(12.0);
 
   public static final double kElevatorGearing = 3.0 / 1.0;
-  public static final double maxElevatorHeightMeters = 1.5617210066;
-  public static final double minElevatorHeightMeters = 0.2934208;
+  public static final double maxElevatorHeightMeters = 1.5617210066; // TODO
+  public static final double minElevatorHeightMeters = 0.2934208; // TODO
   public static final double elevatorAngle = 84.5;
-  public static final double L1_STATE = 0.5;
-  public static final double L2_STATE = 1;
-  public static final double L3_STATE = 1.5;
+  public static final double L1_STATE = 0.5; // TODO
+  public static final double L2_STATE = 1; // TODO
+  public static final double L3_STATE = 1.5; // TODO
   public static final double moi = 0.000367;
   public static final Pose3d elevatorOriginPose3d =
-      new Pose3d(new Translation3d(0.089, 0, 0.070), new Rotation3d(84.5, 0, 0));
+      new Pose3d(new Translation3d(0.089, 0, 0.070), new Rotation3d(84.5, 0, 0)); // TODO
   public static final Pose3d elevatorExtensionOriginPose3d =
       elevatorOriginPose3d.plus(
-          new Transform3d(new Translation3d(0.028123, 0.0, 0.29207), new Rotation3d()));
+          new Transform3d(new Translation3d(0.028123, 0.0, 0.29207), new Rotation3d())); // TODO
 
   public static final int leaderId = 0; // TODO
   public static final int followerId = 0; // TODO
@@ -34,8 +34,8 @@ public class ElevatorConstants {
   public static final int followerEncoderId = 0; // TODO
 
   public static final int motorCurrentLimit = 40; // TODO
-  public static final double encoderPositionFactor = 0.0; // TODO
-  public static final double encoderVelocityFactor = 0.0; // TODO
+  public static final double encoderPositionFactor = 2 * Math.PI / kElevatorGearing; // TODO
+  public static final double encoderVelocityFactor = (2 * Math.PI) / 60 / kElevatorGearing; // TODO
 
   public static class Sim {
     public static final double kP = 10; // TODO

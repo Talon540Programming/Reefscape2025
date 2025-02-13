@@ -7,6 +7,8 @@
 
 package frc.robot.subsystems.elevator;
 
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
+
 import edu.wpi.first.math.*;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.numbers.N1;
@@ -16,8 +18,7 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import frc.robot.constants.Constants;
 
 public class ElevatorIOSimMA implements ElevatorIO {
-  public static final DCMotor gearbox =
-      DCMotor.getNEO(2).withReduction(ElevatorConstants.kElevatorGearing);
+  public static final DCMotor gearbox = DCMotor.getNEO(2).withReduction(kElevatorGearing);
 
   public static final Matrix<N2, N2> A =
       MatBuilder.fill(
@@ -28,15 +29,11 @@ public class ElevatorIOSimMA implements ElevatorIO {
           0,
           -gearbox.KtNMPerAmp
               / (gearbox.rOhms
-                  * Math.pow(ElevatorConstants.drumRadius, 2)
-                  * (ElevatorConstants.carriageMassKg + ElevatorConstants.stagesMassKg)
+                  * Math.pow(drumRadius, 2)
+                  * (carriageMassKg + stagesMassKg)
                   * gearbox.KvRadPerSecPerVolt));
   public static final Vector<N2> B =
-      VecBuilder.fill(
-          0.0,
-          gearbox.KtNMPerAmp
-              / (ElevatorConstants.drumRadius
-                  * (ElevatorConstants.carriageMassKg + ElevatorConstants.stagesMassKg)));
+      VecBuilder.fill(0.0, gearbox.KtNMPerAmp / (drumRadius * (carriageMassKg + stagesMassKg)));
 
   // State given by elevator carriage position and velocity
   // Input given by torque current to motor
@@ -44,8 +41,7 @@ public class ElevatorIOSimMA implements ElevatorIO {
   private double inputTorqueCurrent = 0.0;
   private double appliedVolts = 0.0;
 
-  private final PIDController controller =
-      new PIDController(ElevatorConstants.Sim.kP, 0, ElevatorConstants.Sim.kD);
+  private final PIDController controller = new PIDController(Sim.kP, 0, Sim.kD);
   private boolean closedLoop = false;
   private double feedforward = 0.0;
 
@@ -61,14 +57,13 @@ public class ElevatorIOSimMA implements ElevatorIO {
     } else {
       // Run control at 1khz
       for (int i = 0; i < Constants.kLoopPeriodSecs / (1.0 / 1000.0); i++) {
-        setInputTorqueCurrent(
-            controller.calculate(simState.get(0) / ElevatorConstants.drumRadius) + feedforward);
+        setInputTorqueCurrent(controller.calculate(simState.get(0) / drumRadius) + feedforward);
         update(1.0 / 1000.0);
       }
     }
 
-    inputs.positionRad = simState.get(0) / ElevatorConstants.drumRadius;
-    inputs.velocityRadPerSec = simState.get(1) / ElevatorConstants.drumRadius;
+    inputs.positionRad = simState.get(0) / drumRadius;
+    inputs.velocityRadPerSec = simState.get(1) / drumRadius;
     inputs.appliedVolts = new double[] {appliedVolts};
     inputs.currentAmps = new double[] {Math.copySign(inputTorqueCurrent, appliedVolts)};
   }
@@ -93,15 +88,12 @@ public class ElevatorIOSimMA implements ElevatorIO {
   private void setInputTorqueCurrent(double torqueCurrent) {
     inputTorqueCurrent = torqueCurrent;
     appliedVolts =
-        gearbox.getVoltage(
-            gearbox.getTorque(inputTorqueCurrent),
-            simState.get(1, 0) / ElevatorConstants.drumRadius);
+        gearbox.getVoltage(gearbox.getTorque(inputTorqueCurrent), simState.get(1, 0) / drumRadius);
     appliedVolts = MathUtil.clamp(appliedVolts, -12.0, 12.0);
   }
 
   private void setInputVoltage(double voltage) {
-    setInputTorqueCurrent(
-        gearbox.getCurrent(simState.get(1) / ElevatorConstants.drumRadius, voltage));
+    setInputTorqueCurrent(gearbox.getCurrent(simState.get(1) / drumRadius, voltage));
   }
 
   private void update(double dt) {
@@ -112,9 +104,7 @@ public class ElevatorIOSimMA implements ElevatorIO {
             (Matrix<N2, N1> x, Matrix<N1, N1> u) ->
                 A.times(x)
                     .plus(B.times(u))
-                    .plus(
-                        VecBuilder.fill(
-                            0.0, -Constants.G * Math.sin(ElevatorConstants.elevatorAngle))),
+                    .plus(VecBuilder.fill(0.0, -Constants.G * Math.sin(elevatorAngle))),
             simState,
             MatBuilder.fill(Nat.N1(), Nat.N1(), inputTorqueCurrent),
             dt);
@@ -124,9 +114,9 @@ public class ElevatorIOSimMA implements ElevatorIO {
       simState.set(1, 0, 0.0);
       simState.set(0, 0, 0.0);
     }
-    if (simState.get(0) >= ElevatorConstants.maxElevatorHeightMeters) {
+    if (simState.get(0) >= maxElevatorHeightMeters) {
       simState.set(1, 0, 0.0);
-      simState.set(0, 0, ElevatorConstants.maxElevatorHeightMeters);
+      simState.set(0, 0, maxElevatorHeightMeters);
     }
   }
 }

@@ -20,8 +20,8 @@ public class ElevatorIOSim implements ElevatorIO {
     sim =
         new ElevatorSim(
             LinearSystemId.createElevatorSystem(
-                gearbox, carriageMassKg + stagesMassKg, drumRadius, kElevatorGearing),
-            gearbox,
+                elevatorMotorModel, carriageMassKg + stagesMassKg, drumRadius, kElevatorGearing),
+            elevatorMotorModel,
             minElevatorHeightMeters,
             maxElevatorHeightMeters,
             true,

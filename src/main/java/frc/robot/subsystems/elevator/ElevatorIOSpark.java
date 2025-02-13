@@ -1,5 +1,7 @@
 package frc.robot.subsystems.elevator;
 
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
+
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.SparkBase;
@@ -14,6 +16,8 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
+import frc.robot.constants.Constants;
+import frc.robot.subsystems.elevator.ElevatorConstants.Real;
 import frc.robot.util.SparkUtil;
 import java.util.function.DoubleSupplier;
 
@@ -29,8 +33,8 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer connectedDebounce = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-    leaderSpark = new SparkMax(ElevatorConstants.leaderId, MotorType.kBrushless);
-    followerSpark = new SparkMax(ElevatorConstants.followerId, MotorType.kBrushless);
+    leaderSpark = new SparkMax(leaderId, MotorType.kBrushless);
+    followerSpark = new SparkMax(followerId, MotorType.kBrushless);
 
     encoder = leaderSpark.getEncoder();
     controller = leaderSpark.getClosedLoopController();
@@ -38,22 +42,26 @@ public class ElevatorIOSpark implements ElevatorIO {
     globalConfig = new SparkMaxConfig();
     globalConfig
         .idleMode(IdleMode.kBrake)
-        .smartCurrentLimit(ElevatorConstants.motorCurrentLimit)
+        .smartCurrentLimit(motorCurrentLimit)
         .voltageCompensation(12);
-    globalConfig.signals.appliedOutputPeriodMs(20).busVoltagePeriodMs(20).outputCurrentPeriodMs(20);
+    globalConfig
+        .signals
+        .appliedOutputPeriodMs((int) Constants.kLoopPeriodSecs * 1000)
+        .busVoltagePeriodMs((int) Constants.kLoopPeriodSecs * 1000)
+        .outputCurrentPeriodMs((int) Constants.kLoopPeriodSecs * 1000);
 
     leaderConfig = new SparkMaxConfig();
     leaderConfig.apply(globalConfig);
     leaderConfig
         .encoder
-        .positionConversionFactor(ElevatorConstants.encoderPositionFactor)
-        .velocityConversionFactor(ElevatorConstants.encoderVelocityFactor)
+        .positionConversionFactor(encoderPositionFactor)
+        .velocityConversionFactor(encoderVelocityFactor)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
     leaderConfig
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pidf(ElevatorConstants.Real.kP, 0, ElevatorConstants.Real.kD, 0);
+        .pidf(Real.kP, 0, Real.kD, 0);
     leaderConfig
         .signals
         .primaryEncoderPositionAlwaysOn(true)
