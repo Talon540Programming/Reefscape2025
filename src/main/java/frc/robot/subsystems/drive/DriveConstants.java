@@ -9,7 +9,7 @@ import lombok.Builder;
 
 public class DriveConstants {
   public static final double odometryFrequencyHz =
-      Constants.getRobotMode() == Constants.RobotMode.SIM ? 50 : 250;
+      Constants.getMode() == Constants.Mode.SIM ? 50 : 250;
 
   public static final double trackWidthX = Units.inchesToMeters(20.75);
   public static final double trackWidthY = Units.inchesToMeters(20.75);

@@ -154,8 +154,7 @@ public class DriveBase extends SubsystemBase {
     }
 
     // Update gyro alert
-    gyroDisconnectedAlert.set(
-        !m_gyroInputs.connected && Constants.getRobotMode() != Constants.RobotMode.SIM);
+    gyroDisconnectedAlert.set(!m_gyroInputs.connected && Constants.getMode() != Constants.Mode.SIM);
   }
 
   /** Set brake mode to {@code enabled} doesn't change brake mode if already set. */
