@@ -7,6 +7,13 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants;
 
+// TODO LED States:
+// holding coral
+// holding algae
+// holding both coral and algae
+// following trajectory or go to pose or teleop drive
+// auto stage
+
 public class AlertsUtil {
   private static final double LOW_VOLTAGE_WARNING_THRESHOLD = 11.75;
 
@@ -32,10 +39,21 @@ public class AlertsUtil {
   // Program Alerts
   private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", AlertType.kInfo);
 
+  private final Alert holdingCoral = new Alert("Holding Coral", AlertType.kInfo);
+  private final Alert holdingAlgae = new Alert("Holding Algae", AlertType.kInfo);
+
+  // Hardware Alerts
+  private AddressableLED leds;
+
   private AlertsUtil() {
     if (Constants.TUNING_MODE) {
       tuningModeAlert.set(true);
     }
+  }
+
+  public void initializeLEDs() {
+    // TODO based on hardware
+    leds = new AddressableLED(0);
   }
 
   public void periodic() {
@@ -50,5 +68,10 @@ public class AlertsUtil {
     lowBatteryVoltageAlert.set(
         batteryVoltageDebouncer.calculate(
             RobotController.getBatteryVoltage() <= LOW_VOLTAGE_WARNING_THRESHOLD));
+
+    // Update Program Alerts
+
+    // Update Hardware Alerts
+    if (leds == null) return;
   }
 }

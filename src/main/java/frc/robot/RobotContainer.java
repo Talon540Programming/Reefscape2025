@@ -65,6 +65,9 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
+
+    if (Constants.ENABLE_LEDs) {
+      AlertsUtil.getInstance().initializeLEDs();
     }
 
     configureButtonBindings();
