@@ -60,7 +60,10 @@ public class DriveCommands {
 
           // Convert to field relative
           Rotation2d rotation = PoseEstimator.getInstance().getRotation();
-          rotation = AllianceFlipUtil.apply(rotation);
+          if (AllianceFlipUtil.shouldFlip()) {
+            rotation = rotation.rotateBy(Rotation2d.kPi);
+          }
+          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
           speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
           // Apply speeds
@@ -112,7 +115,9 @@ public class DriveCommands {
                       omega);
 
               // Convert to field relative
-              rotation = AllianceFlipUtil.apply(rotation);
+              if (AllianceFlipUtil.shouldFlip()) {
+                rotation = rotation.rotateBy(Rotation2d.kPi);
+              }
               speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
               // Apply speeds
