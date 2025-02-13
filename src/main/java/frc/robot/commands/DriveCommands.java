@@ -30,7 +30,7 @@ public class DriveCommands {
   private static final LoggedNetworkNumber LINEAR_VELOCITY_SCALAR =
       new LoggedNetworkNumber("TeleopDrive/LinearVelocityScalar", 1.0);
   private static final LoggedNetworkNumber ANGULAR_VELOCITY_SCALAR =
-      new LoggedNetworkNumber("TeleopDrive/AngularVelocityScalar", 1.0);
+      new LoggedNetworkNumber("TeleopDrive/AngularVelocityScalar", 0.7);
 
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
