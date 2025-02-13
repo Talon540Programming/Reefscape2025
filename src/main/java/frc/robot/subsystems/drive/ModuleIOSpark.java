@@ -46,13 +46,13 @@ public class ModuleIOSpark implements ModuleIO {
   private final Debouncer turnConnectedDebounce = new Debouncer(0.5);
 
   public ModuleIOSpark(int index) {
-    switch (Constants.getRobotType()) {
-      case ROBOT_2025_COMP -> {
+    switch (Constants.getRobot()) {
+      case COMPBOT -> {
         config = moduleConfigs[index];
       }
       default ->
           throw new IllegalStateException(
-              "Unexpected RobotType for Spark Module: " + Constants.getRobotType());
+              "Unexpected RobotType for Spark Module: " + Constants.getRobot());
     }
 
     // Initialize Hardware Devices

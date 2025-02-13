@@ -24,8 +24,8 @@ public class Module {
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
   static {
-    switch (Constants.getRobotType()) {
-      case ROBOT_2025_COMP -> {
+    switch (Constants.getRobot()) {
+      case COMPBOT -> {
         drivekS.initDefault(0.19700);
         drivekV.initDefault(0.12941);
         drivekP.initDefault(0.005);

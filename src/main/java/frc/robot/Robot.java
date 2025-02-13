@@ -56,7 +56,7 @@ public class Robot extends LoggedRobot {
 
     LoggerUtil.initializeLoggerMetadata();
 
-    switch (Constants.getRobotMode()) {
+    switch (Constants.getMode()) {
       case REAL -> {
         // Running on a real robot, log to a USB stick
         var loggerPath = LoggerUtil.getLogPath();

@@ -28,7 +28,7 @@ public class RobotContainer {
   private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", Alert.AlertType.kInfo);
 
   public RobotContainer() {
-    switch (Constants.getRobotMode()) {
+    switch (Constants.getMode()) {
       case REAL -> {
         driveBase =
             new DriveBase(
