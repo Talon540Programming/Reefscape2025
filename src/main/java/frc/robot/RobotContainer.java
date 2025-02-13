@@ -61,10 +61,10 @@ public class RobotContainer {
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
       autoChooser.addOption(
-          "Drive Wheel Radius Characterization",
-          DriveCommands.wheelRadiusCharacterization(driveBase));
+          "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
-          "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(driveBase));
+          "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+    }
     }
 
     configureButtonBindings();
