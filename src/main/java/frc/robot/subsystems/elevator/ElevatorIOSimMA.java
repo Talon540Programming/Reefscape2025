@@ -15,7 +15,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.system.NumericalIntegration;
 import edu.wpi.first.math.system.plant.DCMotor;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 
 public class ElevatorIOSimMA implements ElevatorIO {
   public static final DCMotor gearbox = DCMotor.getNEO(2).withReduction(kElevatorGearing);

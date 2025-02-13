@@ -22,4 +22,6 @@ public interface ElevatorIO {
   public default void runOpenLoop(double output) {}
 
   public default void stop() {}
+
+  public default void setPID(double kP, double kI, double kD) {}
 }

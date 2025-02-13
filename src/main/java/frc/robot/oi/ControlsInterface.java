@@ -11,6 +11,10 @@ public interface ControlsInterface {
 
   public Trigger robotRelativeOverride();
 
+  public Trigger stopWithX();
+
+  public Trigger resetGyro();
+
   public Trigger depositL1();
 
   public Trigger depositL2left();

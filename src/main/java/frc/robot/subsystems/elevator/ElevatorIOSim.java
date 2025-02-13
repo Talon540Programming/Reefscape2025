@@ -6,7 +6,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 
 public class ElevatorIOSim implements ElevatorIO {
   private final ElevatorSim sim;

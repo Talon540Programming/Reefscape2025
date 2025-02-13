@@ -4,7 +4,7 @@ import static frc.robot.subsystems.effector.EffectorConstants.*;
 
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 
 public class IndexerIOSim implements IndexerIO {
   private final FlywheelSim sim;

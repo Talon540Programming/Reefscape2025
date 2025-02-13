@@ -16,7 +16,7 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import frc.robot.subsystems.elevator.ElevatorConstants.Real;
 import frc.robot.util.SparkUtil;
 import java.util.function.DoubleSupplier;
@@ -126,6 +126,14 @@ public class ElevatorIOSpark implements ElevatorIO {
         ClosedLoopSlot.kSlot1,
         feedforward,
         ArbFFUnits.kVoltage);
+  }
+
+  @Override
+  public void setPID(double kP, double kI, double kD) {
+    var PIDConfig = new SparkMaxConfig();
+    PIDConfig.closedLoop.pid(kP, kI, kD);
+    leaderSpark.configure(
+        PIDConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override

@@ -21,7 +21,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
+import frc.robot.subsystems.elevator.ElevatorConstants.Real;
+import frc.robot.subsystems.elevator.ElevatorConstants.Sim;
 import frc.robot.util.ElevatorMechanismVisualizer;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
@@ -47,14 +49,14 @@ public class Elevator extends SubsystemBase {
       new LoggedTunableNumber("Elevator/Tolerance", 0.2);
 
   static {
-    switch (Constants.getRobotType()) {
-      case ROBOT_2025_COMP -> {
+    switch (Constants.getRobot()) {
+      case COMPBOT -> {
         kP.initDefault(Real.kP);
         kD.initDefault(Real.kD);
         kS.initDefault(Real.kS);
         kG.initDefault(Real.kG);
       }
-      case ROBOT_SIMBOT -> {
+      case SIMBOT -> {
         kP.initDefault(Sim.kP);
         kD.initDefault(Sim.kD);
         kS.initDefault(Sim.kS);
@@ -130,6 +132,10 @@ public class Elevator extends SubsystemBase {
     Logger.processInputs("Elevator", inputs);
 
     motorDisconnectedAlert.set(!inputs.connected);
+
+    if (kP.hasChanged(hashCode()) || kD.hasChanged(hashCode())) {
+      io.setPID(kP.get(), 0.0, kD.get());
+    }
 
     // Update tunable numbers
     if (maxVelocityMetersPerSec.hasChanged(hashCode())

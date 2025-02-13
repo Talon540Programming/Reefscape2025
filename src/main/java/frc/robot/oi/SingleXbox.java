@@ -32,6 +32,16 @@ public class SingleXbox implements ControlsInterface {
   }
 
   @Override
+  public Trigger stopWithX() {
+    return controller.x();
+  }
+
+  @Override
+  public Trigger resetGyro() {
+    return controller.b();
+  }
+
+  @Override
   public Trigger depositL1() {
     return controller.povDown();
   }

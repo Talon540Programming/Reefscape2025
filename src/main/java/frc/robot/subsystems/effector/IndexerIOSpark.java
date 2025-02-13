@@ -11,7 +11,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import frc.robot.util.SparkUtil;
 import java.util.function.DoubleSupplier;
 
