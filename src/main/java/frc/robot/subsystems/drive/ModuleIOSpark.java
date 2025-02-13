@@ -134,12 +134,14 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.driveVelocityRadPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSpark.getAppliedOutput() * driveSpark.getBusVoltage();
     inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
+    inputs.driveTemperatureCelsius = driveSpark.getMotorTemperature();
 
     inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
     inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition());
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
     inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
+    inputs.turnTemperatureCelsius = turnSpark.getMotorTemperature();
 
     inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
     inputs.turnConnected = turnConnectedDebounce.calculate(!turnSpark.hasActiveFault());
