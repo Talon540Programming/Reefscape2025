@@ -58,4 +58,9 @@ public class ElevatorIOSim implements ElevatorIO {
     FFVolts = feedfoward;
     controller.setSetpoint(positionRad);
   }
+
+  @Override
+  public void setPID(double kP, double kI, double kD) {
+    controller.setPID(kP, 0, kD);
+  }
 }

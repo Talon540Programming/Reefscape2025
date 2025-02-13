@@ -70,8 +70,6 @@ public class Elevator extends SubsystemBase {
 
   private final Alert motorDisconnectedAlert =
       new Alert("Elevator motor disconnected!", Alert.AlertType.kWarning);
-  private BooleanSupplier coastOverride = () -> false;
-  private BooleanSupplier disabledOverride = () -> false;
 
   @AutoLogOutput private boolean brakeModeEnabled = true;
 
@@ -149,9 +147,6 @@ public class Elevator extends SubsystemBase {
     // Run profile
     final boolean shouldRunProfile =
         !stopProfile
-            && !coastOverride.getAsBoolean()
-            && !disabledOverride.getAsBoolean()
-            // && homed
             && !isEStopped
             && DriverStation.isEnabled();
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
@@ -213,8 +208,6 @@ public class Elevator extends SubsystemBase {
     }
 
     // Log state
-    Logger.recordOutput("Elevator/CoastOverride", coastOverride.getAsBoolean());
-    Logger.recordOutput("Elevator/DisabledOverride", disabledOverride.getAsBoolean());
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
 
@@ -231,10 +224,6 @@ public class Elevator extends SubsystemBase {
     this.goal = goal;
   }
 
-  public void setOverrides(BooleanSupplier coastOverride, BooleanSupplier disabledOverride) {
-    this.coastOverride = coastOverride;
-    this.disabledOverride = disabledOverride;
-  }
 
   /** Get position of elevator in meters with 0 at home */
   @AutoLogOutput(key = "Elevator/MeasuredHeightMeters")
