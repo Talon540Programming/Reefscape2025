@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.RobotState;
+import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.AllianceFlipUtil;
@@ -74,7 +74,7 @@ public class DriveCommands {
                   omega * DriveConstants.maxAngularVelocityRadPerSec * angularVelocityScalar);
 
           // Convert to field relative
-          Rotation2d rotation = RobotState.getInstance().getRotation();
+          Rotation2d rotation = PoseEstimator.getInstance().getRotation();
           rotation = AllianceFlipUtil.apply(rotation);
           speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
@@ -113,7 +113,7 @@ public class DriveCommands {
               y = Math.copySign(Math.pow(y, 2), y);
 
               // Calculate angular speed
-              Rotation2d rotation = RobotState.getInstance().getRotation();
+              Rotation2d rotation = PoseEstimator.getInstance().getRotation();
               double omega =
                   angleController.calculate(
                       rotation.getRadians(), rotationSupplier.get().getRadians());
@@ -135,7 +135,7 @@ public class DriveCommands {
             },
             driveBase)
         .beforeStarting(
-            () -> angleController.reset(RobotState.getInstance().getRotation().getRadians()));
+            () -> angleController.reset(PoseEstimator.getInstance().getRotation().getRadians()));
   }
 
   /**

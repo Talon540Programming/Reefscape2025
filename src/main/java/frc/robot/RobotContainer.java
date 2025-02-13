@@ -12,8 +12,8 @@ import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
-  // Load RobotState class
-  private final RobotState robotState = RobotState.getInstance();
+  // Load PoseEstimator class
+  private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
   // Subsystems
   private final DriveBase driveBase;
@@ -100,10 +100,10 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        RobotState.getInstance()
+                        PoseEstimator.getInstance()
                             .resetPose(
                                 new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
                                     AllianceFlipUtil.apply(new Rotation2d()))),
                     driveBase)
                 .ignoringDisable(true));
