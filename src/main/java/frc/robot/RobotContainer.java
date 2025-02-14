@@ -65,7 +65,6 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
-    }
 
     configureButtonBindings();
   }
