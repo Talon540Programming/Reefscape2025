@@ -42,7 +42,9 @@ class UserGuidance:
         self.overlap = np.zeros((self.img_size[1], self.img_size[0]), dtype=np.uint8)
 
         # preview image
-        self.board = BoardPreview(self.tracker.board.draw(tuple(tracker.board_sz * self.SQUARE_LEN_PIX)))
+        # self.board = BoardPreview(self.tracker.board.draw(tuple(tracker.board_sz * self.SQUARE_LEN_PIX)))
+        self.board = BoardPreview(self.tracker.board.generateImage(tuple(tracker.board_sz * self.SQUARE_LEN_PIX)))
+
 
         self.calib = Calibrator(tracker.img_size)
         self.min_reperr_init = float("inf")
@@ -247,6 +249,8 @@ class UserGuidance:
 
     def draw(self, img, mirror=False):
         if self.tgt_r is not None:
+            # while
+            # print(img)
             img[self.board_warped != 0] = self.board_warped[self.board_warped != 0]
 
         if self.tracker.pose_valid:

@@ -9,7 +9,7 @@ in the top-level directory of this distribution.
 import time
 
 import cv2
-from cv2.aruco import Dictionary_get, CharucoBoard_create, drawAxis, interpolateCornersCharuco, detectMarkers, estimatePoseCharucoBoard
+from cv2.aruco import estimatePoseCharucoBoard
 
 import numpy as np
 import numpy.linalg as la
@@ -19,10 +19,13 @@ class ChArucoDetector:
         # configuration
         self.board_sz = np.array([int(cfg.getNode("board_x").real()), int(cfg.getNode("board_y").real())])
         self.square_len = cfg.getNode("square_len").real()
-        self.ardict = Dictionary_get(int(cfg.getNode("dictionary").real()))
-        
+        print(int(cfg.getNode("dictionary").real()))
+        self.ardict = cv2.aruco.getPredefinedDictionary(int(cfg.getNode("dictionary").real()))
+        # self.ardetector = cv2.aruco.ArucoDetector(self.ardict)
+
         marker_len = cfg.getNode("marker_len").real()
-        self.board = CharucoBoard_create(self.board_sz[0], self.board_sz[1], self.square_len, marker_len, self.ardict)
+        self.board = cv2.aruco.CharucoBoard((self.board_sz[0], self.board_sz[1]), self.square_len, marker_len, self.ardict)
+        self.charucodetector = cv2.aruco.CharucoDetector(self.board)
         self.img_size = (int(cfg.getNode("image_width").real()), int(cfg.getNode("image_height").real()))
 
         # per frame data
@@ -34,8 +37,8 @@ class ChArucoDetector:
         self.intrinsic_valid = False
 
         # optical flow calculation
-        self.last_ccorners = None
-        self.last_cids = None
+        self.last_charuco_corners = None
+        self.last_charuco_ids = None
         # mean flow if same corners are detected in consecutive frames
         self.mean_flow = None
 
@@ -45,34 +48,37 @@ class ChArucoDetector:
         self.cdist = calib.cdist
 
     def draw_axis(self, img):
-        drawAxis(img, self.K, self.cdist, self.rvec, self.tvec, self.square_len)
+        cv2.drawFrameAxes(img, self.K, self.cdist, self.rvec, self.tvec, self.square_len)
 
     def detect_pts(self, img):
-        self.corners, ids, self.rejected = detectMarkers(img, self.ardict)
+        self.marker_corners, marker_ids, self.rejected = cv2.aruco.detectMarkers(img, self.ardict)
+
+        # self.charuco_corners, self.charuco_ids, self.marker_corners, marker_ids = self.charucodetector.detectBoard(img)
 
         self.N_pts = 0
         self.mean_flow = None
 
-        if ids is None or ids.size == 0:
-            self.last_ccorners = None
-            self.last_cids = None
+        if marker_ids is None or marker_ids.size == 0:
+            self.last_charuco_corners = None
+            self.last_charuco_ids = None
             return
 
-        res = interpolateCornersCharuco(self.corners, ids, img, self.board, minMarkers=self.pt_min_markers)
-        self.N_pts, self.ccorners, self.cids = res
+        res = cv2.aruco.interpolateCornersCharuco(self.marker_corners, marker_ids, img, self.board, minMarkers=self.pt_min_markers)
+        self.N_pts, self.charuco_corners, self.charuco_ids = res
 
         if self.N_pts == 0:
+            # print("CHECKPOINT")
             return
 
-        if not np.array_equal(self.last_cids, self.cids):
-            self.last_ccorners = self.ccorners.reshape(-1, 2)
-            self.last_cids = self.cids
+        if not np.array_equal(self.last_charuco_ids, self.charuco_ids):
+            self.last_charuco_corners = self.charuco_corners.reshape(-1, 2)
+            self.last_charuco_ids = self.charuco_ids
             return
 
-        diff = self.last_ccorners - self.ccorners.reshape(-1, 2)
+        diff = self.last_charuco_corners - self.charuco_corners.reshape(-1, 2)
         self.mean_flow = np.mean(la.norm(diff, axis=1))
-        self.last_ccorners = self.ccorners.reshape(-1, 2)
-        self.last_cids = self.cids
+        self.last_charuco_corners = self.charuco_corners.reshape(-1, 2)
+        self.last_charuco_ids = self.charuco_ids
 
     def detect(self, img):
         self.raw_img = img.copy()
@@ -83,17 +89,19 @@ class ChArucoDetector:
             self.update_pose()
 
     def get_pts3d(self):
-        return self.board.chessboardCorners[self.cids].reshape(-1, 3)
+        # return self.board.chess
+        return self.board.getChessboardCorners()[self.charuco_ids].reshape(-1,3)
+        return self.board.chessboardCorners[self.charuco_ids].reshape(-1, 3)
 
     def get_calib_pts(self):
-        return (self.ccorners.copy(), self.get_pts3d())
+        return (self.charuco_corners.copy(), self.get_pts3d())
 
     def update_pose(self):
         if self.N_pts < 4:
             self.pose_valid = False
             return
 
-        ret = estimatePoseCharucoBoard(self.ccorners, self.cids, self.board, self.K, self.cdist, np.empty(1), np.empty(1))
+        ret = cv2.aruco.estimatePoseCharucoBoard(self.charuco_corners, self.charuco_ids, self.board, self.K, self.cdist, np.empty(1), np.empty(1))
         self.pose_valid, rvec, tvec = ret
 
         if not self.pose_valid:

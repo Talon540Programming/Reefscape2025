@@ -69,24 +69,30 @@ class GStreamerCapture(Capture):
     _video = None
     _last_config: ConfigStore
 
-    def get_frame(self, config_store: ConfigStore) -> Tuple[bool, cv2.Mat]:
-        if self._video != None and self._config_changed(self._last_config, config_store):
+    def get_frame(self, config: ConfigStore) -> Tuple[bool, cv2.Mat]:
+        if self._video is not None and self._config_changed(self._last_config, config):
             print("Config changed, stopping capture session")
             self._video.release()
             self._video = None
             time.sleep(2)
 
-        if self._video == None:
-            if config_store.remote_config.camera_id == "":
+        if self._video is None:
+            # if type(config.remote_config.camera_id) is int:
+            #     print("Not using v4l2, starting capture session")
+            #     self._video = cv2.VideoCapture(config.remote_config.camera_id)
+            #     time.sleep(5)
+            #     print("Capture session ready")
+
+            if config.remote_config.camera_id == "":
                 print("No camera ID, waiting to start capture session")
             else:
                 print("Starting capture session")
-                self._video = cv2.VideoCapture("v4l2src device=" + str(config_store.remote_config.camera_id) + " extra_controls=\"c,exposure_auto=" + str(config_store.remote_config.camera_auto_exposure) + ",exposure_absolute=" + str(
-                    config_store.remote_config.camera_exposure) + ",gain=" + str(config_store.remote_config.camera_gain) + ",sharpness=0,brightness=0\" ! image/jpeg,format=MJPG,width=" + str(config_store.remote_config.camera_resolution_width) + ",height=" + str(config_store.remote_config.camera_resolution_height) + " ! jpegdec ! video/x-raw ! appsink drop=1", cv2.CAP_GSTREAMER)
+                self._video = cv2.VideoCapture("v4l2src device=" + str(config.remote_config.camera_id) + " extra_controls=\"c,exposure_auto=" + str(config.remote_config.camera_auto_exposure) + ",exposure_absolute=" + str(
+                    config.remote_config.camera_exposure) + ",gain=" + str(config.remote_config.camera_gain) + ",sharpness=0,brightness=0\" ! image/jpeg,format=MJPG,width=" + str(config.remote_config.camera_resolution_width) + ",height=" + str(config.remote_config.camera_resolution_height) + " ! jpegdec ! video/x-raw ! appsink drop=1", cv2.CAP_GSTREAMER)
                 print("Capture session ready")
 
-        self._last_config = ConfigStore(dataclasses.replace(config_store.local_config),
-                                        dataclasses.replace(config_store.remote_config))
+        self._last_config = ConfigStore(dataclasses.replace(config.local_config),
+                                        dataclasses.replace(config.remote_config))
 
         if self._video != None:
             retval, image = self._video.read()

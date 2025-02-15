@@ -26,6 +26,9 @@ class MjpegServer(StreamServer):
     _frame: cv2.Mat
     _has_frame: bool = False
 
+    def __init__(self, port=None):
+        self.stream_port = port
+
     def _make_handler(self_mjpeg):  # type: ignore
         class StreamingHandler(BaseHTTPRequestHandler):
             HTML = """
@@ -101,7 +104,9 @@ class MjpegServer(StreamServer):
         server.serve_forever()
 
     def start(self, config_store: ConfigStore) -> None:
-        threading.Thread(target=self._run, daemon=True, args=(config_store.local_config.stream_port,)).start()
+        if self.stream_port is None:
+            self.stream_port = config_store.local_config.stream_port
+        threading.Thread(target=self._run, daemon=True, args=(self.stream_port,)).start()
 
     def set_frame(self, frame: cv2.Mat) -> None:
         self._frame = frame.copy()

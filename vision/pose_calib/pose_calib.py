@@ -128,12 +128,13 @@ def main():
             ugui.write(outfile)
 
         if ugui.user_info_text:
-            cv2.displayOverlay("PoseCalib", ugui.user_info_text, 1000 // 30)
+            print(ugui.user_info_text)
+            # cv2.displayOverlay("PoseCalib", ugui.user_info_text, 1000 // 30)
 
         cv2.imshow("PoseCalib", out)
         k = cv2.waitKey(wait)
 
-        if k == 27:
+        if k == ord('q'):
             break
         elif k == ord('m'):
             mirror = not mirror

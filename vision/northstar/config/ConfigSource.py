@@ -39,6 +39,36 @@ class FileConfigSource(ConfigSource):
             config_store.local_config.has_calibration = True
 
 
+class DevConfigSource(ConfigSource):
+    _camera_id_sub: int
+    _camera_resolution_width_sub: int
+    _camera_resolution_height_sub: int
+    _camera_auto_exposure_sub: int
+    _camera_exposure_sub: int
+    _camera_gain_sub: int
+    _fiducial_size_m_sub: float
+    _tag_layout_sub: float
+
+    def update(self, config_store: ConfigStore) -> None:
+        CONFIG_FILENAME = "vision/northstar/config.json"
+
+        # Read config data
+        with open(CONFIG_FILENAME) as config_file:
+            config_data = json.loads(config_file.read())
+            config_store.remote_config.camera_id = config_data["camera_id"]
+            config_store.remote_config.camera_resolution_width = config_data["camera_resolution_height"]
+            config_store.remote_config.camera_resolution_height = config_data["camera_resolution_width"]
+            config_store.remote_config.camera_auto_exposure = config_data["camera_auto_exposure"]
+            config_store.remote_config.camera_exposure = config_data["camera_exposure"]
+            config_store.remote_config.camera_gain = config_data["camera_gain"]
+            config_store.remote_config.fiducial_size_m = config_data["fiducial_size_m"]
+            config_store.remote_config.tag_layout = config_data["tag_layout"]
+        try:
+            config_store.remote_config.tag_layout = json.loads(self._tag_layout_sub.get())
+        except:
+            config_store.remote_config.tag_layout = None
+            pass
+
 class NTConfigSource(ConfigSource):
     _init_complete: bool = False
     _camera_id_sub: ntcore.StringSubscriber
@@ -85,3 +115,4 @@ class NTConfigSource(ConfigSource):
         except:
             config_store.remote_config.tag_layout = None
             pass
+

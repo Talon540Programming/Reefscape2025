@@ -1,11 +1,20 @@
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Filesystem;
+import lombok.Getter;
+
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Contains various field dimensions and useful reference points. All units are in meters and poses
@@ -163,41 +172,40 @@ public class FieldConstants {
     public final double pitch;
   }
 
-  // TODO
-  // public static final double aprilTagWidth = Units.inchesToMeters(6.50);
-  // public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.OFFICIAL;
-  // public static final int aprilTagCount = 22;
-  //
-  // @Getter
-  // public enum AprilTagLayoutType {
-  //   OFFICIAL("2025-official");
-  //
-  //   AprilTagLayoutType(String name) {
-  //     if (Constants.disableHAL) {
-  //       layout = null;
-  //     } else {
-  //       try {
-  //         layout =
-  //             new AprilTagFieldLayout(
-  //                 Path.of(Filesystem.getDeployDirectory().getPath(), "apriltags", name +
-  // ".json"));
-  //       } catch (IOException e) {
-  //         throw new RuntimeException(e);
-  //       }
-  //     }
-  //     if (layout == null) {
-  //       layoutString = "";
-  //     } else {
-  //       try {
-  //         layoutString = new ObjectMapper().writeValueAsString(layout);
-  //       } catch (JsonProcessingException e) {
-  //         throw new RuntimeException(
-  //             "Failed to serialize AprilTag layout JSON " + toString() + "for Northstar");
-  //       }
-  //     }
-  //   }
-  //
-  //   private final AprilTagFieldLayout layout;
-  //   private final String layoutString;
-  // }
+//   public static final double aprilTagWidth = Units.inchesToMeters(6.50);
+//   public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.OFFICIAL;
+//   public static final int aprilTagCount = 22;
+  
+//   @Getter
+//   public enum AprilTagLayoutType {
+//     OFFICIAL("2025-official");
+  
+//     AprilTagLayoutType(String name) {
+//       if (Constants.disableHAL) {
+//         layout = null;
+//       } else {
+//         try {
+//           layout =
+//               new AprilTagFieldLayout(
+//                   Path.of(Filesystem.getDeployDirectory().getPath(), "apriltags", name +
+//   ".json"));
+//         } catch (IOException e) {
+//           throw new RuntimeException(e);
+//         }
+//       }
+//       if (layout == null) {
+//         layoutString = "";
+//       } else {
+//         try {
+//           layoutString = new ObjectMapper().writeValueAsString(layout);
+//         } catch (JsonProcessingException e) {
+//           throw new RuntimeException(
+//               "Failed to serialize AprilTag layout JSON " + toString() + "for Northstar");
+//         }
+//       }
+//     }
+  
+//     private final AprilTagFieldLayout layout;
+//     private final String layoutString;
+//   }
 }
