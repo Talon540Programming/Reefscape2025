@@ -35,7 +35,7 @@ public class ModuleIOSpark implements ModuleIO {
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;
-  private SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
+  private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
 
   // Queue inputs from odometry thread
   private final Queue<Double> drivePositionQueue;
@@ -193,7 +193,8 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void setDriveFF(double kS, double kV) {
-    driveFeedforward = new SimpleMotorFeedforward(kS, kV);
+    driveFeedforward.setKs(kS);
+    driveFeedforward.setKv(kV);
   }
 
   @Override

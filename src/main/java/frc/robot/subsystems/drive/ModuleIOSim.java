@@ -29,7 +29,7 @@ public class ModuleIOSim implements ModuleIO {
 
   private final PIDController driveController = new PIDController(0, 0, 0);
   private final PIDController turnController = new PIDController(0, 0, 0);
-  private SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0.0, 0.0);
+  private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0.0, 0.0);
 
   private double driveAppliedVolts = 0.0;
   private double driveFFVolts = 0.0;
@@ -125,7 +125,8 @@ public class ModuleIOSim implements ModuleIO {
 
   @Override
   public void setDriveFF(double kS, double kV) {
-    driveFeedforward = new SimpleMotorFeedforward(kS, kV);
+    driveFeedforward.setKs(kS);
+    driveFeedforward.setKv(kV);
   }
 
   @Override
