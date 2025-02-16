@@ -26,15 +26,24 @@ public class AllianceFlipUtil {
         applyX(translation3d.getX()), translation3d.getY(), translation3d.getZ());
   }
 
-  private static Rotation2d applyRotation(Rotation2d rotation) {
-    return new Rotation2d(-rotation.getCos(), rotation.getSin());
+  private static Rotation2d applyRotation(Rotation2d rotation2d) {
+    return rotation2d.rotateBy(Rotation2d.kPi);
+  }
+
+  private static Rotation3d applyRotation(Rotation3d rotation3d) {
+    return rotation3d.rotateBy(new Rotation3d(0.0, 0.0, Math.PI));
   }
 
   private static Pose2d applyPose(Pose2d pose) {
     return new Pose2d(applyTranslation(pose.getTranslation()), applyRotation(pose.getRotation()));
   }
 
-  private static boolean shouldFlip() {
+  private static Pose3d applyPose(Pose3d pose3d) {
+    return new Pose3d(
+        applyTranslation(pose3d.getTranslation()), applyRotation(pose3d.getRotation()));
+  }
+
+  public static boolean shouldFlip() {
     var currentAllianceOpt = DriverStation.getAlliance();
     return currentAllianceOpt.isPresent() && currentAllianceOpt.get() == DriverStation.Alliance.Red;
   }
@@ -43,20 +52,28 @@ public class AllianceFlipUtil {
     return shouldFlip() ? applyX(x) : x;
   }
 
-  public static Translation2d apply(Translation2d translation) {
-    return shouldFlip() ? applyTranslation(translation) : translation;
-  }
-
-  public static Rotation2d apply(Rotation2d rotation) {
-    return shouldFlip() ? applyRotation(rotation) : rotation;
-  }
-
-  public static Pose2d apply(Pose2d pose) {
-    return shouldFlip() ? applyPose(pose) : pose;
+  public static Translation2d apply(Translation2d translation2d) {
+    return shouldFlip() ? applyTranslation(translation2d) : translation2d;
   }
 
   public static Translation3d apply(Translation3d translation3d) {
     return shouldFlip() ? applyTranslation(translation3d) : translation3d;
+  }
+
+  public static Rotation2d apply(Rotation2d rotation2d) {
+    return shouldFlip() ? applyRotation(rotation2d) : rotation2d;
+  }
+
+  public static Rotation3d apply(Rotation3d rotation3d) {
+    return shouldFlip() ? applyRotation(rotation3d) : rotation3d;
+  }
+
+  public static Pose2d apply(Pose2d pose2d) {
+    return shouldFlip() ? applyPose(pose2d) : pose2d;
+  }
+
+  public static Pose3d apply(Pose3d pose3d) {
+    return shouldFlip() ? applyPose(pose3d) : pose3d;
   }
 
   public static class AllianceRelative<T> {
@@ -84,7 +101,15 @@ public class AllianceFlipUtil {
       return new AllianceRelative<>(value, AllianceFlipUtil::applyRotation);
     }
 
+    public static AllianceRelative<Rotation3d> from(Rotation3d value) {
+      return new AllianceRelative<>(value, AllianceFlipUtil::applyRotation);
+    }
+
     public static AllianceRelative<Translation2d> from(Translation2d value) {
+      return new AllianceRelative<>(value, AllianceFlipUtil::applyTranslation);
+    }
+
+    public static AllianceRelative<Translation3d> from(Translation3d value) {
       return new AllianceRelative<>(value, AllianceFlipUtil::applyTranslation);
     }
 
@@ -92,8 +117,8 @@ public class AllianceFlipUtil {
       return new AllianceRelative<>(value, AllianceFlipUtil::applyPose);
     }
 
-    public static AllianceRelative<Translation3d> from(Translation3d value) {
-      return new AllianceRelative<>(value, AllianceFlipUtil::applyTranslation);
+    public static AllianceRelative<Pose3d> from(Pose3d value) {
+      return new AllianceRelative<>(value, AllianceFlipUtil::applyPose);
     }
   }
 }

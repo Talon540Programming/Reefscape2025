@@ -35,7 +35,7 @@ public class ModuleIOSpark implements ModuleIO {
   // Closed loop controllers
   private final SparkClosedLoopController driveController;
   private final SparkClosedLoopController turnController;
-  private SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
+  private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(0, 0);
 
   // Queue inputs from odometry thread
   private final Queue<Double> drivePositionQueue;
@@ -134,14 +134,14 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.driveVelocityRadPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSpark.getAppliedOutput() * driveSpark.getBusVoltage();
     inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
-    inputs.driveTemperatureCelsius = driveSpark.getMotorTemperature();
+    inputs.driveTempCelsius = driveSpark.getMotorTemperature();
 
     inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
     inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition());
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
     inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
-    inputs.turnTemperatureCelsius = turnSpark.getMotorTemperature();
+    inputs.turnTempCelsius = turnSpark.getMotorTemperature();
 
     inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
     inputs.turnConnected = turnConnectedDebounce.calculate(!turnSpark.hasActiveFault());
@@ -193,7 +193,8 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void setDriveFF(double kS, double kV) {
-    driveFeedforward = new SimpleMotorFeedforward(kS, kV);
+    driveFeedforward.setKs(kS);
+    driveFeedforward.setKv(kV);
   }
 
   @Override
