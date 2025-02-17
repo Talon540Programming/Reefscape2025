@@ -2,7 +2,7 @@ import cv2
 
 c = cv2.FileStorage("calib_default.yml", cv2.FILE_STORAGE_READ)
 
-c2 = cv2.FileStorage("calib_default.json", cv2.FILE_STORAGE_WRITE)
+c2 = cv2.FileStorage("cam3_calibration.json", cv2.FILE_STORAGE_WRITE)
 
 #c2.write("calibration_date", c.getNode("calibration_time"))
 #c2.write("camera_resolution", c.getNode("camera_resolution"))

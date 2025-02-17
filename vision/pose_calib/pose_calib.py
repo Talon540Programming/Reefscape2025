@@ -50,7 +50,7 @@ def add_camera_controls(win_name, cap):
     cv2.namedWindow(win_name, cv2.WINDOW_AUTOSIZE | cv2.WINDOW_GUI_NORMAL)
 
     if cap.manual_focus:
-        focus = 0
+        focus = 2
         cap.set(cv2.CAP_PROP_FOCUS, focus / 100)
         cv2.createTrackbar("Focus", win_name, focus, 100, lambda v: cap.set(cv2.CAP_PROP_FOCUS, v / 100))
 

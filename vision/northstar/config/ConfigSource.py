@@ -5,6 +5,8 @@ import numpy
 import ntcore
 import os
 
+orangepi = True
+
 from config.config import ConfigStore, RemoteConfig
 
 
@@ -14,11 +16,16 @@ class ConfigSource:
 
 
 class FileConfigSource(ConfigSource):
-    CONFIG_FILENAME = "vision/northstar/config.json"
-    CALIBRATION_FILENAME = "vision/northstar/calibration.json"
+    if not orangepi:
+        CONFIG_FILENAME = "vision/northstar/config.json"
+        CALIBRATION_FILENAME = "vision/northstar/calibration.json"
+    else:
+        CONFIG_FILENAME = "config_orangepi.json"
+        CALIBRATION_FILENAME = "calibration.json"
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, config_file, calibration_file) -> None:
+        self.CONFIG_FILENAME = config_file
+        self.CALIBRATION_FILENAME = calibration_file
 
     def update(self, config_store: ConfigStore) -> None:
         # Get config
@@ -49,15 +56,22 @@ class DevConfigSource(ConfigSource):
     _fiducial_size_m_sub: float
     _tag_layout_sub: float
 
+    def __init__(self, config_file):
+        self.CONFIG_FILENAME = config_file
+
+
     def update(self, config_store: ConfigStore) -> None:
-        CONFIG_FILENAME = "vision/northstar/config.json"
+        if not orangepi:
+            CONFIG_FILENAME = "vision/northstar/config.json"
+        else:
+            CONFIG_FILENAME = "config_orangepi.json"
 
         # Read config data
-        with open(CONFIG_FILENAME) as config_file:
+        with open(self.CONFIG_FILENAME) as config_file:
             config_data = json.loads(config_file.read())
             config_store.remote_config.camera_id = config_data["camera_id"]
-            config_store.remote_config.camera_resolution_width = config_data["camera_resolution_height"]
-            config_store.remote_config.camera_resolution_height = config_data["camera_resolution_width"]
+            config_store.remote_config.camera_resolution_width = config_data["camera_resolution_width"]
+            config_store.remote_config.camera_resolution_height = config_data["camera_resolution_height"]
             config_store.remote_config.camera_auto_exposure = config_data["camera_auto_exposure"]
             config_store.remote_config.camera_exposure = config_data["camera_exposure"]
             config_store.remote_config.camera_gain = config_data["camera_gain"]
@@ -115,4 +129,3 @@ class NTConfigSource(ConfigSource):
         except:
             config_store.remote_config.tag_layout = None
             pass
-

@@ -1,5 +1,4 @@
-1. Buy this charuco board: https://calib.io/collections/products/products/charuco-targets?variant=9400454873135
-   400 x 300 mm, Coarse Pattern
+1. Print charuco_board.png from the northstar 
 2. pip3 install numpy==1.23.1
    pip3 install opencv-python==4.5.5.64
    pip3 install opencv-contrib-python==4.5.5.64
