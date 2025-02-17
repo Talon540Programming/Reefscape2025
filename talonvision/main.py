@@ -1,3 +1,11 @@
-from Capture import DefaultCapture
+import cv2
 
-capture = DefaultCapture()
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if ret:
+        cv2.imshow('Frame', frame)
+
+cap.release()
+cv2.destroyAllWindows()
