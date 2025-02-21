@@ -11,6 +11,7 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.superstructure.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -20,6 +21,7 @@ public class RobotContainer {
 
   // Subsystems
   private final DriveBase driveBase;
+  private final Superstructure superstructureBase;
   private final IntakeBase intakeBase;
 
   // Controller
@@ -39,6 +41,7 @@ public class RobotContainer {
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
         intakeBase = new IntakeBase(new IntakeIOSpark());
+        superstructureBase = new Superstructure(new ElevatorIOSpark(), new EffectorIOSpark());
       }
       case SIM -> {
         driveBase =
@@ -49,7 +52,7 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim());
         intakeBase = new IntakeBase(new IntakeIOSim());
-
+        superstructureBase = new Superstructure(new ElevatorIOSim(), new EffectorIOSim());
       }
       default -> {
         driveBase =
@@ -60,6 +63,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         intakeBase = new IntakeBase(new IntakeIO() {});
+        superstructureBase = new Superstructure(new ElevatorIO() {}, new EffectorIO() {});
       }
     }
 

@@ -1,0 +1,42 @@
+package frc.robot.subsystems.superstructure;
+
+import static frc.robot.subsystems.superstructure.SuperstructureConstants.*;
+
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
+import frc.robot.Constants;
+
+public class EffectorIOSim implements EffectorIO {
+  private static final DCMotor intakeMotorModel = DCMotor.getNEO(1);
+  private static final DCMotorSim sim =
+      new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(intakeMotorModel, effectorMoI, effectorGearing),
+          intakeMotorModel);
+
+  private double appliedVoltage = 0.0;
+
+  @Override
+  public void updateInputs(EffectorIOInputs inputs) {
+    sim.update(Constants.kLoopPeriodSecs);
+
+    inputs.connected = true;
+    inputs.positionRads = sim.getAngularPositionRad();
+    inputs.velocityRadsPerSec = sim.getAngularVelocityRadPerSec();
+    inputs.appliedVoltage = appliedVoltage;
+    inputs.currentAmps = sim.getCurrentDrawAmps();
+  }
+
+  @Override
+  public void runVolts(double volts) {
+    appliedVoltage = MathUtil.clamp(volts, -12.0, 12.0);
+    sim.setInputVoltage(appliedVoltage);
+  }
+
+  @Override
+  public void stop() {
+    runVolts(0.0);
+  }
+}
