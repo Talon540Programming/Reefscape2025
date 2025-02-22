@@ -1,29 +1,33 @@
-package frc.robot.subsystems.intake;
+package frc.robot.subsystems.superstructure;
 
-import static frc.robot.subsystems.intake.IntakeConstants.*;
+import static frc.robot.subsystems.superstructure.SuperstructureConstants.*;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.wpilibj.DigitalInput;
 
-public class IntakeIOSpark implements IntakeIO {
+public class EffectorIOSpark implements EffectorIO {
   private final SparkBase spark;
   private final RelativeEncoder encoder;
 
   private final Debouncer connectedDebouncer = new Debouncer(.5);
 
-  public IntakeIOSpark() {
-    spark = new SparkMax(11, SparkLowLevel.MotorType.kBrushless);
+  // End Effector beam break
+  private final DigitalInput rearBeamBreak = new DigitalInput(0);
+
+  public EffectorIOSpark() {
+    spark = new SparkMax(14, SparkLowLevel.MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();
     config
-        .inverted(intakeInverted)
-        .idleMode(IdleMode.kBrake)
+        .inverted(effectorInverted)
+        .idleMode(SparkBaseConfig.IdleMode.kBrake)
         .smartCurrentLimit(40, 50)
         .voltageCompensation(12.0);
 
@@ -39,8 +43,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     config
         .encoder
-        .positionConversionFactor(intakePositionConversionFactor)
-        .velocityConversionFactor(intakeVelocityConversionFactor)
+        .positionConversionFactor(effectorPositionConversionFactor)
+        .velocityConversionFactor(effectorVelocityConversionFactor)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
 
@@ -49,12 +53,14 @@ public class IntakeIOSpark implements IntakeIO {
   }
 
   @Override
-  public void updateInputs(IntakeIOInputs inputs) {
+  public void updateInputs(EffectorIOInputs inputs) {
     inputs.positionRads = encoder.getPosition();
     inputs.velocityRadsPerSec = encoder.getVelocity();
     inputs.appliedVoltage = spark.getAppliedOutput() * spark.getBusVoltage();
     inputs.currentAmps = spark.getOutputCurrent();
     inputs.tempCelsius = spark.getMotorTemperature();
+
+    inputs.rearBeamBreakBroken = !rearBeamBreak.get();
 
     inputs.connected = connectedDebouncer.calculate(!spark.hasActiveFault());
   }
@@ -72,7 +78,8 @@ public class IntakeIOSpark implements IntakeIO {
   @Override
   public void setBrakeMode(boolean enabled) {
     var brakeModeConfig = new SparkMaxConfig();
-    brakeModeConfig.idleMode(enabled ? IdleMode.kBrake : IdleMode.kCoast);
+    brakeModeConfig.idleMode(
+        enabled ? SparkBaseConfig.IdleMode.kBrake : SparkBaseConfig.IdleMode.kCoast);
 
     spark.configure(
         brakeModeConfig,

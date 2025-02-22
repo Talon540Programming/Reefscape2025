@@ -7,10 +7,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.intake.IntakeBase;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.superstructure.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -20,7 +17,8 @@ public class RobotContainer {
 
   // Subsystems
   private final DriveBase driveBase;
-  private final IntakeBase intakeBase;
+  // private final SuperstructureBase superstructureBase;
+  // private final IntakeBase intakeBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -38,7 +36,9 @@ public class RobotContainer {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
-        intakeBase = new IntakeBase(new IntakeIOSpark());
+        // intakeBase = new IntakeBase(new IntakeIOSpark());
+        // superstructureBase = new SuperstructureBase(new ElevatorIOSpark(), new
+        // EffectorIOSpark());
       }
       case SIM -> {
         driveBase =
@@ -48,8 +48,8 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
-        intakeBase = new IntakeBase(new IntakeIOSim());
-
+        // intakeBase = new IntakeBase(new IntakeIOSim());
+        // superstructureBase = new SuperstructureBase(new ElevatorIOSim(), new EffectorIOSim());
       }
       default -> {
         driveBase =
@@ -59,7 +59,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-        intakeBase = new IntakeBase(new IntakeIO() {});
+        // intakeBase = new IntakeBase(new IntakeIO() {});
+        // superstructureBase = new SuperstructureBase(new ElevatorIO() {}, new EffectorIO() {});
       }
     }
 

@@ -4,11 +4,13 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.RobotBase;
 
 public class Constants {
-  private static RobotType robotType = RobotType.COMPBOT;
+  private static RobotType robotType = RobotType.SIMBOT;
   // Allows tunable values to be changed when enabled. Also adds tunable selectors to AutoSelector
   public static final boolean TUNING_MODE = true;
   // Disable the AdvantageKit logger from running
   public static final boolean ENABLE_LOGGING = true;
+  // Disable LEDs, will reduce software and electrical overhead but disable hardware alerts
+  public static final boolean ENABLE_LEDs = false;
 
   public static final double kLoopPeriodSecs = 0.02;
 
