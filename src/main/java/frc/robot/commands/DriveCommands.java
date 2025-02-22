@@ -64,7 +64,6 @@ public class DriveCommands {
             rotation = rotation.rotateBy(Rotation2d.kPi);
           }
           speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
-          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
           // Apply speeds
           driveBase.runVelocity(speeds);
