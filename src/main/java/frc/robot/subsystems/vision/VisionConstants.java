@@ -1,4 +1,4 @@
-// Copyright (c) 2024 FRC 6328
+// Copyright (c) 2025 FRC 6328
 // http://github.com/Mechanical-Advantage
 //
 // Use of this source code is governed by an MIT-style
@@ -7,94 +7,129 @@
 
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import frc.robot.Constants;
+import frc.robot.util.LoggedTunableNumber;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.List;
+import lombok.Builder;
 
 public class VisionConstants {
   public static final double ambiguityThreshold = 0.4;
   public static final double targetLogTimeSecs = 0.1;
   public static final double fieldBorderMargin = 0.5;
   public static final double zMargin = 0.75;
-  public static final double xyStdDevCoefficient = 0.005;
-  public static final double thetaStdDevCoefficient = 0.01;
+  public static final double xyStdDevCoefficient = 0.015;
+  public static final double thetaStdDevCoefficient = 0.03;
+  public static final double demoTagPosePersistenceSecs = 0.5;
+  public static final double objDetectConfidenceThreshold = 0.8;
+  public static final LoggedTunableNumber timestampOffset =
+      new LoggedTunableNumber("AprilTagVision/TimestampOffset", 0.0);
 
-  public static final double[] stdDevFactors =
-      switch (Constants.getRobot()) {
-        case COMPBOT -> new double[] {1.0, 0.6, 1.0, 1.2};
-        case SIMBOT -> new double[] {1.0, 1.0};
-        default -> new double[] {};
-      };
+  private static int monoExposure = 10000;
+  private static int colorExposure = 10000;
+  private static double monoGain = 0.3;
+  private static double colorGain = 0.3;
 
-  public static final Pose3d[] cameraPoses =
+  public static LoggedTunableNumber[] pitchAdjustments =
       switch (Constants.getRobot()) {
-        case COMPBOT ->
-            new Pose3d[] {
-              new Pose3d(
-                  Units.inchesToMeters(8.875),
-                  Units.inchesToMeters(10.5),
-                  Units.inchesToMeters(8.25),
-                  new Rotation3d(0.0, Units.degreesToRadians(-28.125), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(30.0)))),
-              new Pose3d(
-                  Units.inchesToMeters(3.25),
-                  Units.inchesToMeters(5.0),
-                  Units.inchesToMeters(6.4),
-                  new Rotation3d(0.0, Units.degreesToRadians(-16.875), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-4.709)))),
-              new Pose3d(
-                  Units.inchesToMeters(8.875),
-                  Units.inchesToMeters(-10.5),
-                  Units.inchesToMeters(8.25),
-                  new Rotation3d(0.0, Units.degreesToRadians(-28.125), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-30.0)))),
-              new Pose3d(
-                  Units.inchesToMeters(-16.0),
-                  Units.inchesToMeters(-12.0),
-                  Units.inchesToMeters(8.5),
-                  new Rotation3d(0.0, Units.degreesToRadians(-33.75), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(176.386))))
-            };
         case SIMBOT ->
-            new Pose3d[] {
-              new Pose3d(
-                  Units.inchesToMeters(9.735),
-                  Units.inchesToMeters(9.974),
-                  Units.inchesToMeters(8.837),
-                  new Rotation3d(0.0, Units.degreesToRadians(-28.125), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(30.0)))),
-              new Pose3d(
-                  Units.inchesToMeters(9.735),
-                  Units.inchesToMeters(-9.974),
-                  Units.inchesToMeters(8.837),
-                  new Rotation3d(0.0, Units.degreesToRadians(-28.125), 0.0)
-                      .rotateBy(new Rotation3d(0.0, 0.0, Units.degreesToRadians(-30.0))))
+            new LoggedTunableNumber[] {
+              new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
+              new LoggedTunableNumber("Vision/PitchAdjust1", 0.0)
             };
-        default -> new Pose3d[] {};
-      };
-
-  public static final String[] instanceNames =
-      switch (Constants.getRobot()) {
-        case COMPBOT -> new String[] {"northstar_0", "northstar_1", "northstar_2", "northstar_3"};
-        case SIMBOT -> new String[] {"northstar_0", "northstar_1"};
-        default -> new String[] {};
-      };
-
-  public static final String[] cameraIds =
-      switch (Constants.getRobot()) {
         case COMPBOT ->
-            new String[] {
-              "/dev/v4l/by-path/platform-fc800000.usb-usb-0:1:1.0-video-index0",
-              "/dev/v4l/by-path/platform-fc880000.usb-usb-0:1:1.0-video-index0",
-              "/dev/v4l/by-path/platform-fc800000.usb-usb-0:1:1.0-video-index0",
-              "/dev/v4l/by-path/platform-fc880000.usb-usb-0:1:1.0-video-index0"
+            new LoggedTunableNumber[] {
+              new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
+              new LoggedTunableNumber("Vision/PitchAdjust1", 0.0),
+              new LoggedTunableNumber("Vision/PitchAdjust2", 0.0),
+              new LoggedTunableNumber("Vision/PitchAdjust3", 0.0)
             };
-        case SIMBOT ->
-            new String[] {
-              "/dev/v4l/by-path/platform-fc800000.usb-usb-0:1:1.0-video-index0",
-              "/dev/v4l/by-path/platform-fc880000.usb-usb-0:1:1.0-video-index0"
-            };
-        default -> new String[] {};
+        default -> new LoggedTunableNumber[] {};
       };
+  public static List<CameraConfig> cameras =
+      switch (Constants.getRobot()) {
+        case SIMBOT ->
+            List.of(
+                CameraConfig.builder()
+                    .cameraName("testcam")
+                    .robotToCamera(
+                        new Transform3d(
+                            -0.330312,
+                            0.138773,
+                            0.157061,
+                            new Rotation3d(0, Math.toRadians(-30), Math.PI)))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of(
+                            "camera_calibrations/photon_calibration_UNDER_SHOOTER_1280x720.json"))
+                    .build());
+        case COMPBOT ->
+            List.of(
+                CameraConfig.builder()
+                    .cameraName("UNDER_SHOOTER")
+                    .robotToCamera(
+                        new Transform3d(
+                            -0.330312,
+                            0.138773,
+                            0.157061,
+                            new Rotation3d(0, Math.toRadians(-30), Math.PI)))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of(
+                            "camera_calibrations/photon_calibration_UNDER_SHOOTER_1280x720.json"))
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("BACK_LEFT")
+                    .robotToCamera(
+                        new Transform3d(
+                            -0.285206,
+                            0.283806,
+                            0.272624,
+                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(135))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of("camera_calibrations/photon_calibration_BACK_LEFT_1280x720.json"))
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("FRONT_LEFT")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.278740,
+                            0.280968,
+                            0.272098,
+                            new Rotation3d(0, Math.toRadians(-45), Math.toRadians(-22.5))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of("camera_calibrations/photon_calibration_FRONT_LEFT_1280x720.json"))
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("FRONT_RIGHT")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.281034,
+                            -0.278751,
+                            0.272098,
+                            new Rotation3d(0, Math.toRadians(-45), Math.toRadians(67.5))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of("camera_calibrations/photon_calibration_FRONT_RIGHT_1280x720.json"))
+                    .build());
+        default -> Collections.<CameraConfig>emptyList();
+      };
+
+  @Builder
+  public record CameraConfig(
+      String cameraName,
+      Transform3d robotToCamera,
+      Matrix<N3, N1> cameraBias,
+      Path calibrationPath) {}
+
+  private VisionConstants() {}
 }

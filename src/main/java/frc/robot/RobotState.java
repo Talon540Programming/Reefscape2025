@@ -1,17 +1,36 @@
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.subsystems.vision.VisionConstants.CameraConfig;
+import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.GeomUtil;
+import frc.robot.util.LoggedTunableNumber;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 
@@ -21,6 +40,26 @@ public class RobotState {
   // Increase these numbers to trust your state estimate less.
   private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
   private static final double poseBufferSizeSec = 2.0;
+
+  private static final LoggedTunableNumber txTyObservationStaleSecs =
+      new LoggedTunableNumber("RobotState/TxTyObservationStaleSeconds", 0.5);
+  private static final LoggedTunableNumber minDistanceTagPoseBlend =
+      new LoggedTunableNumber("RobotState/MinDistanceTagPoseBlend", Units.inchesToMeters(24.0));
+  private static final LoggedTunableNumber maxDistanceTagPoseBlend =
+      new LoggedTunableNumber("RobotState/MaxDistanceTagPoseBlend", Units.inchesToMeters(36.0));
+
+  private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
+
+  static {
+    for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
+      tagPoses2d.put(
+          i,
+          FieldConstants.aprilTagFieldlayout
+              .getTagPose(i)
+              .map(Pose3d::toPose2d)
+              .orElse(new Pose2d()));
+    }
+  }
 
   private static RobotState instance;
 
@@ -55,6 +94,8 @@ public class RobotState {
   // Assume gyro starts at zero
   private Rotation2d gyroOffset = new Rotation2d();
 
+  private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
+
   private RobotState() {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
@@ -72,33 +113,206 @@ public class RobotState {
     poseBuffer.clear();
   }
 
-  public void addOdometryObservation(
-      SwerveModulePosition[] wheelPositions, Rotation2d gyroAngle, double timestamp) {
-    var twist = kinematics.toTwist2d(lastWheelPositions, wheelPositions);
+  public void addOdometryObservation(OdometryObservation observation) {
+    var twist = kinematics.toTwist2d(lastWheelPositions, observation.wheelPositions());
 
     // Update previous state
-    lastWheelPositions = wheelPositions;
+    lastWheelPositions = observation.wheelPositions();
     Pose2d lastOdometryPose = odometryPose;
 
     // Update Odometry
     odometryPose = odometryPose.exp(twist);
 
-    if (gyroAngle != null) {
+    if (observation.gyroAngle() != null) {
       // Use gyro measurement
       // Add offset to measured angle
-      Rotation2d angle = gyroAngle.plus(gyroOffset);
+      Rotation2d angle = observation.gyroAngle().plus(gyroOffset);
       odometryPose = new Pose2d(odometryPose.getTranslation(), angle);
     }
 
     // Add pose to buffer at timestamp
-    poseBuffer.addSample(timestamp, odometryPose);
+    poseBuffer.addSample(observation.timestamp(), odometryPose);
 
     // Calculate diff from last odometry pose and add onto pose estimate
     Twist2d finalTwist = lastOdometryPose.log(odometryPose);
     estimatedPose = estimatedPose.exp(finalTwist);
   }
 
+  public void addVisionObservation(VisionObservation observation) {
+    // If measurement is old enough to be outside the pose buffer's timespan, skip.
+    try {
+      if (poseBuffer.getInternalBuffer().lastKey() - poseBufferSizeSec > observation.timestamp()) {
+        return;
+      }
+    } catch (NoSuchElementException ex) {
+      return;
+    }
+    // Get odometry based pose at timestamp
+    var sample = poseBuffer.getSample(observation.timestamp());
+    if (sample.isEmpty()) {
+      // exit if not there
+      return;
+    }
+
+    // sample --> odometryPose transform and backwards of that
+    var sampleToOdometryTransform = new Transform2d(sample.get(), odometryPose);
+    var odometryToSampleTransform = new Transform2d(odometryPose, sample.get());
+    // get old estimate by applying odometryToSample Transform
+    Pose2d estimateAtTime = estimatedPose.plus(odometryToSampleTransform);
+
+    // Calculate 3 x 3 vision matrix
+    var r = new double[3];
+    for (int i = 0; i < 3; ++i) {
+      r[i] = observation.stdDevs().get(i, 0) * observation.stdDevs().get(i, 0);
+    }
+    // Solve for closed form Kalman gain for continuous Kalman filter with A = 0
+    // and C = I. See wpimath/algorithms.md.
+    Matrix<N3, N3> visionK = new Matrix<>(Nat.N3(), Nat.N3());
+    for (int row = 0; row < 3; ++row) {
+      double stdDev = qStdDevs.get(row, 0);
+      if (stdDev == 0.0) {
+        visionK.set(row, row, 0.0);
+      } else {
+        visionK.set(row, row, stdDev / (stdDev + Math.sqrt(stdDev * r[row])));
+      }
+    }
+    // difference between estimate and vision pose
+    Transform2d transform = new Transform2d(estimateAtTime, observation.visionPose());
+    // scale transform by visionK
+    var kTimesTransform =
+        visionK.times(
+            VecBuilder.fill(
+                transform.getX(), transform.getY(), transform.getRotation().getRadians()));
+    Transform2d scaledTransform =
+        new Transform2d(
+            kTimesTransform.get(0, 0),
+            kTimesTransform.get(1, 0),
+            Rotation2d.fromRadians(kTimesTransform.get(2, 0)));
+
+    // Recalculate current estimate by applying scaled transform to old estimate
+    // then replaying odometry data
+    estimatedPose = estimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
+  }
+
+  public void addTxTyObservation(TxTyObservation observation) {
+    // Skip if current data for tag is newer
+    if (txTyPoses.containsKey(observation.tagId())
+        && txTyPoses.get(observation.tagId()).timestamp() >= observation.timestamp()) {
+      return;
+    }
+
+    // Get rotation at timestamp
+    var sample = poseBuffer.getSample(observation.timestamp());
+    if (sample.isEmpty()) {
+      // exit if not there
+      return;
+    }
+    Rotation2d robotRotation =
+        estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
+
+    // Average tx's and ty's
+    double tx = 0.0;
+    double ty = 0.0;
+    for (int i = 0; i < 4; i++) {
+      tx += observation.tx()[i];
+      ty += observation.ty()[i];
+    }
+    tx /= 4.0;
+    ty /= 4.0;
+
+    Pose3d cameraPose =
+        Pose3d.kZero.plus(
+            VisionConstants.cameras.toArray(new CameraConfig[0])[observation.camera()]
+                .robotToCamera());
+
+    // Use 3D distance and tag angles to find robot pose
+    Translation2d camToTagTranslation =
+        new Pose3d(Translation3d.kZero, new Rotation3d(0, ty, -tx))
+            .transformBy(
+                new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
+            .getTranslation()
+            .rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
+            .toTranslation2d();
+    Rotation2d camToTagRotation =
+        robotRotation.plus(
+            cameraPose.toPose2d().getRotation().plus(camToTagTranslation.getAngle()));
+    var tagPose2d = tagPoses2d.get(observation.tagId());
+    if (tagPose2d == null) return;
+    Translation2d fieldToCameraTranslation =
+        new Pose2d(tagPose2d.getTranslation(), camToTagRotation.plus(Rotation2d.kPi))
+            .transformBy(GeomUtil.toTransform2d(camToTagTranslation.getNorm(), 0.0))
+            .getTranslation();
+    Pose2d robotPose =
+        new Pose2d(
+                fieldToCameraTranslation, robotRotation.plus(cameraPose.toPose2d().getRotation()))
+            .transformBy(new Transform2d(cameraPose.toPose2d(), Pose2d.kZero));
+    // Use gyro angle at time for robot rotation
+    robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
+
+    // Add transform to current odometry based pose for latency correction
+    txTyPoses.put(
+        observation.tagId(),
+        new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), observation.timestamp()));
+  }
+
+  /** Get 2d pose estimate of robot if not stale. */
+  public Optional<Pose2d> getTxTyPose(int tagId) {
+    if (!txTyPoses.containsKey(tagId)) {
+      DriverStation.reportError("No tag with id: " + tagId, true);
+      return Optional.empty();
+    }
+    var data = txTyPoses.get(tagId);
+    // Check if stale
+    if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs.get()) {
+      return Optional.empty();
+    }
+    // Get odometry based pose at timestamp
+    var sample = poseBuffer.getSample(data.timestamp());
+    // Latency compensate
+    return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
+  }
+
+  /**
+   * Get estimated pose using txty data given tagId on reef and aligned pose on reef. Used for algae
+   * intaking and coral scoring.
+   */
+  public Pose2d getReefPose(int face, Pose2d finalPose) {
+    final boolean isRed = AllianceFlipUtil.shouldFlip();
+    var tagPose =
+        getTxTyPose(
+            switch (face) {
+              case 1 -> isRed ? 6 : 19;
+              case 2 -> isRed ? 11 : 20;
+              case 3 -> isRed ? 10 : 21;
+              case 4 -> isRed ? 9 : 22;
+              case 5 -> isRed ? 8 : 17;
+              // 0
+              default -> isRed ? 7 : 18;
+            });
+    // Use estimated pose if tag pose is not present
+    if (tagPose.isEmpty()) return RobotState.getInstance().getEstimatedPose();
+    // Use distance from estimated pose to final pose to get t value
+    final double t =
+        MathUtil.clamp(
+            (getEstimatedPose().getTranslation().getDistance(finalPose.getTranslation())
+                    - minDistanceTagPoseBlend.get())
+                / (maxDistanceTagPoseBlend.get() - minDistanceTagPoseBlend.get()),
+            0.0,
+            1.0);
+    return getEstimatedPose().interpolate(tagPose.get(), 1.0 - t);
+  }
+
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
   }
+
+  public record OdometryObservation(
+      SwerveModulePosition[] wheelPositions, Rotation2d gyroAngle, double timestamp) {}
+
+  public record VisionObservation(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {}
+
+  public record TxTyObservation(
+      int tagId, int camera, double[] tx, double[] ty, double distance, double timestamp) {}
+
+  public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
 }

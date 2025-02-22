@@ -1,3 +1,4 @@
+package frc.robot.subsystems.northstarvision;
 // // Copyright (c) 2024 FRC 6328
 // // http://github.com/Mechanical-Advantage
 // //
@@ -45,7 +46,8 @@
 //     var configTable = northstarTable.getSubTable("config");
 //     configTable.getStringTopic("camera_id").publish().set(cameraIds[index]);
 //     configTable.getIntegerTopic("camera_resolution_width").publish().set(cameraResolutionWidth);
-//     configTable.getIntegerTopic("camera_resolution_height").publish().set(cameraResolutionHeight);
+//
+// configTable.getIntegerTopic("camera_resolution_height").publish().set(cameraResolutionHeight);
 //     configTable.getIntegerTopic("camera_auto_exposure").publish().set(cameraAutoExposure);
 //     configTable.getIntegerTopic("camera_exposure").publish().set(cameraExposure);
 //     configTable.getIntegerTopic("camera_gain").publish().set(cameraGain);

@@ -31,7 +31,7 @@ public class AllianceFlipUtil {
     return new Pose2d(applyTranslation(pose.getTranslation()), applyRotation(pose.getRotation()));
   }
 
-  private static boolean shouldFlip() {
+  public static boolean shouldFlip() {
     var currentAllianceOpt = DriverStation.getAlliance();
     return currentAllianceOpt.isPresent() && currentAllianceOpt.get() == DriverStation.Alliance.Red;
   }

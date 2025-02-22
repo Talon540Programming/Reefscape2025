@@ -24,16 +24,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.oi.*;
 import frc.robot.subsystems.drive.*;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOSpark;
-import frc.robot.subsystems.elevator.Elevator;
-import frc.robot.subsystems.elevator.ElevatorConstants;
-import frc.robot.subsystems.elevator.ElevatorIO;
-import frc.robot.subsystems.elevator.ElevatorIOSim;
-import frc.robot.subsystems.elevator.ElevatorIOSpark;
+import frc.robot.subsystems.elevator.*;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -56,6 +48,7 @@ public class RobotContainer {
   // Subsystems
   private final DriveBase driveBase;
   private final Elevator elevator;
+  private final Vision vision;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -76,6 +69,7 @@ public class RobotContainer {
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
         elevator = new Elevator(new ElevatorIOSpark());
+
         break;
 
       case SIM:
@@ -102,6 +96,14 @@ public class RobotContainer {
         elevator = new Elevator(new ElevatorIO() {});
         break;
     }
+
+    vision =
+        new Vision(
+            VisionConstants.cameras.stream()
+                .map(
+                    v ->
+                        new VisionIOPhotonCamera(v.cameraName(), v.robotToCamera(), v.cameraBias()))
+                .toArray(VisionIOPhotonCamera[]::new));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");

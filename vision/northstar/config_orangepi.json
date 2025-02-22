@@ -1,14 +1,13 @@
 {
-    "device_id": "talonvision",
-    "server_ip": "192.168.1.10",
-    "stream_port": 8000,
-    "camera_id": "/dev/video0",
-    "camera_resolution_width": 640,
-    "camera_resolution_height": 480,
-    "camera_auto_exposure": 1,
-    "camera_exposure": 10,
-    "camera_gain": 25,
-    "fiducial_size_m": 0.1651,
-    "tag_layout": 0.0
-  }
-  
+  "device_id": "talonvision",
+  "server_ip": "192.168.1.10",
+  "stream_port": 8000,
+  "camera_id": "/dev/video0",
+  "camera_resolution_width": 640,
+  "camera_resolution_height": 480,
+  "camera_auto_exposure": 1,
+  "camera_exposure": 10,
+  "camera_gain": 25,
+  "fiducial_size_m": 0.1651,
+  "tag_layout": 0.0
+}
