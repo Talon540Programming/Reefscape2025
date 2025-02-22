@@ -29,8 +29,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     config
         .encoder
-        .positionConversionFactor(positionConversionFactor)
-        .velocityConversionFactor(velocityConversionFactor)
+        .positionConversionFactor(2 * Math.PI / gearing)
+        .velocityConversionFactor(2 * Math.PI / 60.0 / gearing)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
 

@@ -12,11 +12,7 @@ public class IntakeIOSim implements IntakeIO {
   private static final DCMotor intakeMotorModel = DCMotor.getNEO(1);
   private static final DCMotorSim sim =
       new DCMotorSim(
-          LinearSystemId.createDCMotorSystem(intakeMotorModel,
-              moi,
-              gearing
-          ),
-          intakeMotorModel);
+          LinearSystemId.createDCMotorSystem(intakeMotorModel, moi, gearing), intakeMotorModel);
 
   private double appliedVoltage = 0.0;
 
