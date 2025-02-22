@@ -17,15 +17,22 @@ public class IntakeIOSpark implements IntakeIO {
   private final Debouncer connectedDebouncer = new Debouncer(.5);
 
   public IntakeIOSpark() {
-    spark = new SparkMax(12, SparkLowLevel.MotorType.kBrushless);
+    spark = new SparkMax(11, SparkLowLevel.MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();
     config
-        .inverted(intakeInverted)
+        .inverted(inverted)
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(40, 50)
         .voltageCompensation(12.0);
+
+    config
+        .encoder
+        .positionConversionFactor(positionConversionFactor)
+        .velocityConversionFactor(velocityConversionFactor)
+        .uvwMeasurementPeriod(10)
+        .uvwAverageDepth(2);
 
     config
         .signals
@@ -36,13 +43,6 @@ public class IntakeIOSpark implements IntakeIO {
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
-
-    config
-        .encoder
-        .positionConversionFactor(intakePositionConversionFactor)
-        .velocityConversionFactor(intakeVelocityConversionFactor)
-        .uvwMeasurementPeriod(10)
-        .uvwAverageDepth(2);
 
     spark.configure(
         config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
