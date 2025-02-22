@@ -68,5 +68,7 @@
   },
   "[java]": {
     "editor.defaultFormatter": "richardwillis.vscode-spotless-gradle"
-  }
+  },
+  "C_Cpp.default.compileCommands": "e:\\dev\\robotics\\540\\Reefscape2025\\aquila\\builddir/compile_commands.json",
+  "C_Cpp.default.configurationProvider": "mesonbuild.mesonbuild"
 }
