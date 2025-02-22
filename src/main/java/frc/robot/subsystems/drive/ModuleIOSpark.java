@@ -84,7 +84,8 @@ public class ModuleIOSpark implements ModuleIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     driveSpark.configure(
         driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
@@ -116,7 +117,8 @@ public class ModuleIOSpark implements ModuleIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     turnSpark.configure(turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 

@@ -42,7 +42,8 @@ public class IntakeIOSpark implements IntakeIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     spark.configure(
         config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
