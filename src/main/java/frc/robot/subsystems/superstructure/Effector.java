@@ -9,8 +9,8 @@ import org.littletonrobotics.junction.Logger;
 // effector
 
 class Effector {
-  public static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("Effector/IntakeVolts", 3.0);
+  public static final LoggedTunableNumber endEffectorVolts =
+      new LoggedTunableNumber("Intake/EndEffectorIntakeVolts", 6.0);
   public static final LoggedTunableNumber ejectVolts =
       new LoggedTunableNumber("Effector/EjectVolts", 6.0);
 
@@ -35,4 +35,3 @@ class Effector {
     io.runVolts(output);
   }
 }
-

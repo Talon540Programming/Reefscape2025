@@ -21,7 +21,7 @@ public class EffectorIOSpark implements EffectorIO {
   private final DigitalInput rearBeamBreak = new DigitalInput(0);
 
   public EffectorIOSpark() {
-    spark = new SparkMax(12, SparkLowLevel.MotorType.kBrushless);
+    spark = new SparkMax(14, SparkLowLevel.MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();

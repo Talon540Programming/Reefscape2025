@@ -17,7 +17,7 @@ public class IntakeIOSpark implements IntakeIO {
   private final Debouncer connectedDebouncer = new Debouncer(.5);
 
   public IntakeIOSpark() {
-    spark = new SparkMax(12, SparkLowLevel.MotorType.kBrushless);
+    spark = new SparkMax(11, SparkLowLevel.MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();
