@@ -30,4 +30,6 @@ public interface ControlsInterface {
   public Trigger removeL3Algae();
 
   public Trigger intake();
+
+  public Trigger slowMode();
 }

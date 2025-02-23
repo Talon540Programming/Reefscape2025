@@ -42,6 +42,7 @@ public class RobotContainer {
   //   private final CommandXboxController controller = new CommandXboxController(0);
   private final ControlsInterface controlsInterface = new SingleXbox(0);
   // private final ControlsInterface controlsInterface = new SimKeyboard(0);
+  private final boolean slowModeEnabled = false;
   // Load RobotState class
   private final RobotState robotState = RobotState.getInstance();
 
@@ -82,6 +83,14 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim());
         elevator = new Elevator(new ElevatorIOSim());
+        // vision = new Vision(
+        //     VisionConstants.cameras.stream()
+        //     .map(
+        //         v ->
+        //             new VisionIOPhotonCamera(
+        //                 v.cameraName(), v.robotToCamera(), v.cameraBias()))
+        //     .toArray(VisionIOPhotonCamera[]::new)
+        // );
         break;
 
       default:
@@ -145,9 +154,23 @@ public class RobotContainer {
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
             driveBase,
-            () -> controlsInterface.getDriveX(),
-            () -> controlsInterface.getDriveY(),
-            () -> controlsInterface.getDriveTheta()));
+            () ->
+                !controlsInterface.slowMode().getAsBoolean()
+                    ? controlsInterface.getDriveX()
+                    : controlsInterface.getDriveX() * 0.5,
+            () ->
+                !controlsInterface.slowMode().getAsBoolean()
+                    ? controlsInterface.getDriveY()
+                    : controlsInterface.getDriveY() * 0.5,
+            () ->
+                !controlsInterface.slowMode().getAsBoolean()
+                    ? controlsInterface.getDriveTheta()
+                    : controlsInterface.getDriveTheta() * 0.5));
+
+    // Lower elevator and run rollers and intake belts to intake coral
+    // controlsInterface.intake().onTrue(
+
+    // )
 
     // Lock to 0° when A button is held
     controlsInterface

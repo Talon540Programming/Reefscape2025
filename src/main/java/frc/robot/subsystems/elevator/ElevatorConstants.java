@@ -18,6 +18,10 @@ public class ElevatorConstants {
   public static final double maxElevatorHeightMeters = 1.5617210066; // TODO
   public static final double minElevatorHeightMeters = 0.2934208; // TODO
   public static final double elevatorAngle = 84.5;
+  public static final double endEffectAngle = 73;
+  public static final double effectorLength = Units.inchesToMeters(11.875); // TODO
+  public static final double groundToHarder = Units.inchesToMeters(5.530541);
+  public static final double effectorOpeningHeight = Units.inchesToMeters(5.5);
   public static final double L1_STATE = 0.5; // TODO
   public static final double L2_STATE = 1; // TODO
   public static final double L3_STATE = 1.5; // TODO

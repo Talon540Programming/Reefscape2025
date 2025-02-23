@@ -46,8 +46,8 @@ public class VisionIOPhotonCamera implements VisionIO {
     for (PhotonPipelineResult res : resList) {
       inputs.timestampSeconds = res.getTimestampSeconds();
       inputs.hasResult = false;
-    //   System.out.println(res);
-    //   System.out.println("CHECKPOINT1");
+      //   System.out.println(res);
+      //   System.out.println("CHECKPOINT1");
 
       if (res.getMultiTagResult().isPresent()) {
         System.out.println("CHECKPOINT2");
@@ -80,7 +80,6 @@ public class VisionIOPhotonCamera implements VisionIO {
           System.out.println(targetPoseAmbiguity);
           System.out.println(target);
 
-
           if (targetPoseAmbiguity < lowestAmbiguityScore
               && targetPoseAmbiguity <= AMBIGUITY_THRESHOLD) {
             lowestAmbiguityScore = targetPoseAmbiguity;
@@ -89,7 +88,7 @@ public class VisionIOPhotonCamera implements VisionIO {
         }
 
         if (lowestAmbiguityTarget != null) {
-            System.out.println(lowestAmbiguityTarget.getFiducialId());
+          System.out.println(lowestAmbiguityTarget.getFiducialId());
           var tagPoseOpt =
               FieldConstants.aprilTagFieldlayout.getTagPose(lowestAmbiguityTarget.getFiducialId());
           if (tagPoseOpt.isPresent()) {

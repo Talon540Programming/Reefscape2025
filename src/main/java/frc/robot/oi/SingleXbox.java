@@ -85,7 +85,13 @@ public class SingleXbox implements ControlsInterface {
 
   @Override
   public Trigger intake() {
-    return controller.rightBumper();
+    return controller.x();
+  }
+  ;
+
+  @Override
+  public Trigger slowMode() {
+    return controller.a();
   }
   ;
 }

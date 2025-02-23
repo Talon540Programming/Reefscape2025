@@ -50,16 +50,16 @@ public class RobotState {
 
   private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
 
-  static {
-    for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
-      tagPoses2d.put(
-          i,
-          FieldConstants.aprilTagFieldlayout
-              .getTagPose(i)
-              .map(Pose3d::toPose2d)
-              .orElse(new Pose2d()));
-    }
-  }
+  // static {
+  //   for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
+  //     tagPoses2d.put(
+  //         i,
+  //         FieldConstants.aprilTagFieldlayout
+  //             .getTagPose(i)
+  //             .map(Pose3d::toPose2d)
+  //             .orElse(new Pose2d()));
+  //   }
+  // }
 
   private static RobotState instance;
 
