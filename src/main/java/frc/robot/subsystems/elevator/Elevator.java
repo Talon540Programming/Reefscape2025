@@ -226,7 +226,6 @@ public class Elevator extends SubsystemBase {
     return (inputs.positionRad - homedPosition) * drumRadius;
   }
 
-
   public double getGoalMeters() {
     return goal.get().position;
   }

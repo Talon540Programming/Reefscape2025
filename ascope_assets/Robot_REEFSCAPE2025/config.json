@@ -1,61 +1,120 @@
 {
-    "name": "Talon540 Reefscape 2025 Robot",
-    "rotations": [
-        {"axis": "x", "degrees": 90},
-        {"axis": "z", "degrees": 90}
-
-    ],
-    "positions": [
+  "name": "Talon540 Reefscape 2025 Robot",
+  "rotations": [
+    {
+      "axis": "x",
+      "degrees": 90
+    },
+    {
+      "axis": "z",
+      "degrees": 90
+    }
+  ],
+  "positions": [
+    0,
+    0,
+    0
+  ],
+  "cameras": [
+    {
+      "name": "Webcam",
+      "fov": 180,
+      "resolution": [
+        1280,
+        720
+      ],
+      "position": [
+        0.139954,
         0,
-        0,
-        0
-    ],
-    "cameras": [
+        0.3875985136
+      ],
+      "rotations": [
         {
-            "name": "Webcam",
-            "fov": 180,
-            "resolution": [1280, 720],
-            "position": [0.139954,0,0.3875985136],
-            "rotations": [
-                {"axis": "x", "degrees": 0},
-                {"axis": "y", "degrees": 0},
-                {"axis": "z", "degrees": 0}
-            ]
+          "axis": "x",
+          "degrees": 0
         },
         {
-            "name": "testCam",
-            "fov": 70,
-            "resolution": [1280, 800],
-            "position": [0.2761328234, 0.1711164726, 0.1594981062],
-            "rotations": [
-                {"axis": "x", "degrees": 0},
-                {"axis": "y", "degrees": -30},
-                {"axis": "z", "degrees": -30}
-            ]
+          "axis": "y",
+          "degrees": 0
         },
         {
-            "name": "testCamElevator",
-            "fov": 70,
-            "resolution": [1280, 800],
-            "position": [0.103632, 0.228346, 0.24892],
-            "rotations": [
-                {"axis": "x", "degrees": 0},
-                {"axis": "y", "degrees": -10},
-                {"axis": "z", "degrees": -30}
-            ]
+          "axis": "z",
+          "degrees": 0
         }
-    ],
-    "components": [
+      ]
+    },
+    {
+      "name": "testCam",
+      "fov": 70,
+      "resolution": [
+        1280,
+        800
+      ],
+      "position": [
+        0.2761328234,
+        0.1711164726,
+        0.1594981062
+      ],
+      "rotations": [
         {
-            "zeroedRotations": [
-                {"axis": "x", "degrees": 90},
-                {"axis": "z", "degrees": 90}
-            ],
-            "zeroedPosition": [
-                -0.0888492,
-                0,
-                -0.0699008
-            ]
+          "axis": "x",
+          "degrees": 0
+        },
+        {
+          "axis": "y",
+          "degrees": -30
+        },
+        {
+          "axis": "z",
+          "degrees": -30
         }
-    ]
+      ]
+    },
+    {
+      "name": "testCamElevator",
+      "fov": 70,
+      "resolution": [
+        1280,
+        800
+      ],
+      "position": [
+        0.103632,
+        0.228346,
+        0.24892
+      ],
+      "rotations": [
+        {
+          "axis": "x",
+          "degrees": 0
+        },
+        {
+          "axis": "y",
+          "degrees": -10
+        },
+        {
+          "axis": "z",
+          "degrees": -30
+        }
+      ]
+    }
+  ],
+  "components": [
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "z",
+          "degrees": 90
+        }
+      ],
+      "zeroedPosition": [
+        -0.0888492,
+        0,
+        -0.0699008
+      ]
+    }
+  ]
 }
