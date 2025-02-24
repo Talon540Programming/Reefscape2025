@@ -27,6 +27,8 @@ import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.PoseEstimator;
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -44,7 +46,7 @@ public class RobotContainer {
   // private final ControlsInterface controlsInterface = new SimKeyboard(0);
   private final boolean slowModeEnabled = false;
   // Load RobotState class
-  private final RobotState robotState = RobotState.getInstance();
+  private final PoseEstimator robotState = PoseEstimator.getInstance();
 
   // Subsystems
   private final DriveBase driveBase;
@@ -203,10 +205,10 @@ public class RobotContainer {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        RobotState.getInstance()
+                        PoseEstimator.getInstance()
                             .resetPose(
                                 new Pose2d(
-                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
                                     AllianceFlipUtil.apply(new Rotation2d()))),
                     driveBase)
                 .ignoringDisable(true));

@@ -9,7 +9,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
-import frc.robot.RobotState;
+import frc.robot.util.PoseEstimator;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import org.photonvision.simulation.PhotonCameraSim;
@@ -52,16 +53,16 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     camSim.enableProcessedStream(false);
     camSim.enableDrawWireframe(false);
 
-    m_visionSystemSim.addCamera(camSim, this.kRobotToCamera);
+    m_visionSystemSim.addCamera(camSim, this.robotToCamera);
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    m_visionSystemSim.update(RobotState.getInstance().getEstimatedPose());
+    m_visionSystemSim.update(PoseEstimator.getInstance().getEstimatedPose());
 
     super.updateInputs(inputs);
 
-    if (inputs.hasResult) {
+    if (inputs.hasAprilTagResult) {
       m_visionSystemSim
           .getDebugField()
           .getObject("VisionEstimation")
