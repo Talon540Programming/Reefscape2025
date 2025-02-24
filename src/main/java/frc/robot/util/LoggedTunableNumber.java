@@ -4,13 +4,14 @@ import frc.robot.Constants;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
  * value not in dashboard.
  */
-public class LoggedTunableNumber {
+public class LoggedTunableNumber implements DoubleSupplier {
   private static final String tableKey = "TunableNumbers";
 
   private final String key;
@@ -130,5 +131,10 @@ public class LoggedTunableNumber {
     if (Arrays.stream(tunableNumbers).anyMatch(LoggedTunableNumber::hasChanged)) {
       action.run();
     }
+  }
+
+  @Override
+  public double getAsDouble() {
+    return get();
   }
 }

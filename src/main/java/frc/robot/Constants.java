@@ -9,6 +9,8 @@ public class Constants {
   public static final boolean TUNING_MODE = true;
   // Disable the AdvantageKit logger from running
   public static final boolean ENABLE_LOGGING = true;
+  // Disable LEDs, will reduce software and electrical overhead but disable hardware alerts
+  public static final boolean ENABLE_LEDs = false;
 
   public static final double kLoopPeriodSecs = 0.02;
 
