@@ -11,8 +11,8 @@ import frc.robot.Constants;
 import java.util.Queue;
 
 public class ModuleIOSim implements ModuleIO {
-  private static final DCMotor driveMotorModel = DCMotor.getNEO(1);
-  private static final DCMotor turnMotorModel = DCMotor.getNEO(1);
+  private final DCMotor driveMotorModel = DCMotor.getNEO(1);
+  private final DCMotor turnMotorModel = DCMotor.getNEO(1);
 
   private final DCMotorSim driveSim =
       new DCMotorSim(

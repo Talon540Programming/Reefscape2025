@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 
 public class IntakeIOSim implements IntakeIO {
-  private static final DCMotor intakeMotorModel = DCMotor.getNEO(1);
-  private static final DCMotorSim sim =
+  private final DCMotor intakeMotorModel = DCMotor.getNEO(1);
+  private final DCMotorSim sim =
       new DCMotorSim(
           LinearSystemId.createDCMotorSystem(intakeMotorModel, moi, gearing), intakeMotorModel);
 
