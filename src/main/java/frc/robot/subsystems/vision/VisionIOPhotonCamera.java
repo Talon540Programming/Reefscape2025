@@ -42,6 +42,7 @@ public class VisionIOPhotonCamera implements VisionIO {
   public void updateInputs(VisionIOInputs inputs) {
     inputs.isConnected = camera.isConnected();
     var resList = camera.getAllUnreadResults();
+    // var res = camera.getLatestResult();
 
     for (PhotonPipelineResult res : resList) {
       inputs.timestampSeconds = res.getTimestampSeconds();
@@ -50,7 +51,7 @@ public class VisionIOPhotonCamera implements VisionIO {
       //   System.out.println("CHECKPOINT1");
 
       if (res.getMultiTagResult().isPresent()) {
-        System.out.println("CHECKPOINT2");
+        // System.out.println("CHECKPOINT2");
         Transform3d fieldToCamera = res.getMultiTagResult().get().estimatedPose.best;
         inputs.hasResult = true;
         inputs.estimatedRobotPose =
@@ -71,14 +72,16 @@ public class VisionIOPhotonCamera implements VisionIO {
         var tagsUsed = new ArrayList<Integer>();
         for (var target : res.getTargets()) {
           double targetPoseAmbiguity = target.getPoseAmbiguity();
-          // Filter out tags that aren't fiducial targets (IDK how) or in the ATFL
+
+          System.out.println(targetPoseAmbiguity);
+          //   Filter out tags that aren't fiducial targets (IDK how) or in the ATFL
           if (targetPoseAmbiguity == -1
               || FieldConstants.aprilTagFieldlayout.getTagPose(target.getFiducialId()).isEmpty())
             continue;
 
           tagsUsed.add(target.getFiducialId());
-          System.out.println(targetPoseAmbiguity);
-          System.out.println(target);
+          //   System.out.println(targetPoseAmbiguity);
+          //   System.out.println(target);
 
           if (targetPoseAmbiguity < lowestAmbiguityScore
               && targetPoseAmbiguity <= AMBIGUITY_THRESHOLD) {
@@ -92,7 +95,7 @@ public class VisionIOPhotonCamera implements VisionIO {
           var tagPoseOpt =
               FieldConstants.aprilTagFieldlayout.getTagPose(lowestAmbiguityTarget.getFiducialId());
           if (tagPoseOpt.isPresent()) {
-            System.out.println("Checkpoint4");
+            // System.out.println("Checkpoint4");
             inputs.hasResult = true;
             inputs.estimatedRobotPose =
                 tagPoseOpt

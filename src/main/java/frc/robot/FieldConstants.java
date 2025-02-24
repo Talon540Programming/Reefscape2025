@@ -6,9 +6,6 @@ import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
 import java.util.*;
-
-import org.littletonrobotics.junction.Logger;
-
 import lombok.Getter;
 
 /**
@@ -144,7 +141,7 @@ public class FieldConstants {
                       0,
                       Units.degreesToRadians(level.pitch),
                       poseDirection.getRotation().getRadians()));
-        
+
           fillRight.put(level, rightBranchPose);
           fillLeft.put(level, leftBranchPose);
           fillRight2d.put(level, rightBranchPose.toPose2d());

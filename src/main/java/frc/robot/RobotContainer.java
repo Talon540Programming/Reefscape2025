@@ -71,6 +71,15 @@ public class RobotContainer {
                 new ModuleIOSpark(3));
         elevator = new Elevator(new ElevatorIOSpark());
 
+        // vision =
+        //     new Vision(
+        //         VisionConstants.cameras.stream()
+        //             .map(
+        //                 v ->
+        //                     new VisionIOPhotonCamera(
+        //                         v.cameraName(), v.robotToCamera(), v.cameraBias()))
+        //             .toArray(VisionIOPhotonCamera[]::new));
+
         break;
 
       case SIM:
@@ -83,14 +92,18 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim());
         elevator = new Elevator(new ElevatorIOSim());
-        // vision = new Vision(
-        //     VisionConstants.cameras.stream()
-        //     .map(
-        //         v ->
-        //             new VisionIOPhotonCamera(
-        //                 v.cameraName(), v.robotToCamera(), v.cameraBias()))
-        //     .toArray(VisionIOPhotonCamera[]::new)
-        // );
+        // vision =
+        //     new Vision(
+        //         VisionConstants.cameras.stream()
+        //             .map(
+        //                 v ->
+        //                     new VisionIOSim(
+        //                         v.cameraName(),
+        //                         v.robotToCamera(),
+        //                         v.cameraBias(),
+        //
+        // Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json")))
+        //             .toArray(VisionIOSim[]::new));
         break;
 
       default:
@@ -103,6 +116,7 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        // vision = new Vision(new VisionIO[] {});
         break;
     }
 

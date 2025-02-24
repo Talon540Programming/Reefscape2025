@@ -36,7 +36,7 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     // Photon camera sim is currently out of date with the calibration export model, so we can only
     // pull the camera intrinsics and distortion from it
     try {
-      setCalibrationFromConfig(calibrationPath, 1280, 720, cameraProps);
+      setCalibrationFromConfig(calibrationPath, 1280, 800, cameraProps);
     } catch (IOException e) {
       throw new RuntimeException("Unable to parse calibration data from file");
     }
@@ -91,7 +91,7 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     var jsonDistortNode = calibData.get("distCoeffs").get("data");
     // Calibration model only needs to include first five elements of the distortion vector.
     // https://discord.com/channels/725836368059826228/725848198794706994/1210448658936365076
-    int numCol = Math.min(5, jsonDistortNode.size());
+    int numCol = Math.min(8, jsonDistortNode.size());
     double[] jsonDistortion = new double[numCol];
     for (int j = 0; j < numCol; j++) {
       jsonDistortion[j] = jsonDistortNode.get(j).asDouble();

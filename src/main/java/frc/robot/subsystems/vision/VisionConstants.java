@@ -58,16 +58,28 @@ public class VisionConstants {
         case SIMBOT ->
             List.of(
                 CameraConfig.builder()
-                    .cameraName("testcam2")
+                    .cameraName("frontleft")
                     .robotToCamera(
                         new Transform3d(
-                            -0.330312,
-                            0.138773,
-                            0.157061,
-                            new Rotation3d(0, Math.toRadians(-30), Math.PI)))
+                            0.247316498,
+                            0.21199348,
+                            0.2159,
+                            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(-25))))
                     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
                     .calibrationPath(
-                        Path.of("camera_calibrations/mrcalibration_testcam2@800x600.json"))
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("frontright")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.247316498,
+                            -0.21199348,
+                            0.2159,
+                            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(25))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .calibrationPath(
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
                     .build()
                 // ,
                 // CameraConfig.builder()
@@ -81,8 +93,8 @@ public class VisionConstants {
                 //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
                 //     .calibrationPath(
                 //         Path.of(
-                //
-                // "camera_calibrations/photon_calibration_UNDER_SHOOTER_1280x720.json"))
+
+                // "camera_calibrations/mrcalibration_testcam2@800x600.json"))
                 //     .build()
                 );
         case COMPBOT ->

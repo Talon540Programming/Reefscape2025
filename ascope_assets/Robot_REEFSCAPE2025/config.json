@@ -96,6 +96,60 @@
           "degrees": -30
         }
       ]
+    },
+    {
+      "name": "frontleft",
+      "fov": 70,
+      "resolution": [
+        1280,
+        800
+      ],
+      "position": [
+        0.247316498,
+        0.21199348,
+        0.2159
+      ],
+      "rotations": [
+        {
+          "axis": "x",
+          "degrees": 0
+        },
+        {
+          "axis": "y",
+          "degrees": -15
+        },
+        {
+          "axis": "z",
+          "degrees": -25
+        }
+      ]
+    },
+    {
+      "name": "frontright",
+      "fov": 70,
+      "resolution": [
+        1280,
+        800
+      ],
+      "position": [
+        0.247316498,
+        -0.21199348,
+        0.2159
+      ],
+      "rotations": [
+        {
+          "axis": "x",
+          "degrees": 0
+        },
+        {
+          "axis": "y",
+          "degrees": -15
+        },
+        {
+          "axis": "z",
+          "degrees": 25
+        }
+      ]
     }
   ],
   "components": [

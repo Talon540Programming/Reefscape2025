@@ -16,7 +16,6 @@ import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -24,7 +23,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.FieldConstants;
 import frc.robot.subsystems.elevator.ElevatorConstants.Real;
 import frc.robot.subsystems.elevator.ElevatorConstants.Sim;
 import frc.robot.util.ElevatorMechanismVisualizer;
@@ -128,7 +126,6 @@ public class Elevator extends SubsystemBase {
   }
 
   public void periodic() {
-    
 
     io.updateInputs(inputs);
     Logger.processInputs("Elevator", inputs);
@@ -193,9 +190,6 @@ public class Elevator extends SubsystemBase {
           "Elevator/Profile/MeasuredPositionMeters", inputs.positionRad * drumRadius);
       Logger.recordOutput(
           "Elevator/Profile/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
-
-      System.out.println(FieldConstants.ReefLevel.L2.height);
-
 
     } else {
       // Reset setpoint
@@ -265,7 +259,7 @@ public class Elevator extends SubsystemBase {
     double me = ElevatorConstants.effectorOpeningHeight;
     // double verticalElevatorHeight = Math.sin(elevatorAngle) * elevatorHeight;
 
-    // double elevatorHeight = 
+    // double elevatorHeight =
 
     double h = level.getZ();
 
