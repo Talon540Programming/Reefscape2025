@@ -17,10 +17,36 @@ import frc.robot.Constants;
 import frc.robot.util.LoggedTunableNumber;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 
 public class VisionConstants {
+
+  public static final Map<Integer, Integer> blueAllianceAprilTagReefPoses = new HashMap<>();
+
+  static {
+    blueAllianceAprilTagReefPoses.put(18, 0);
+    blueAllianceAprilTagReefPoses.put(19, 1);
+    blueAllianceAprilTagReefPoses.put(20, 2);
+    blueAllianceAprilTagReefPoses.put(21, 3);
+    blueAllianceAprilTagReefPoses.put(22, 4);
+    blueAllianceAprilTagReefPoses.put(17, 5);
+  }
+
+  //   public static final Map<Integer, Integer> redAllianceAprilTagReefPoses = new HashMap<>();
+  public static final int[] redAllianceAprilTagReefPoses = new int[] {7, 6, 11, 10, 9, 8};
+
+  //   static {
+  //     redAllianceAprilTagReefPoses.put(0,7);
+  //     redAllianceAprilTagReefPoses.put(1,6);
+  //     redAllianceAprilTagReefPoses.put(2,11);
+  //     redAllianceAprilTagReefPoses.put(3,10);
+  //     redAllianceAprilTagReefPoses.put(4,9);
+  //     redAllianceAprilTagReefPoses.put(5,8);
+  //   }
+
   public static final double ambiguityThreshold = 0.4;
   public static final double targetLogTimeSecs = 0.1;
   public static final double fieldBorderMargin = 0.5;
@@ -61,26 +87,39 @@ public class VisionConstants {
                     .cameraName("frontleft")
                     .robotToCamera(
                         new Transform3d(
-                            0.247316498,
-                            0.21199348,
-                            0.2159,
-                            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(-25))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
-                    .calibrationPath(
-                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build(),
-                CameraConfig.builder()
-                    .cameraName("frontright")
-                    .robotToCamera(
-                        new Transform3d(
-                            0.247316498,
-                            -0.21199348,
-                            0.2159,
-                            new Rotation3d(0, Math.toRadians(-15), Math.toRadians(25))))
+                            0.206,
+                            0.272,
+                            0.221,
+                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(-35))))
                     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
                     .calibrationPath(
                         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
                     .build()
+                //     ,
+                // CameraConfig.builder()
+                //     .cameraName("frontright")
+                //     .robotToCamera(
+                //         new Transform3d(
+                //             0.206,
+                //             -0.272,
+                //             0.221,
+                //             new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
+                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                //     .calibrationPath(
+                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                //     .build(),
+                // CameraConfig.builder()
+                //     .cameraName("elevator")
+                //     .robotToCamera(
+                //         new Transform3d(
+                //             0.05,
+                //             0,
+                //             0.783,
+                //             new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                //     .calibrationPath(
+                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                //     .build()
                 // ,
                 // CameraConfig.builder()
                 //     .cameraName("testcam2")

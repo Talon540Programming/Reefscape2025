@@ -19,16 +19,16 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToReef;
 import frc.robot.oi.*;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.EqualsUtil;
 import frc.robot.util.PoseEstimator;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -42,8 +42,8 @@ public class RobotContainer {
 
   // Controller
   //   private final CommandXboxController controller = new CommandXboxController(0);
-  private final ControlsInterface controlsInterface = new SingleXbox(0);
-  // private final ControlsInterface controlsInterface = new SimKeyboard(0);
+  //   private final ControlsInterface controlsInterface = new SingleXbox(0);
+  private final ControlsInterface controlsInterface = new SimKeyboard(0);
   private final boolean slowModeEnabled = false;
   // Load RobotState class
   private final PoseEstimator robotState = PoseEstimator.getInstance();
@@ -54,7 +54,7 @@ public class RobotContainer {
   private final Vision vision;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  //   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -194,8 +194,8 @@ public class RobotContainer {
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 driveBase,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> -controlsInterface.getDriveY(),
+                () -> -controlsInterface.getDriveX(),
                 () -> Rotation2d.kZero));
 
     controlsInterface.stopWithX().onTrue(Commands.runOnce(driveBase::stopWithX, driveBase));
@@ -225,6 +225,37 @@ public class RobotContainer {
                     },
                     elevator),
                 Commands.waitUntil(() -> elevator.isAtGoal())));
+
+    controlsInterface
+        .enableReefAutoAlignment()
+        .whileTrue(
+            Commands.runOnce(
+                    () -> {
+                      vision.setPipelineIndex(1);
+                    },
+                    vision)
+                .andThen(
+                    new DriveToReef(
+                        driveBase,
+                        () ->
+                            vision
+                                .getNearestReefPose()
+                                .plus(FieldConstants.Reef.robotFromBranchOffset),
+                        () ->
+                            PoseEstimator.getInstance()
+                                .getReefPose(
+                                    vision.getReefAprilTagId(), vision.getNearestReefPose())))
+                .until(
+                    () ->
+                        EqualsUtil.GeomExtensions.epsilonEquals(
+                            PoseEstimator.getInstance().getEstimatedPose(),
+                            vision
+                                .getNearestReefPose()
+                                .plus(FieldConstants.Reef.robotFromBranchOffset)))
+                .finallyDo(
+                    () -> {
+                      vision.setPipelineIndex(0);
+                    }));
   }
 
   public Command getAutonomousCommand() {

@@ -95,4 +95,9 @@ public class SingleXbox implements ControlsInterface {
     return controller.a();
   }
   ;
+
+  @Override
+  public Trigger enableReefAutoAlignment() {
+    return controller.leftTrigger();
+  }
 }

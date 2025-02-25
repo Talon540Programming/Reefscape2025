@@ -10,7 +10,6 @@ import edu.wpi.first.math.numbers.N3;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.util.PoseEstimator;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import org.photonvision.simulation.PhotonCameraSim;
@@ -18,12 +17,13 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
 public class VisionIOSim extends VisionIOPhotonCamera {
-  private static VisionSystemSim m_visionSystemSim;
+  private static VisionSystemSim visionSim;
+  private int pipeline = 0;
 
   static {
     if (Constants.getMode() == Constants.Mode.SIM) {
-      m_visionSystemSim = new VisionSystemSim("main");
-      m_visionSystemSim.addAprilTags(FieldConstants.aprilTagFieldlayout);
+      visionSim = new VisionSystemSim("main");
+      visionSim.addAprilTags(FieldConstants.aprilTagFieldlayout);
     }
   }
 
@@ -53,23 +53,49 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     camSim.enableProcessedStream(false);
     camSim.enableDrawWireframe(false);
 
-    m_visionSystemSim.addCamera(camSim, this.robotToCamera);
+    visionSim.addCamera(camSim, this.robotToCamera);
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    m_visionSystemSim.update(PoseEstimator.getInstance().getEstimatedPose());
+    visionSim.update(PoseEstimator.getInstance().getEstimatedPose());
 
     super.updateInputs(inputs);
 
+    inputs.pipelineIndex = pipeline;
+
+    if (inputs.pipelineIndex == 0) {
+      updateAprilTag(inputs);
+    } else if (inputs.pipelineIndex == 1) {
+      updateCorners(inputs);
+    } else {
+      System.out.println("Pipeline index not found");
+    }
+  }
+
+  @Override
+  public void updateAprilTag(VisionIOInputs inputs) {
+    super.updateAprilTag(inputs);
     if (inputs.hasAprilTagResult) {
-      m_visionSystemSim
+      visionSim
           .getDebugField()
           .getObject("VisionEstimation")
           .setPose(inputs.estimatedRobotPose.toPose2d());
     } else {
-      m_visionSystemSim.getDebugField().getObject("VisionEstimation").setPoses();
+      visionSim.getDebugField().getObject("VisionEstimation").setPoses();
     }
+  }
+
+  @Override
+  public void updateCorners(VisionIOInputs inputs) {
+    // System.out.println("CHECKPOINT");
+
+    super.updateCorners(inputs);
+  }
+
+  @Override
+  public void setPipelineIndex(int index) {
+    this.pipeline = index;
   }
 
   private void setCalibrationFromConfig(

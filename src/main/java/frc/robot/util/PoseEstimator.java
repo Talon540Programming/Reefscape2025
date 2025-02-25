@@ -22,9 +22,6 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.VisionConstants.CameraConfig;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -211,6 +208,10 @@ public class PoseEstimator {
     // Average tx's and ty's
     double tx = 0.0;
     double ty = 0.0;
+
+    // Return if no observations
+    if (observation.t().length == 0) return;
+
     for (int i = 0; i < 4; i++) {
       tx += observation.t()[i].getX();
       ty += observation.t()[i].getY();
@@ -236,7 +237,6 @@ public class PoseEstimator {
     var tagPose2d = tagPoses2d.get(observation.tagId());
 
     if (tagPose2d == null) return;
-
 
     Translation2d fieldToCameraTranslation =
         new Pose2d(tagPose2d.getTranslation(), camToTagRotation.plus(Rotation2d.kPi))
@@ -305,6 +305,11 @@ public class PoseEstimator {
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
   }
+
+  // @AutoLogOutput(key = "RobotState/FieldVelocity")
+  // public ChassisSpeeds getFieldVelocity() {
+  //   return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getRotation());
+  // }
 
   public record OdometryObservation(
       SwerveModulePosition[] wheelPositions, Rotation2d gyroAngle, double timestamp) {}

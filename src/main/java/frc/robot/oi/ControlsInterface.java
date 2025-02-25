@@ -32,4 +32,6 @@ public interface ControlsInterface {
   public Trigger intake();
 
   public Trigger slowMode();
+
+  public Trigger enableReefAutoAlignment();
 }

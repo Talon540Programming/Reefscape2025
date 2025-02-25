@@ -13,7 +13,8 @@ import org.littletonrobotics.junction.inputs.LoggableInputs;
 
 public interface VisionIO {
   public static class VisionIOInputs implements LoggableInputs, Cloneable {
-    public int pipelineIndex = 0; // 0 is Apriltags (3d detection), 1 is corner detection (2d detection)
+    public int pipelineIndex =
+        0; // 0 is Apriltags (3d detection), 1 is corner detection (2d detection)
     public boolean isConnected = false;
     public boolean hasAprilTagResult = false;
     public boolean hasCornersResult = false;
@@ -25,7 +26,6 @@ public interface VisionIO {
     public Pose3d[] detectedTagPoses = new Pose3d[] {};
     public Translation2d[] detectedCorners = new Translation2d[] {};
     public double tagDistance = 0.0;
-
 
     @Override
     public void toLog(LogTable table) {
@@ -86,5 +86,7 @@ public interface VisionIO {
 
   public default void setPipelineIndex(int index) {}
 
-  public default Transform3d getRobotToCamera() { return new Transform3d(); }
-} 
+  public default Transform3d getRobotToCamera() {
+    return new Transform3d();
+  }
+}

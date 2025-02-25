@@ -80,6 +80,8 @@ public class FieldConstants {
   }
 
   public static class Reef {
+    public static final Transform2d robotFromBranchOffset =
+        new Transform2d(Units.inchesToMeters(20), 0, Rotation2d.fromDegrees(180));
     public static final double faceLength = Units.inchesToMeters(36.792600);
     public static final Translation2d center =
         new Translation2d(Units.inchesToMeters(176.746), fieldWidth / 2.0);
@@ -152,6 +154,8 @@ public class FieldConstants {
         branchPositions2d.add(fillRight2d);
         branchPositions2d.add(fillLeft2d);
       }
+
+      // branchPositions2d.get
     }
   }
 

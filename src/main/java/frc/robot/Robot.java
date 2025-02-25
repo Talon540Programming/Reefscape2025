@@ -14,6 +14,8 @@
 package frc.robot;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -22,6 +24,7 @@ import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.LoggerUtil;
+import frc.robot.util.PoseEstimator;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -144,7 +147,17 @@ public class Robot extends LoggedRobot {
   }
 
   @Override
-  public void teleopInit() {}
+  public void teleopInit() {
+    PoseEstimator.getInstance().resetPose(new Pose2d(3.22, 3.85, new Rotation2d(0)));
+
+    // PoseEstimator.getInstance().resetPose(
+    //   new Pose2d(0, 0,
+    //   new Rotation2d(0, 0)
+    //   )
+    // );
+
+    PoseEstimator.getInstance().resetPose(new Pose2d(1.37, 7.19, Rotation2d.fromDegrees(-55)));
+  }
 
   @Override
   public void teleopPeriodic() {}
