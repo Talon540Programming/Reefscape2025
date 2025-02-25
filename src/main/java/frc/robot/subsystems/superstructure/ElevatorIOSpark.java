@@ -4,7 +4,7 @@ import static frc.robot.subsystems.superstructure.SuperstructureConstants.Elevat
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.*;
-import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
+import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -36,7 +36,11 @@ public class ElevatorIOSpark implements ElevatorIO {
         .velocityConversionFactor(2 * Math.PI / 60.0 / gearing)
         .uvwMeasurementPeriod(10)
         .uvwAverageDepth(2);
-    leaderConfig.closedLoop.feedbackSensor(FeedbackSensor.kPrimaryEncoder).pidf(0.0, 0.0, 0.0, 0.0);
+
+    leaderConfig
+        .closedLoop
+        .feedbackSensor(ClosedLoopConfig.FeedbackSensor.kPrimaryEncoder)
+        .pidf(0.0, 0.0, 0.0, 0.0);
     leaderConfig
         .signals
         .primaryEncoderPositionAlwaysOn(true)
@@ -55,12 +59,12 @@ public class ElevatorIOSpark implements ElevatorIO {
 
     var followerConfig = new SparkMaxConfig();
     followerConfig
-        .follow(leaderSpark, true)
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(60)
-        .voltageCompensation(12.0);
+        .voltageCompensation(12.0)
+        .follow(leaderSpark, true);
 
-    leaderConfig
+    followerConfig
         .signals
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
@@ -80,7 +84,7 @@ public class ElevatorIOSpark implements ElevatorIO {
 
     inputs.appliedVolts =
         new double[] {
-          leaderSpark.getAppliedOutput() * leaderSpark.getAppliedOutput(),
+          leaderSpark.getAppliedOutput() * leaderSpark.getBusVoltage(),
           followerSpark.getAppliedOutput() * followerSpark.getBusVoltage()
         };
     inputs.currentAmps =
@@ -136,6 +140,10 @@ public class ElevatorIOSpark implements ElevatorIO {
         enabled ? SparkBaseConfig.IdleMode.kBrake : SparkBaseConfig.IdleMode.kCoast);
 
     leaderSpark.configure(
+        brakeModeConfig,
+        SparkBase.ResetMode.kNoResetSafeParameters,
+        SparkBase.PersistMode.kNoPersistParameters);
+    followerSpark.configure(
         brakeModeConfig,
         SparkBase.ResetMode.kNoResetSafeParameters,
         SparkBase.PersistMode.kNoPersistParameters);

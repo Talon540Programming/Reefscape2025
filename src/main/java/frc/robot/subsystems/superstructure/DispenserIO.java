@@ -22,5 +22,5 @@ public interface DispenserIO {
 
   default void stop() {}
 
-  // default void setBrakeMode(boolean enabled) {}
+  default void setBrakeMode(boolean enabled) {}
 }
