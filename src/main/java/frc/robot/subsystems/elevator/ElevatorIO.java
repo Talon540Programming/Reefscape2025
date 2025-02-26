@@ -4,22 +4,28 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface ElevatorIO {
   @AutoLog
-  public static class ElevatorIOInputs {
-    public boolean connected = false;
+  public class ElevatorIOInputs {
+    public boolean leaderConnected = false;
+    public boolean followerConnected = false;
 
-    public double[] appliedVolts = new double[] {};
+    public double positionRads = 0.0;
     public double velocityRadPerSec = 0.0;
-    public double positionRad = 0.0;
+    public double[] appliedVolts = new double[] {};
     public double[] currentAmps = new double[] {};
+    public double[] tempCelsius = new double[] {};
   }
 
-  public default void updateInputs(ElevatorIOInputs inputs) {}
+  default void updateInputs(ElevatorIOInputs inputs) {}
 
-  public default void runPosition(double positionRad, double feedforward) {}
+  default void runOpenLoop(double output) {}
 
-  public default void runOpenLoop(double output) {}
+  default void runPosition(double positionRads, double feedforwardVolts) {}
 
-  public default void stop() {}
+  default void stop() {}
 
-  public default void setPID(double kP, double kI, double kD) {}
+  default void resetOrigin() {}
+
+  default void setPID(double kP, double kI, double kD) {}
+
+  default void setBrakeMode(boolean enabled) {}
 }

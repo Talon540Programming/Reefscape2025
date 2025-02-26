@@ -11,7 +11,7 @@ import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
-public class Module {
+class Module {
   private static final LoggedTunableNumber drivekS =
       new LoggedTunableNumber("Drive/Module/DrivekS");
   private static final LoggedTunableNumber drivekV =

@@ -5,7 +5,7 @@ import edu.wpi.first.math.geometry.Twist2d;
 
 public class EqualsUtil {
   public static boolean epsilonEquals(double a, double b, double epsilon) {
-    return (a - epsilon <= b) && (a + epsilon >= b);
+    return Math.abs(a - b) <= epsilon;
   }
 
   public static boolean epsilonEquals(double a, double b) {
@@ -25,6 +25,10 @@ public class EqualsUtil {
           && EqualsUtil.epsilonEquals(pose.getY(), other.getY())
           && EqualsUtil.epsilonEquals(
               pose.getRotation().getRadians(), other.getRotation().getRadians());
+    public static boolean equalsZero(Twist2d twist) {
+      return EqualsUtil.epsilonEquals(twist.dx, 0.0)
+          && EqualsUtil.epsilonEquals(twist.dy, 0.0)
+          && EqualsUtil.epsilonEquals(twist.dtheta, 0.0);
     }
   }
 }

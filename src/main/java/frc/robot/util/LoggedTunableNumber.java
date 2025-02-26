@@ -4,13 +4,14 @@ import frc.robot.Constants;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
  * value not in dashboard.
  */
-public class LoggedTunableNumber {
+public class LoggedTunableNumber implements DoubleSupplier {
   private static final String tableKey = "TunableNumbers";
 
   private final String key;
@@ -20,38 +21,13 @@ public class LoggedTunableNumber {
 
   private LoggedNetworkNumber dashboardNumber;
 
-  private final boolean ntPubEnabled;
-
-  /**
-   * Create a new LoggedTunableNumber
-   *
-   * @param dashboardKey Key on dashboard
-   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
-   */
-  public LoggedTunableNumber(String dashboardKey, boolean alwaysEnabled) {
-    this.key = tableKey + "/" + dashboardKey;
-    this.ntPubEnabled = alwaysEnabled;
-  }
-
   /**
    * Create a new LoggedTunableNumber
    *
    * @param dashboardKey Key on dashboard
    */
   public LoggedTunableNumber(String dashboardKey) {
-    this(dashboardKey, Constants.TUNING_MODE);
-  }
-
-  /**
-   * Create a new LoggedTunableNumber with the default value
-   *
-   * @param dashboardKey Key on dashboard
-   * @param defaultValue Default value
-   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
-   */
-  public LoggedTunableNumber(String dashboardKey, double defaultValue, boolean alwaysEnabled) {
-    this(dashboardKey, alwaysEnabled);
-    initDefault(defaultValue);
+    this.key = tableKey + "/" + dashboardKey;
   }
 
   /**
@@ -80,7 +56,7 @@ public class LoggedTunableNumber {
     }
 
     this.defaultValue = defaultValue;
-    if (ntPubEnabled) {
+    if (Constants.TUNING_MODE) {
       dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
     }
   }
@@ -99,7 +75,7 @@ public class LoggedTunableNumber {
               key));
     }
 
-    return ntPubEnabled ? dashboardNumber.get() : defaultValue;
+    return Constants.TUNING_MODE ? dashboardNumber.get() : defaultValue;
   }
 
   /**
@@ -155,5 +131,10 @@ public class LoggedTunableNumber {
     if (Arrays.stream(tunableNumbers).anyMatch(LoggedTunableNumber::hasChanged)) {
       action.run();
     }
+  }
+
+  @Override
+  public double getAsDouble() {
+    return get();
   }
 }

@@ -12,7 +12,7 @@ import java.util.function.DoubleSupplier;
 import lombok.Getter;
 import org.littletonrobotics.junction.AutoLog;
 
-public class OdometryManager implements AutoCloseable {
+class OdometryManager implements AutoCloseable {
   public static Lock odometryLock =
       new ReentrantLock(); // Prevent conflicts when reading and writing data
 

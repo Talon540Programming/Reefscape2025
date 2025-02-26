@@ -1,7 +1,6 @@
 package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
@@ -80,8 +79,6 @@ public class FieldConstants {
   }
 
   public static class Reef {
-    public static final Transform2d robotFromBranchOffset =
-        new Transform2d(Units.inchesToMeters(20), 0, Rotation2d.fromDegrees(180));
     public static final double faceLength = Units.inchesToMeters(36.792600);
     public static final Translation2d center =
         new Translation2d(Units.inchesToMeters(176.746), fieldWidth / 2.0);
@@ -169,13 +166,6 @@ public class FieldConstants {
     public static final Pose2d rightIceCream =
         new Pose2d(Units.inchesToMeters(48), middleIceCream.getY() - separation, new Rotation2d());
   }
-
-  public static final double aprilTagWidth = Units.inchesToMeters(6.50);
-  // public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.OFFICIAL;
-  public static final int aprilTagCount = 22;
-
-  public static final AprilTagFieldLayout aprilTagFieldlayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
   @Getter
   public enum AprilTagLayoutType {
