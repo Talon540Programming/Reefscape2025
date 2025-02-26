@@ -221,6 +221,11 @@ public class ElevatorBase extends SubsystemBase {
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
 
+    // If not homed, schedule that command
+    if (!homed) {
+      homingSequence().schedule();
+    }
+
     measuredVisualizer.update(getPositionMeters());
     setpointVisualizer.update(setpoint.position);
   }
