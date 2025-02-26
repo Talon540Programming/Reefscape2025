@@ -1,10 +1,10 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.dispenser;
 
-import static frc.robot.subsystems.superstructure.SuperstructureConstants.Dispenser.*;
+import static frc.robot.subsystems.dispenser.DispenserConstants.*;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
-import com.revrobotics.spark.SparkLowLevel;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -21,7 +21,7 @@ public class DispenserIOSpark implements DispenserIO {
   private final DigitalInput rearBeamBreak = new DigitalInput(0);
 
   public DispenserIOSpark() {
-    spark = new SparkMax(14, SparkLowLevel.MotorType.kBrushless);
+    spark = new SparkMax(14, MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();

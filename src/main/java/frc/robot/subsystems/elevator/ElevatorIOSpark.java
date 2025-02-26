@@ -1,11 +1,11 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.elevator;
 
-import static frc.robot.subsystems.superstructure.SuperstructureConstants.Elevator.*;
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.*;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
-import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import frc.robot.util.Debouncer;
@@ -22,8 +22,8 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer followerConnectedDebouncer = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-    leaderSpark = new SparkMax(12, SparkLowLevel.MotorType.kBrushless);
-    followerSpark = new SparkMax(13, SparkLowLevel.MotorType.kBrushless);
+    leaderSpark = new SparkMax(12, MotorType.kBrushless);
+    followerSpark = new SparkMax(13, MotorType.kBrushless);
 
     encoder = leaderSpark.getEncoder();
     controller = leaderSpark.getClosedLoopController();
@@ -107,7 +107,7 @@ public class ElevatorIOSpark implements ElevatorIO {
     controller.setReference(
         positionRads,
         SparkBase.ControlType.kPosition,
-        ClosedLoopSlot.kSlot1,
+        ClosedLoopSlot.kSlot0,
         feedforwardVolts,
         SparkClosedLoopController.ArbFFUnits.kVoltage);
   }
@@ -136,8 +136,7 @@ public class ElevatorIOSpark implements ElevatorIO {
   @Override
   public void setBrakeMode(boolean enabled) {
     var brakeModeConfig = new SparkMaxConfig();
-    brakeModeConfig.idleMode(
-        enabled ? SparkBaseConfig.IdleMode.kBrake : SparkBaseConfig.IdleMode.kCoast);
+    brakeModeConfig.idleMode(enabled ? IdleMode.kBrake : IdleMode.kCoast);
 
     leaderSpark.configure(
         brakeModeConfig,
