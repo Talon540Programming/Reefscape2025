@@ -107,7 +107,7 @@ public class ElevatorIOSpark implements ElevatorIO {
     controller.setReference(
         positionRads,
         SparkBase.ControlType.kPosition,
-        ClosedLoopSlot.kSlot1,
+        ClosedLoopSlot.kSlot0,
         feedforwardVolts,
         SparkClosedLoopController.ArbFFUnits.kVoltage);
   }

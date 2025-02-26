@@ -1,5 +1,7 @@
 package frc.robot.subsystems.elevator;
 
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
+
 import edu.wpi.first.math.util.Units;
 import frc.robot.FieldConstants.ReefLevel;
 import frc.robot.util.LoggedTunableNumber;
@@ -27,6 +29,10 @@ public enum ElevatorState {
     var offsetTunable =
         new LoggedTunableNumber(
             String.format("Elevator/Presets/%s Offset", reefLevel), defaultOffset);
-    elevatorHeightMeters = () -> reefLevel.height + offsetTunable.get();
+
+    elevatorHeightMeters =
+        () ->
+            (reefLevel.height - originToBaseHeightMeters) / elevatorPitch.getSin()
+                + offsetTunable.get();
   }
 }

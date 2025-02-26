@@ -48,11 +48,11 @@ public class ElevatorBase extends SubsystemBase {
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        kP.initDefault(0); // TODO
-        kD.initDefault(0); // TODO
-        kS.initDefault(0.34691); // TODO
-        kG.initDefault(0.71532); // TODO
-        kA.initDefault(0.0061913); // TODO
+        kP.initDefault(0.3); // TODO
+        kD.initDefault(0.25); // TODO
+        kS.initDefault(0); // TODO
+        kG.initDefault(1.05); // TODO
+        kA.initDefault(0.0); // TODO
       }
       case SIMBOT -> {
         kP.initDefault(0); // TODO
