@@ -48,11 +48,11 @@ public class ElevatorBase extends SubsystemBase {
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        kP.initDefault(0.3); // TODO
-        kD.initDefault(0.25); // TODO
-        kS.initDefault(0); // TODO
-        kG.initDefault(1.05); // TODO
-        kA.initDefault(0.0); // TODO
+        kP.initDefault(0.3);
+        kD.initDefault(0.25);
+        kS.initDefault(0);
+        kG.initDefault(1.05);
+        kA.initDefault(0.0);
       }
       case SIMBOT -> {
         kP.initDefault(0); // TODO
@@ -156,10 +156,6 @@ public class ElevatorBase extends SubsystemBase {
     // Run profile
     final boolean shouldRunProfile =
         !profileDisabled && homed && !eStopped && DriverStation.isEnabled();
-
-    Logger.recordOutput("test1", !profileDisabled);
-    Logger.recordOutput("test2", !eStopped);
-
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
 
     // // Check if out of tolerance
@@ -224,6 +220,11 @@ public class ElevatorBase extends SubsystemBase {
 
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
+
+    // If not homed, schedule that command
+    if (!homed) {
+      homingSequence().schedule();
+    }
 
     measuredVisualizer.update(getPositionMeters());
     setpointVisualizer.update(setpoint.position);

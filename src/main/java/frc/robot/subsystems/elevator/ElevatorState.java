@@ -16,7 +16,7 @@ public enum ElevatorState {
   STOW("Stow", 0.0),
   INTAKE("Intake", 0.0),
   L1_CORAL(ReefLevel.L1, Units.inchesToMeters(0.0)),
-  L2_CORAL(ReefLevel.L2, Units.inchesToMeters(0.0)),
+  L2_CORAL(ReefLevel.L2, Units.inchesToMeters(1)),
   L3_CORAL(ReefLevel.L3, Units.inchesToMeters(0.0));
 
   private final DoubleSupplier elevatorHeightMeters;
@@ -29,10 +29,9 @@ public enum ElevatorState {
     var offsetTunable =
         new LoggedTunableNumber(
             String.format("Elevator/Presets/%s Offset", reefLevel), defaultOffset);
-
     elevatorHeightMeters =
         () ->
-            (reefLevel.height - originToBaseHeightMeters) / elevatorPitch.getSin()
-                + offsetTunable.get();
+            (reefLevel.height + offsetTunable.get() - originToBaseHeightMeters)
+                / elevatorPitch.getSin();
   }
 }

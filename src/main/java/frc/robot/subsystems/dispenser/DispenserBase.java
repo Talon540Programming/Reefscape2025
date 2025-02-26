@@ -11,9 +11,9 @@ import org.littletonrobotics.junction.Logger;
 
 public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("Dispenser/IntakeVolts", 4.0);
+      new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
   private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 4.0);
+      new LoggedTunableNumber("Dispenser/EjectVolts", 2.0);
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
