@@ -1,6 +1,6 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.dispenser;
 
-import static frc.robot.subsystems.superstructure.SuperstructureConstants.Dispenser.*;
+import static frc.robot.subsystems.dispenser.DispenserConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;

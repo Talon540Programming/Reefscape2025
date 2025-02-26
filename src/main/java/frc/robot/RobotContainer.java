@@ -1,17 +1,20 @@
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
+import frc.robot.subsystems.dispenser.DispenserBase;
+import frc.robot.subsystems.dispenser.DispenserIO;
+import frc.robot.subsystems.dispenser.DispenserIOSim;
+import frc.robot.subsystems.dispenser.DispenserIOSpark;
 import frc.robot.subsystems.drive.*;
+import frc.robot.subsystems.elevator.*;
 import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
-import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 public class RobotContainer {
@@ -21,6 +24,8 @@ public class RobotContainer {
   // Subsystems
   private final DriveBase driveBase;
   private final IntakeBase intakeBase;
+  private final ElevatorBase elevatorBase;
+  private final DispenserBase dispenserBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -39,6 +44,8 @@ public class RobotContainer {
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
         intakeBase = new IntakeBase(new IntakeIOSpark());
+        elevatorBase = new ElevatorBase(new ElevatorIOSpark());
+        dispenserBase = new DispenserBase(new DispenserIOSpark());
       }
       case SIM -> {
         driveBase =
@@ -49,7 +56,8 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim());
         intakeBase = new IntakeBase(new IntakeIOSim());
-
+        elevatorBase = new ElevatorBase(new ElevatorIOSim());
+        dispenserBase = new DispenserBase(new DispenserIOSim());
       }
       default -> {
         driveBase =
@@ -60,6 +68,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         intakeBase = new IntakeBase(new IntakeIO() {});
+        elevatorBase = new ElevatorBase(new ElevatorIO() {});
+        dispenserBase = new DispenserBase(new DispenserIO() {});
       }
     }
 
@@ -72,6 +82,19 @@ public class RobotContainer {
           "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+
+      // autoChooser.addOption(
+      //     "Elevator Dynamic Forward",
+      //     superstructureBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      // autoChooser.addOption(
+      //     "Elevator Dynamic Reverse",
+      //     superstructureBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      // autoChooser.addOption(
+      //     "Elevator Quasi Forward",
+      //     superstructureBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      // autoChooser.addOption(
+      //     "Elevator Quasi Reverse",
+      //     superstructureBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
 
     configureButtonBindings();
@@ -96,22 +119,34 @@ public class RobotContainer {
                 () -> -controller.getLeftX(),
                 () -> Rotation2d.kZero));
 
-    // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(driveBase::stopWithX, driveBase));
+    controller.back().onTrue(elevatorBase.homingSequence());
 
-    // Reset gyro to 0° when B button is pressed
+    controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
     controller
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        PoseEstimator.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(new Rotation2d()))),
-                    driveBase)
-                .ignoringDisable(true));
+        .povLeft()
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
+    controller.povUp().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
+    controller
+        .povRight()
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)));
+
+    // // Switch to X pattern when X button is pressed
+    // controller.x().onTrue(Commands.runOnce(driveBase::stopWithX, driveBase));
+
+    // // Reset gyro to 0° when B button is pressed
+    // controller
+    //     .b()
+    //     .onTrue(
+    //         Commands.runOnce(
+    //                 () ->
+    //                     PoseEstimator.getInstance()
+    //                         .resetPose(
+    //                             new Pose2d(
+    //
+    // PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
+    //                                 AllianceFlipUtil.apply(new Rotation2d()))),
+    //                 driveBase)
+    //             .ignoringDisable(true));
   }
 
   public Command getAutonomousCommand() {

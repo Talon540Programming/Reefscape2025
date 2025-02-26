@@ -1,4 +1,4 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.dispenser;
 
 import org.littletonrobotics.junction.AutoLog;
 

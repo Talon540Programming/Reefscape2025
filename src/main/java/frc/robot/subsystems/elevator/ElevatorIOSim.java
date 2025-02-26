@@ -1,6 +1,6 @@
-package frc.robot.subsystems.superstructure;
+package frc.robot.subsystems.elevator;
 
-import static frc.robot.subsystems.superstructure.SuperstructureConstants.Elevator.*;
+import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -12,7 +12,7 @@ public class ElevatorIOSim implements ElevatorIO {
   private final ElevatorSim sim =
       new ElevatorSim(
           elevatorMotorModel,
-          SuperstructureConstants.Elevator.gearing,
+          gearing,
           carriageMassKg + stagesMassKg,
           drumRadius,
           0,
