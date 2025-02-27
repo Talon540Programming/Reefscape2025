@@ -1,9 +1,11 @@
 package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import lombok.Getter;
 
@@ -13,6 +15,10 @@ import lombok.Getter;
  */
 public class FieldConstants {
   public static AprilTagFieldLayout fieldLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+
+  static {
+    System.out.println(Path.of(AprilTagFields.k2025ReefscapeWelded.toString()));
+  }
 
   public static final double fieldLength =
       AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
