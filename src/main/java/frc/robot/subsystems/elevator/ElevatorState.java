@@ -15,7 +15,7 @@ public enum ElevatorState {
   START(() -> 0.0),
   STOW("Stow", 0.0),
   INTAKE("Intake", 0.0),
-  L1_CORAL(ReefLevel.L1, Units.inchesToMeters(0.0)),
+  L1_CORAL(ReefLevel.L1, Units.inchesToMeters(7)),
   L2_CORAL(ReefLevel.L2, Units.inchesToMeters(1)),
   L3_CORAL(ReefLevel.L3, Units.inchesToMeters(0.0));
 

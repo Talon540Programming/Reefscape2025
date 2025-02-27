@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -20,6 +21,7 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -105,6 +107,15 @@ public class RobotContainer {
       autoChooser.addOption(
           "Elevator Quasi Reverse",
           elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
+
+      autoChooser.addOption(
+          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
 
     configureButtonBindings();
@@ -115,26 +126,35 @@ public class RobotContainer {
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
             driveBase,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX(),
+            () ->
+                controller.y().getAsBoolean()
+                    ? -controller.getLeftY() * 0.7
+                    : -controller.getLeftY(),
+            () ->
+                controller.y().getAsBoolean()
+                    ? -controller.getLeftX() * 0.7
+                    : -controller.getLeftX(),
+            () ->
+                controller.y().getAsBoolean()
+                    ? -controller.getRightX() * 0.7
+                    : -controller.getRightX(),
             controller.leftStick()));
 
     // TODO Lock to Feeder Station when held
-    controller
-        .a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                driveBase,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> Rotation2d.kZero,
-                controller.leftStick()));
+    // controller
+    //     .y()
+    //     .whileTrue(
+    //         DriveCommands.joystickDriveAtAngle(
+    //             driveBase,
+    //             () -> -controller.getLeftY(),
+    //             () -> -controller.getLeftX(),
+    //             () -> Rotation2d.kZero,
+    //             controller.leftStick()));
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
     // Intake
-    controller.b().onTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
+    controller.x().onTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
     // L1
     controller
         .povLeft()
@@ -161,6 +181,7 @@ public class RobotContainer {
     controller
         .start()
         .and(controller.back())
+        .debounce(0.5)
         .onTrue(
             Commands.runOnce(
                     () ->

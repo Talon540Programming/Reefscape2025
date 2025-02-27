@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drive;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -15,6 +17,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
 import frc.robot.util.LoggedTunableNumber;
@@ -29,8 +32,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class DriveBase extends SubsystemBase {
   // Characterization
-  private static final double FF_START_DELAY = 2.0; // Secs
-  private static final double FF_RAMP_RATE = 0.85; // Volts/Sec
+  private static final double FF_START_DELAY = 2; // Secs
+  private static final double FF_RAMP_RATE = 3.5; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
 
@@ -72,6 +75,16 @@ public class DriveBase extends SubsystemBase {
 
   @AutoLogOutput(key = "Drive/BrakeModeEnabled")
   private boolean BRAKE_MODE = true;
+
+  private final SysIdRoutine sysId =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null,
+              null,
+              null,
+              (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
   public DriveBase(
       GyroIO gyroIO,
@@ -206,12 +219,16 @@ public class DriveBase extends SubsystemBase {
     Logger.recordOutput("SwerveStates/SetpointsUnoptimized", setpointStatesUnoptimized);
     Logger.recordOutput("SwerveStates/Setpoints", setpointStates);
     Logger.recordOutput("SwerveChassisSpeeds/Setpoints", currentSetpoint.chassisSpeeds());
+    Logger.recordOutput(
+        "SwerveChassisSpeeds/SetpointsUnoptimized", currentSetpoint.chassisSpeeds());
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(setpointStates[i]);
     }
   }
+
+  // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP
 
   /** Runs the drive in a straight(ish) line with the specified drive output. */
   public void runCharacterization(double output) {
@@ -417,6 +434,18 @@ public class DriveBase extends SubsystemBase {
                               + formatter.format(Units.metersToInches(wheelRadius))
                               + " inches");
                     })));
+  }
+
+  /** Returns a command to run a quasistatic test in the specified direction. */
+  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
+    return run(() -> runCharacterization(0.0))
+        .withTimeout(1.0)
+        .andThen(sysId.quasistatic(direction));
+  }
+
+  /** Returns a command to run a dynamic test in the specified direction. */
+  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
+    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
   }
 
   private static class WheelRadiusCharacterizationState {

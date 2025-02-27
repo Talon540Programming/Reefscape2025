@@ -26,12 +26,18 @@ class Module {
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        drivekS.initDefault(0.19700);
-        drivekV.initDefault(0.12941);
-        drivekP.initDefault(0.005);
-        drivekD.initDefault(0.0);
-        turnkP.initDefault(2.0);
-        turnkD.initDefault(0.05);
+        // drivekS.initDefault(0.113190);
+        // drivekV.initDefault(0.841640);
+        // drivekP.initDefault(0.01);
+        // drivekD.initDefault(0);
+        // turnkP.initDefault(2);
+        // turnkD.initDefault(0);
+        drivekS.initDefault(0.0);
+        drivekV.initDefault(0.0);
+        drivekP.initDefault(0.0);
+        drivekD.initDefault(0);
+        turnkP.initDefault(0);
+        turnkD.initDefault(0);
       }
       default -> {
         drivekS.initDefault(0.113190);
@@ -95,6 +101,8 @@ class Module {
 
   /** Runs the module with the specified setpoint state. */
   public void runSetpoint(SwerveModuleState state) {
+    // state.optimize(getAngle());
+    // state.cosineScale(getAngle());
     m_io.runDriveVelocity(state.speedMetersPerSecond / DriveConstants.wheelRadius);
     m_io.runTurnPosition(state.angle);
   }

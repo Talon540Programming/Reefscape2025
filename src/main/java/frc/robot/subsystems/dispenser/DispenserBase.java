@@ -13,7 +13,7 @@ public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
   private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 2.0);
+      new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
@@ -32,7 +32,7 @@ public class DispenserBase extends SubsystemBase {
   private final Alert disconnected =
       new Alert("Dispenser motor disconnected!", Alert.AlertType.kWarning);
 
-  @Setter private double coralVolts = 0.0;
+  // @Setter private double coralVolts = 0.0;
 
   public DispenserBase(DispenserIO io) {
     this.io = io;
@@ -52,12 +52,12 @@ public class DispenserBase extends SubsystemBase {
     // Update if holding coral.
     hasCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
 
-    // Run Coral
-    if (!isEStopped) {
-      io.runVolts(coralVolts);
-    } else {
-      io.stop();
-    }
+    // // Run Coral
+    // if (!isEStopped) {
+    //   io.runVolts(coralVolts);
+    // } else {
+    //   io.stop();
+    // }
   }
 
   public Command intakeTillHolding() {
