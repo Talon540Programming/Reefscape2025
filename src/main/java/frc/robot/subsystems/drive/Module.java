@@ -3,7 +3,6 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
@@ -26,18 +25,12 @@ class Module {
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        // drivekS.initDefault(0.113190);
-        // drivekV.initDefault(0.841640);
-        // drivekP.initDefault(0.01);
-        // drivekD.initDefault(0);
-        // turnkP.initDefault(2);
-        // turnkD.initDefault(0);
-        drivekS.initDefault(0.0);
-        drivekV.initDefault(0.0);
+        drivekS.initDefault(0.69641);
+        drivekV.initDefault(0.12647);
         drivekP.initDefault(0.0);
-        drivekD.initDefault(0);
-        turnkP.initDefault(0);
-        turnkD.initDefault(0);
+        drivekD.initDefault(0.0);
+        turnkP.initDefault(1.5);
+        turnkD.initDefault(0.0);
       }
       default -> {
         drivekS.initDefault(0.113190);
@@ -101,8 +94,6 @@ class Module {
 
   /** Runs the module with the specified setpoint state. */
   public void runSetpoint(SwerveModuleState state) {
-    // state.optimize(getAngle());
-    // state.cosineScale(getAngle());
     m_io.runDriveVelocity(state.speedMetersPerSecond / DriveConstants.wheelRadius);
     m_io.runTurnPosition(state.angle);
   }
@@ -149,9 +140,9 @@ class Module {
     return m_inputs.drivePositionRad;
   }
 
-  /** Returns the module velocity in rotations/sec (Phoenix native units). */
+  /** Returns the module velocity in rad/sec. */
   public double getFFCharacterizationVelocity() {
-    return Units.radiansToRotations(m_inputs.driveVelocityRadPerSec);
+    return m_inputs.driveVelocityRadPerSec;
   }
 
   /* Sets brake mode to {@code enabled} */
