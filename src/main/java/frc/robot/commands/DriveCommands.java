@@ -20,11 +20,11 @@ public class DriveCommands {
   private static final double DEADBAND = 0.1;
 
   private static final LoggedTunableNumber teleopLinearScalar =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 0.5);
-  private static final LoggedTunableNumber teleopLinearScalarSprint =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalarSprint", 1.0);
-  private static final LoggedTunableNumber angularScalar =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalarSprint", 1.0);
+      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 1.0);
+  private static final LoggedTunableNumber teleopLinearScalarSlowMode =
+      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalarSprint", 0.5);
+  private static final LoggedTunableNumber teleopAngularScalar =
+      new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 1.0);
 
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -39,7 +39,7 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
-      BooleanSupplier sprintSupplier) {
+      BooleanSupplier slowSupplier) {
     return Commands.run(
         () -> {
           // Apply deadband
@@ -54,10 +54,10 @@ public class DriveCommands {
 
           // Generate robot relative speeds
           double linearVelocityScalar =
-              sprintSupplier.getAsBoolean()
-                  ? teleopLinearScalarSprint.get()
+              slowSupplier.getAsBoolean()
+                  ? teleopLinearScalarSlowMode.get()
                   : teleopLinearScalar.get();
-          double angularVelocityScalar = angularScalar.get();
+          double angularVelocityScalar = teleopAngularScalar.get();
 
           var speeds =
               new ChassisSpeeds(
@@ -88,7 +88,7 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> rotationSupplier,
-      BooleanSupplier sprintSupplier) {
+      BooleanSupplier slowSupplier) {
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
@@ -115,8 +115,8 @@ public class DriveCommands {
 
               // Generate robot relative speeds
               double linearVelocityScalar =
-                  sprintSupplier.getAsBoolean()
-                      ? teleopLinearScalarSprint.get()
+                  slowSupplier.getAsBoolean()
+                      ? teleopLinearScalarSlowMode.get()
                       : teleopLinearScalar.get();
               var speeds =
                   new ChassisSpeeds(

@@ -46,6 +46,8 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
+  private boolean slowModeEnabled;
+
   public RobotContainer() {
     switch (Constants.getMode()) {
       case REAL -> {
@@ -122,34 +124,17 @@ public class RobotContainer {
   }
 
   private void configureButtonBindings() {
+    // Make slow mode toggleable
+    controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
+
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
             driveBase,
-            () ->
-                controller.y().getAsBoolean()
-                    ? -controller.getLeftY() * 0.7
-                    : -controller.getLeftY(),
-            () ->
-                controller.y().getAsBoolean()
-                    ? -controller.getLeftX() * 0.7
-                    : -controller.getLeftX(),
-            () ->
-                controller.y().getAsBoolean()
-                    ? -controller.getRightX() * 0.7
-                    : -controller.getRightX(),
-            controller.leftStick()));
-
-    // TODO Lock to Feeder Station when held
-    // controller
-    //     .y()
-    //     .whileTrue(
-    //         DriveCommands.joystickDriveAtAngle(
-    //             driveBase,
-    //             () -> -controller.getLeftY(),
-    //             () -> -controller.getLeftX(),
-    //             () -> Rotation2d.kZero,
-    //             controller.leftStick()));
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            () -> -controller.getRightX(),
+            () -> slowModeEnabled));
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
