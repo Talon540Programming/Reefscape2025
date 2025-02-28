@@ -89,6 +89,7 @@ public class ModuleIOSpark implements ModuleIO {
 
     driveSpark.configure(
         driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    driveEncoder.setPosition(0.0);
 
     // Configure Turn
     var turnConfig = new SparkMaxConfig();
