@@ -10,18 +10,21 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.LoggedTunableNumber;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class DriveCommands {
   // Drive
   private static final double DEADBAND = 0.1;
 
-  private static final LoggedNetworkNumber LINEAR_VELOCITY_SCALAR =
-      new LoggedNetworkNumber("TeleopDrive/LinearVelocityScalar", 1.0);
-  private static final LoggedNetworkNumber ANGULAR_VELOCITY_SCALAR =
-      new LoggedNetworkNumber("TeleopDrive/AngularVelocityScalar", 0.7);
+  private static final LoggedTunableNumber teleopLinearScalar =
+      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 1.0);
+  private static final LoggedTunableNumber teleopLinearScalarSlowMode =
+      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalarSprint", 0.5);
+  private static final LoggedTunableNumber teleopAngularScalar =
+      new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 1.0);
 
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;
@@ -35,7 +38,8 @@ public class DriveCommands {
       DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
+      DoubleSupplier omegaSupplier,
+      BooleanSupplier slowSupplier) {
     return Commands.run(
         () -> {
           // Apply deadband
@@ -49,8 +53,11 @@ public class DriveCommands {
           omega = Math.copySign(Math.pow(omega, 2), omega);
 
           // Generate robot relative speeds
-          double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
-          double angularVelocityScalar = ANGULAR_VELOCITY_SCALAR.get();
+          double linearVelocityScalar =
+              slowSupplier.getAsBoolean()
+                  ? teleopLinearScalarSlowMode.get()
+                  : teleopLinearScalar.get();
+          double angularVelocityScalar = teleopAngularScalar.get();
 
           var speeds =
               new ChassisSpeeds(
@@ -63,7 +70,6 @@ public class DriveCommands {
           if (AllianceFlipUtil.shouldFlip()) {
             rotation = rotation.rotateBy(Rotation2d.kPi);
           }
-          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
           speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
           // Apply speeds
@@ -81,7 +87,8 @@ public class DriveCommands {
       DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier) {
+      Supplier<Rotation2d> rotationSupplier,
+      BooleanSupplier slowSupplier) {
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
@@ -107,7 +114,10 @@ public class DriveCommands {
                       rotation.getRadians(), rotationSupplier.get().getRadians());
 
               // Generate robot relative speeds
-              double linearVelocityScalar = LINEAR_VELOCITY_SCALAR.get();
+              double linearVelocityScalar =
+                  slowSupplier.getAsBoolean()
+                      ? teleopLinearScalarSlowMode.get()
+                      : teleopLinearScalar.get();
               var speeds =
                   new ChassisSpeeds(
                       x * DriveBase.getMaxLinearVelocityMetersPerSecond() * linearVelocityScalar,

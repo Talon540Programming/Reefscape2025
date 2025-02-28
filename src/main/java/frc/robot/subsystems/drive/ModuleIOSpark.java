@@ -16,10 +16,10 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import frc.robot.Constants;
+import frc.robot.util.Debouncer;
 import java.util.Queue;
 
 public class ModuleIOSpark implements ModuleIO {
@@ -84,10 +84,12 @@ public class ModuleIOSpark implements ModuleIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     driveSpark.configure(
         driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    driveEncoder.setPosition(0.0);
 
     // Configure Turn
     var turnConfig = new SparkMaxConfig();
@@ -116,7 +118,8 @@ public class ModuleIOSpark implements ModuleIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     turnSpark.configure(turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
