@@ -222,9 +222,9 @@ public class ElevatorBase extends SubsystemBase {
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
 
     // If not homed, schedule that command
-    // if (!homed && !homingSequence().isScheduled()) {
-    //   homingSequence().schedule();
-    // }
+    if (!homed && !profileDisabled) {
+      homingSequence().schedule();
+    }
 
     measuredVisualizer.update(getPositionMeters());
     setpointVisualizer.update(setpoint.position);
