@@ -49,6 +49,10 @@ public class DispenserBase extends SubsystemBase {
     holdingCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
   }
 
+  public Command runRollers(double inputVolts) {
+    return startEnd(() -> io.runVolts(inputVolts), io::stop);
+  }
+
   public Command intakeTillHolding() {
     return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop).until(() -> holdingCoral);
   }

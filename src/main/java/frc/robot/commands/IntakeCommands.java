@@ -24,4 +24,13 @@ public class IntakeCommands {
                         .withTimeout(intakeTimeout.get())))
         .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
   }
+
+  public static Command reserialize(
+      ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
+    return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
+        .andThen(
+            Commands.waitUntil(elevator::isAtGoal)
+                .andThen(dispenser.runRollers(-2.0).until(() -> !dispenser.isHoldingCoral()))
+                .andThen(IntakeCommands.intake(elevator, intake, dispenser)));
+  }
 }

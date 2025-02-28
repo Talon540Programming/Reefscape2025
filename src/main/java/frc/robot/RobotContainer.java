@@ -161,6 +161,13 @@ public class RobotContainer {
                 .eject()
                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))));
 
+    // Reserialize
+    controller
+        .leftTrigger()
+        .and(controller.rightTrigger())
+        .debounce(0.25)
+        .onTrue(IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase));
+
     // Home Elevator
     controller
         .back()
