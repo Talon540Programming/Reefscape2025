@@ -6,7 +6,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.Debouncer;
 import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
-import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
 
 public class DispenserBase extends SubsystemBase {
@@ -24,15 +23,12 @@ public class DispenserBase extends SubsystemBase {
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();
 
-  @Setter private boolean isEStopped;
-  @Getter private boolean hasCoral;
+  @Getter private boolean holdingCoral;
 
   private final Debouncer holdingCoralDebouncer = new Debouncer(0);
 
   private final Alert disconnected =
       new Alert("Dispenser motor disconnected!", Alert.AlertType.kWarning);
-
-  // @Setter private double coralVolts = 0.0;
 
   public DispenserBase(DispenserIO io) {
     this.io = io;
@@ -50,18 +46,11 @@ public class DispenserBase extends SubsystemBase {
     }
 
     // Update if holding coral.
-    hasCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
-
-    // // Run Coral
-    // if (!isEStopped) {
-    //   io.runVolts(coralVolts);
-    // } else {
-    //   io.stop();
-    // }
+    holdingCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
   }
 
   public Command intakeTillHolding() {
-    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop).until(() -> hasCoral);
+    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop).until(() -> holdingCoral);
   }
 
   public Command eject() {
