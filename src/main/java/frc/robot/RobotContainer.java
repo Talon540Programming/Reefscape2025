@@ -156,7 +156,11 @@ public class RobotContainer {
     controller.rightTrigger().onTrue(dispenserBase.eject());
 
     // Home Elevator
-    controller.back().debounce(0.5).onTrue(elevatorBase.homingSequence());
+    controller
+        .back()
+        .and(controller.start().negate())
+        .debounce(0.5)
+        .onTrue(elevatorBase.homingSequence());
 
     // Auto Align (Left or Right)
     // TODO
