@@ -12,13 +12,13 @@ public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
   private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
+      new LoggedTunableNumber("Dispenser/EjectVolts", 4.0);
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
 
   private static final LoggedTunableNumber ejectPeriod =
-      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.65);
+      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.35);
 
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();

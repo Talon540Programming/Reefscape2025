@@ -153,7 +153,13 @@ public class RobotContainer {
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
 
     // Dispense
-    controller.rightTrigger().onTrue(dispenserBase.eject());
+    controller
+        .rightTrigger()
+        .and(controller.leftTrigger().negate())
+        .onTrue(
+            dispenserBase
+                .eject()
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))));
 
     // Home Elevator
     controller
