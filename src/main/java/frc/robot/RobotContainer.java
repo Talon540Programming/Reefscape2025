@@ -138,8 +138,6 @@ public class RobotContainer {
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
-    // Intake
-    controller.x().onTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
     // L1
     controller
         .povLeft()
@@ -150,6 +148,10 @@ public class RobotContainer {
     controller
         .povRight()
         .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)));
+
+    // Intake
+    controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
+
     // Dispense
     controller.rightTrigger().onTrue(dispenserBase.eject());
 

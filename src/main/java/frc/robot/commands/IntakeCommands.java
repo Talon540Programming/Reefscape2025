@@ -10,14 +10,18 @@ import frc.robot.util.LoggedTunableNumber;
 
 public class IntakeCommands {
   public static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("Intake/HopperIntakeVolts", 6.0);
+      new LoggedTunableNumber("Intake/HopperIntakeVolts", 5.5);
+  public static final LoggedTunableNumber intakeTimeout =
+      new LoggedTunableNumber("Intake/IntakeTimeoutSecs", 5.0);
 
   public static Command intake(ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
     return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
-        .alongWith(
+        .andThen(
             Commands.waitUntil(elevator::isAtGoal)
                 .andThen(
                     Commands.deadline(
-                        dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))));
+                            dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))
+                        .withTimeout(intakeTimeout.get())))
+        .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
   }
 }
