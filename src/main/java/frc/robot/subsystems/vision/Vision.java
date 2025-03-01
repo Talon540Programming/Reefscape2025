@@ -2,7 +2,6 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import org.littletonrobotics.junction.Logger;
@@ -11,8 +10,8 @@ public class Vision extends SubsystemBase {
 
   private final VisionIO[] cameras;
   private final VisionIOInputs[] cameraInputs;
-  private final double leftCameraCenterXAligned = 425;
-  private final double rightCameraCenterXAlined = 850;
+  public final double rightPostCenterXAligned = 425;
+  public final double leftBranchCenterXAligned = 1134;
 
   public Vision(VisionIO... cameras) {
     this.cameras = cameras;
@@ -94,21 +93,15 @@ public class Vision extends SubsystemBase {
 
     if (!input.hasResult) return 0;
 
-    Translation2d[] corners = input.detectedCorners;
+    double centerx = input.tagCenterX;
 
-    double centerx = 0.0;
+    return centerx;
 
-    for (int i = 0; i < 4; i++) {
-      centerx += corners[i].getX();
-    }
-
-    centerx /= 4.0;
-
-    if (cameraindex == 0) {
-      return centerx - leftCameraCenterXAligned;
-    } else if (cameraindex == 1) {
-      return centerx - rightCameraCenterXAlined;
-    } else return Integer.MAX_VALUE;
+    // if (cameraindex == 0) {
+    //   return centerx;
+    // } else if (cameraindex == 1) {
+    //   return centerx;
+    // } else return Integer.MAX_VALUE;
 
     // return cameraindex == 0
     //     ? centerx - leftCameraCenterXAligned

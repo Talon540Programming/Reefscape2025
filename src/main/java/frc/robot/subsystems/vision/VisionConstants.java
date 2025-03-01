@@ -67,22 +67,22 @@ public class VisionConstants {
   private static double monoGain = 0.3;
   private static double colorGain = 0.3;
 
-  public static LoggedTunableNumber[] pitchAdjustments =
-      switch (Constants.getRobot()) {
-        case SIMBOT ->
-            new LoggedTunableNumber[] {
-              new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
-              new LoggedTunableNumber("Vision/PitchAdjust1", 0.0)
-            };
-        case COMPBOT ->
-            new LoggedTunableNumber[] {
-              new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
-              new LoggedTunableNumber("Vision/PitchAdjust1", 0.0),
-              new LoggedTunableNumber("Vision/PitchAdjust2", 0.0),
-              new LoggedTunableNumber("Vision/PitchAdjust3", 0.0)
-            };
-        default -> new LoggedTunableNumber[] {};
-      };
+  //   public static LoggedTunableNumber[] pitchAdjustments =
+  //       switch (Constants.getRobot()) {
+  //         case SIMBOT ->
+  //             new LoggedTunableNumber[] {
+  //               new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
+  //               new LoggedTunableNumber("Vision/PitchAdjust1", 0.0)
+  //             };
+  //         case COMPBOT ->
+  //             new LoggedTunableNumber[] {
+  //               new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
+  //               new LoggedTunableNumber("Vision/PitchAdjust1", 0.0),
+  //               new LoggedTunableNumber("Vision/PitchAdjust2", 0.0),
+  //               new LoggedTunableNumber("Vision/PitchAdjust3", 0.0)
+  //             };
+  //         default -> new LoggedTunableNumber[] {};
+  //       };
   public static List<CameraConfig> cameras =
       switch (Constants.getRobot()) {
         case SIMBOT ->
@@ -110,19 +110,21 @@ public class VisionConstants {
                     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
                         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build(),
-                CameraConfig.builder()
-                    .cameraName("elevator")
-                    .robotToCamera(
-                        new Transform3d(
-                            0.05,
-                            0,
-                            0.783,
-                            new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
-                    .calibrationPath(
-                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build());
+                    .build()
+                // ,
+                // CameraConfig.builder()
+                //     .cameraName("elevator")
+                //     .robotToCamera(
+                //         new Transform3d(
+                //             0.05,
+                //             0,
+                //             0.783,
+                //             new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
+                //     .calibrationPath(
+                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                //     .build()
+                );
         case COMPBOT ->
             List.of(
                 CameraConfig.builder()
@@ -148,19 +150,21 @@ public class VisionConstants {
                     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
                         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build(),
-                CameraConfig.builder()
-                    .cameraName("elevator")
-                    .robotToCamera(
-                        new Transform3d(
-                            0.05,
-                            0,
-                            0.783,
-                            new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
-                    .calibrationPath(
-                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build());
+                    .build()
+                //     ,
+                // CameraConfig.builder()
+                //     .cameraName("elevator")
+                //     .robotToCamera(
+                //         new Transform3d(
+                //             0.05,
+                //             0,
+                //             0.783,
+                //             new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
+                //     .calibrationPath(
+                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                //     .build()
+                );
         default -> Collections.<CameraConfig>emptyList();
       };
 

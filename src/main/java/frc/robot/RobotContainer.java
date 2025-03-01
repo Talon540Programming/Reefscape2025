@@ -172,6 +172,20 @@ public class RobotContainer {
                     : -controller.getRightX(),
             controller.leftStick()));
 
+    driveBase.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            driveBase,
+            () ->
+                controller.y().getAsBoolean()
+                    ? -controller.getLeftY() * 0.7
+                    : -controller.getLeftY(),
+            () ->
+                controller.y().getAsBoolean()
+                    ? -controller.getLeftX() * 0.7
+                    : -controller.getLeftX(),
+            () -> 0,
+            controller.leftStick()));
+
     // TODO Lock to Feeder Station when held
     // controller
     //     .y()
@@ -209,11 +223,8 @@ public class RobotContainer {
         .whileTrue(
             new AlignToReef(
                 driveBase,
+                () -> vision.leftBranchCenterXAligned,
                 () -> vision.getOffsetX(0) // right-side camera is used to align to left post
-                ).alongWith(
-                    Commands.run(
-                        () -> System.out.println("Enabled left")
-                    )
                 ));
 
     controller
@@ -221,11 +232,8 @@ public class RobotContainer {
         .whileTrue(
             new AlignToReef(
                 driveBase,
-                () -> vision.getOffsetX(1) // left-side camera is used to align to right post
-                ).alongWith(
-                    Commands.run(
-                        () -> System.out.println("Enabled left")
-                    )
+                () -> vision.rightPostCenterXAligned,
+                () -> vision.getOffsetX(0) // left-side camera is used to align to right post
                 ));
 
     // Human Player Alert (Strobe LEDs)
