@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.AlignToReef;
+import frc.robot.commands.AutoCommandFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.oi.ControlsInterface;
@@ -49,6 +50,7 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+  private final AutoCommandFactory autoFactory;
 
   private final LoggedNetworkNumber endgameAlert1 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
@@ -120,7 +122,7 @@ public class RobotContainer {
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
-
+    autoFactory = new AutoCommandFactory(driveBase, intakeBase, dispenserBase, elevatorBase);
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
       autoChooser.addOption(
@@ -148,6 +150,7 @@ public class RobotContainer {
           "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
       autoChooser.addOption(
           "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption("L2 Auto", autoFactory.TaxiL2());
     }
 
     configureButtonBindings();

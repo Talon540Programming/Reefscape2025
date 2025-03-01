@@ -30,6 +30,10 @@ public class DriveCommands {
   private static final double ANGLE_KD = 0.4;
   private static final double ANGLE_MAX_VELOCITY = 8.0;
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
+  private static final double DRIVE_KP = 0.001;
+  private static final double DRIVE_KD = 0;
+  private static final double DRIVE_MAX_VELOCITY = 8.0;
+  private static final double DRIVE_MAX_ACCELERATION = 20.0;
 
   /**
    * Field relative drive command using two joysticks (controlling linear and angular velocities).

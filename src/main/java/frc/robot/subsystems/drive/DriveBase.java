@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -454,6 +455,15 @@ public class DriveBase extends SubsystemBase {
     double[] positions = new double[4];
     Rotation2d lastAngle = new Rotation2d();
     double gyroDelta = 0.0;
+  }
+
+  public void followTrajectory(SwerveSample sample) {
+    // Get the current pose of the robot
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds = new ChassisSpeeds(sample.vx, sample.vy, sample.omega);
+
+    // Apply the generated speeds
+    runVelocity(speeds);
   }
 
   public static double getMaxLinearVelocityMetersPerSecond() {
