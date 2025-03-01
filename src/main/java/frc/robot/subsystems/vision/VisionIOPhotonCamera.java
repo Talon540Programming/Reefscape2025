@@ -2,16 +2,11 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import frc.robot.FieldConstants;
-import java.util.ArrayList;
 import org.photonvision.PhotonCamera;
-import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class VisionIOPhotonCamera implements VisionIO {
   protected final PhotonCamera camera;
@@ -44,122 +39,16 @@ public class VisionIOPhotonCamera implements VisionIO {
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     inputs.isConnected = camera.isConnected();
-    inputs.pipelineIndex = pipeline;
+    // inputs.pipelineIndex = pipeline;
     // System.out.println(inputs.pipelineIndex);
 
-    if (inputs.pipelineIndex == 0) {
-      updateAprilTag(inputs);
-    } else if (inputs.pipelineIndex == 1) {
-      updateCorners(inputs);
-    } else {
-      System.out.println("Pipeline index not found");
-    }
-  }
-
-  @Override
-  public void updateAprilTag(VisionIOInputs inputs) {
-    var resList = camera.getAllUnreadResults();
-    if (!resList.isEmpty()) {
-      PhotonPipelineResult res = resList.get(resList.size() - 1);
-      // var res = camera.getLatestResult();
-
-      // for (PhotonPipelineResult res : resList) {
-      inputs.timestampSeconds = res.getTimestampSeconds();
-      inputs.hasAprilTagResult = false;
-
-      if (res.getMultiTagResult().isPresent()) {
-
-        Transform3d fieldToCamera = res.getMultiTagResult().get().estimatedPose.best;
-        inputs.hasAprilTagResult = true;
-        inputs.estimatedRobotPose =
-            new Pose3d()
-                .plus(fieldToCamera)
-                .relativeTo(FieldConstants.aprilTagFieldlayout.getOrigin())
-                .plus(robotToCamera.inverse());
-        inputs.detectedTagsIds =
-            res.getMultiTagResult().get().fiducialIDsUsed.stream()
-                .mapToInt(Short::intValue)
-                .toArray();
-        inputs.visionMeasurementStdDevs = MULTI_TARGET_STDDEVS;
-      } else if (!res.getTargets().isEmpty()) {
-
-        // Find the detected target with the lowest pose ambiguity that is within the field layout
-        double lowestAmbiguityScore = Double.POSITIVE_INFINITY;
-        PhotonTrackedTarget lowestAmbiguityTarget = null;
-        var tagsUsed = new ArrayList<Integer>();
-        for (var target : res.getTargets()) {
-          double targetPoseAmbiguity = target.getPoseAmbiguity();
-
-          //   Filter out tags that aren't fiducial targets (IDK how) or in the ATFL
-          if (targetPoseAmbiguity == -1
-              || FieldConstants.aprilTagFieldlayout.getTagPose(target.getFiducialId()).isEmpty())
-            continue;
-
-          tagsUsed.add(target.getFiducialId());
-
-          if (targetPoseAmbiguity < lowestAmbiguityScore
-              && targetPoseAmbiguity <= AMBIGUITY_THRESHOLD) {
-            lowestAmbiguityScore = targetPoseAmbiguity;
-            lowestAmbiguityTarget = target;
-          }
-        }
-
-        if (lowestAmbiguityTarget != null) {
-          var tagPoseOpt =
-              FieldConstants.aprilTagFieldlayout.getTagPose(lowestAmbiguityTarget.getFiducialId());
-          if (tagPoseOpt.isPresent()) {
-            inputs.hasAprilTagResult = true;
-            inputs.estimatedRobotPose =
-                tagPoseOpt
-                    .get()
-                    .transformBy(lowestAmbiguityTarget.getBestCameraToTarget().inverse())
-                    .transformBy(robotToCamera.inverse());
-            inputs.detectedTagsIds = tagsUsed.stream().mapToInt(Integer::intValue).toArray();
-            inputs.visionMeasurementStdDevs = SINGLE_TARGET_STDDEVS;
-          }
-        }
-      }
-
-      // Reject pose estimates outside reasonable bounds
-      if (!inputs.hasAprilTagResult
-          || inputs.estimatedRobotPose.getX() < -FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getX()
-              > FieldConstants.aprilTagFieldlayout.getFieldLength() + FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getY() < -FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getY()
-              > FieldConstants.aprilTagFieldlayout.getFieldWidth() + FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getZ() < -Z_MARGIN
-          || inputs.estimatedRobotPose.getZ() > Z_MARGIN) {
-        // Record default values if no results or invalid were found
-        inputs.hasAprilTagResult = false;
-        inputs.estimatedRobotPose = new Pose3d();
-        inputs.detectedTagsIds = new int[] {};
-        inputs.detectedTagPoses = new Pose3d[] {};
-        inputs.visionMeasurementStdDevs = INVALID_STDDEVS;
-      } else {
-        // Calculate the average distance between the estimated pose and the pose of all detected
-        // fiducial targets in three dimensions
-        double totalDistance = 0.0;
-        // Guaranteed to have at least one target
-        int numTags = inputs.detectedTagsIds.length;
-        inputs.detectedTagPoses = new Pose3d[numTags];
-        for (int i = 0; i < numTags; i++) {
-          int tagId = inputs.detectedTagsIds[i];
-          // All values are guaranteed to exist within the ATFL
-          var tagPose = FieldConstants.aprilTagFieldlayout.getTagPose(tagId).orElseThrow();
-          inputs.detectedTagPoses[i] = tagPose;
-          totalDistance +=
-              tagPose.getTranslation().getDistance(inputs.estimatedRobotPose.getTranslation());
-        }
-        double averageDistance = totalDistance / numTags;
-        // Increase std devs based on the average distance to the target and per camera bias matrix
-        inputs.visionMeasurementStdDevs =
-            inputs
-                .visionMeasurementStdDevs
-                .times(1.0 + ((Math.pow(averageDistance, 2.0) / numTags)))
-                .elementTimes(cameraBias);
-      }
-    }
+    // if (inputs.pipelineIndex == 0) {
+    //   updateAprilTag(inputs);
+    // } else if (inputs.pipelineIndex == 1) {
+    updateCorners(inputs);
+    // } else {
+    //   System.out.println("Pipeline index not found");
+    // }
   }
 
   @Override
@@ -167,11 +56,11 @@ public class VisionIOPhotonCamera implements VisionIO {
     var resList = camera.getAllUnreadResults();
 
     if (!resList.isEmpty()) {
-      System.out.println("CHECKPOINT");
       var res = resList.get(resList.size() - 1);
 
       inputs.timestampSeconds = res.getTimestampSeconds();
-      inputs.hasCornersResult = false;
+
+      inputs.hasResult = false;
 
       if (!res.getTargets().isEmpty()) {
 
@@ -185,13 +74,30 @@ public class VisionIOPhotonCamera implements VisionIO {
         //   t -> t.getDetectedCorners().
         // )
 
-        inputs.hasCornersResult = true;
+        inputs.hasResult = true;
+        var bestTarget = res.getBestTarget();
+
+        inputs.detectedTagsIds = new int[] {res.getBestTarget().fiducialId};
         inputs.detectedCorners =
-            res.getBestTarget().getDetectedCorners().stream()
+            bestTarget.getDetectedCorners().stream()
                 .map(tc -> new Translation2d(tc.x, tc.y))
                 .toArray(Translation2d[]::new);
 
-        inputs.tagDistance = res.getBestTarget().getBestCameraToTarget().getX();
+        double centerx = 0.0;
+
+        for (int i = 0; i < 4; i++) {
+          centerx += inputs.detectedCorners[i].getX();
+        }
+
+        centerx /= 4;
+
+        inputs.tagCenterX = centerx;
+
+        double hypotDistance = bestTarget.getBestCameraToTarget().getX();
+        inputs.tagHorizontalDistance = hypotDistance;
+
+        inputs.tagHorizontalDistance =
+            hypotDistance * Math.cos(-robotToCamera.getRotation().getY());
 
         // for (PhotonTrackedTarget target : res.getTargets()) {
         //   // var detectedCorners = target.getDetectedCorners();
@@ -201,10 +107,11 @@ public class VisionIOPhotonCamera implements VisionIO {
         // }
       }
 
-      if (!inputs.hasCornersResult) {
+      if (!inputs.hasResult) {
         inputs.detectedCorners = new Translation2d[] {};
         // inputs.detectedTagPoses = new Pose3d[] {};
-        inputs.tagDistance = 0;
+        inputs.tagHorizontalDistance = 0;
+        inputs.tagCenterX = Integer.MIN_VALUE;
       }
     }
   }
@@ -214,9 +121,118 @@ public class VisionIOPhotonCamera implements VisionIO {
     return robotToCamera;
   }
 
-  @Override
-  public void setPipelineIndex(int index) {
-    this.pipeline = index;
-    this.camera.setPipelineIndex(this.pipeline);
-  }
+  // @Override
+  // public void setPipelineIndex(int index) {
+  //   this.pipeline = index;
+  //   this.camera.setPipelineIndex(this.pipeline);
+  // }
+
+  // @Override
+  // public void updateAprilTag(VisionIOInputs inputs) {
+  //   var resList = camera.getAllUnreadResults();
+  //   if (!resList.isEmpty()) {
+  //     PhotonPipelineResult res = resList.get(resList.size() - 1);
+  //     // var res = camera.getLatestResult();
+
+  //     // for (PhotonPipelineResult res : resList) {
+  //     inputs.timestampSeconds = res.getTimestampSeconds();
+  //     inputs.hasAprilTagResult = false;
+
+  //     if (res.getMultiTagResult().isPresent()) {
+
+  //       Transform3d fieldToCamera = res.getMultiTagResult().get().estimatedPose.best;
+  //       inputs.hasAprilTagResult = true;
+  //       inputs.estimatedRobotPose =
+  //           new Pose3d()
+  //               .plus(fieldToCamera)
+  //               .relativeTo(FieldConstants.aprilTagFieldLayout.getOrigin())
+  //               .plus(robotToCamera.inverse());
+  //       inputs.detectedTagsIds =
+  //           res.getMultiTagResult().get().fiducialIDsUsed.stream()
+  //               .mapToInt(Short::intValue)
+  //               .toArray();
+  //       inputs.visionMeasurementStdDevs = MULTI_TARGET_STDDEVS;
+  //     } else if (!res.getTargets().isEmpty()) {
+
+  //       // Find the detected target with the lowest pose ambiguity that is within the field
+  // layout
+  //       double lowestAmbiguityScore = Double.POSITIVE_INFINITY;
+  //       PhotonTrackedTarget lowestAmbiguityTarget = null;
+  //       var tagsUsed = new ArrayList<Integer>();
+  //       for (var target : res.getTargets()) {
+  //         double targetPoseAmbiguity = target.getPoseAmbiguity();
+
+  //         //   Filter out tags that aren't fiducial targets (IDK how) or in the ATFL
+  //         if (targetPoseAmbiguity == -1
+  //             || FieldConstants.aprilTagFieldLayout.getTagPose(target.getFiducialId()).isEmpty())
+  //           continue;
+
+  //         tagsUsed.add(target.getFiducialId());
+
+  //         if (targetPoseAmbiguity < lowestAmbiguityScore
+  //             && targetPoseAmbiguity <= AMBIGUITY_THRESHOLD) {
+  //           lowestAmbiguityScore = targetPoseAmbiguity;
+  //           lowestAmbiguityTarget = target;
+  //         }
+  //       }
+
+  //       if (lowestAmbiguityTarget != null) {
+  //         var tagPoseOpt =
+  //
+  // FieldConstants.aprilTagFieldLayout.getTagPose(lowestAmbiguityTarget.getFiducialId());
+  //         if (tagPoseOpt.isPresent()) {
+  //           inputs.hasAprilTagResult = true;
+  //           inputs.estimatedRobotPose =
+  //               tagPoseOpt
+  //                   .get()
+  //                   .transformBy(lowestAmbiguityTarget.getBestCameraToTarget().inverse())
+  //                   .transformBy(robotToCamera.inverse());
+  //           inputs.detectedTagsIds = tagsUsed.stream().mapToInt(Integer::intValue).toArray();
+  //           inputs.visionMeasurementStdDevs = SINGLE_TARGET_STDDEVS;
+  //         }
+  //       }
+  //     }
+
+  //     // Reject pose estimates outside reasonable bounds
+  //     if (!inputs.hasAprilTagResult
+  //         || inputs.estimatedRobotPose.getX() < -FIELD_BORDER_MARGIN
+  //         || inputs.estimatedRobotPose.getX()
+  //             > FieldConstants.aprilTagFieldLayout.getFieldLength() + FIELD_BORDER_MARGIN
+  //         || inputs.estimatedRobotPose.getY() < -FIELD_BORDER_MARGIN
+  //         || inputs.estimatedRobotPose.getY()
+  //             > FieldConstants.aprilTagFieldLayout.getFieldWidth() + FIELD_BORDER_MARGIN
+  //         || inputs.estimatedRobotPose.getZ() < -Z_MARGIN
+  //         || inputs.estimatedRobotPose.getZ() > Z_MARGIN) {
+  //       // Record default values if no results or invalid were found
+  //       inputs.hasAprilTagResult = false;
+  //       inputs.estimatedRobotPose = new Pose3d();
+  //       inputs.detectedTagsIds = new int[] {};
+  //       inputs.detectedTagPoses = new Pose3d[] {};
+  //       inputs.visionMeasurementStdDevs = INVALID_STDDEVS;
+  //     } else {
+  //       // Calculate the average distance between the estimated pose and the pose of all detected
+  //       // fiducial targets in three dimensions
+  //       double totalDistance = 0.0;
+  //       // Guaranteed to have at least one target
+  //       int numTags = inputs.detectedTagsIds.length;
+  //       inputs.detectedTagPoses = new Pose3d[numTags];
+  //       for (int i = 0; i < numTags; i++) {
+  //         int tagId = inputs.detectedTagsIds[i];
+  //         // All values are guaranteed to exist within the ATFL
+  //         var tagPose = FieldConstants.aprilTagFieldLayout.getTagPose(tagId).orElseThrow();
+  //         inputs.detectedTagPoses[i] = tagPose;
+  //         totalDistance +=
+  //             tagPose.getTranslation().getDistance(inputs.estimatedRobotPose.getTranslation());
+  //       }
+  //       double averageDistance = totalDistance / numTags;
+  //       // Increase std devs based on the average distance to the target and per camera bias
+  // matrix
+  //       inputs.visionMeasurementStdDevs =
+  //           inputs
+  //               .visionMeasurementStdDevs
+  //               .times(1.0 + ((Math.pow(averageDistance, 2.0) / numTags)))
+  //               .elementTimes(cameraBias);
+  //     }
+  //   }
+  // }
 }

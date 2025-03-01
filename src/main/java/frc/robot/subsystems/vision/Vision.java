@@ -2,20 +2,17 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.FieldConstants;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
-import frc.robot.util.PoseEstimator;
-import frc.robot.util.PoseEstimator.TxTyObservation;
-import frc.robot.util.PoseEstimator.VisionObservation;
-import java.util.Arrays;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
 
   private final VisionIO[] cameras;
   private final VisionIOInputs[] cameraInputs;
+  private final double leftCameraCenterXAligned = 425;
+  private final double rightCameraCenterXAlined = 850;
 
   public Vision(VisionIO... cameras) {
     this.cameras = cameras;
@@ -34,33 +31,34 @@ public class Vision extends SubsystemBase {
       Logger.processInputs("Vision/Cam" + i, input);
 
       // Don't report if there is no valid global pose estimate
-      if (!input.hasAprilTagResult) continue;
 
-      if (input.pipelineIndex == 0) {
-        PoseEstimator.getInstance()
-            .addVisionObservation(
-                new VisionObservation(
-                    input.estimatedRobotPose.toPose2d(),
-                    input.timestampSeconds,
-                    input.visionMeasurementStdDevs));
-      } else if (input.pipelineIndex == 1) {
-        PoseEstimator.getInstance()
-            .addTxTyObservation(
-                new TxTyObservation(
-                    input.detectedTagsIds[0],
-                    cameras[i].getRobotToCamera(),
-                    input.detectedCorners,
-                    input.tagDistance,
-                    input.timestampSeconds));
-      }
+      // if (input.pipelineIndex == 0) {
+      // PoseEstimator.getInstance()
+      //     .addVisionObservation(
+      //         new VisionObservation(
+      //             input.estimatedRobotPose.toPose2d(),
+      //             input.timestampSeconds,
+      //             input.visionMeasurementStdDevs));
+      // } else if (input.pipelineIndex == 1) {
+      // PoseEstimator.getInstance()
+      //     .addTxTyObservation(
+      //         new TxTyObservation(
+      //             input.detectedTagsIds[0],
+      //             cameras[i].getRobotToCamera(),
+      //             input.detectedCorners,
+      //             input.tagDistance,
+      //             input.timestampSeconds));
+      // }
+
+      // Logger.recordOutput("Vision/offset", getOffsetX(0));
     }
   }
 
-  public void setPipelineIndex(int index) {
-    for (VisionIO camera : cameras) {
-      camera.setPipelineIndex(index);
-    }
-  }
+  // public void setPipelineIndex(int index) {
+  //   for (VisionIO camera : cameras) {
+  //     camera.setPipelineIndex(index);
+  //   }
+  // }
 
   // Shelby County v Holder
   // Griswald v Connecticut
@@ -70,52 +68,101 @@ public class Vision extends SubsystemBase {
   // Reed v Reed
   // Obergefell v Hodges
   // Plyler v Doe
-  // Koremtsu v United States
+  // Korematsu v United States
   // Shah v Reno
 
-  public Pose2d getNearestReefPose() {
-    Pose2d currentPose = PoseEstimator.getInstance().getEstimatedPose();
-    // Pose2d closestPose = Pose2d.kZero;
-    // for (Pose2d pose : FieldConstants.Reef.centerFaces) {
+  // public Pose2d getNearestReefPose() {
+  //   Pose2d currentPose = PoseEstimator.getInstance().getReefPose();
+  // }
 
-    Pose2d closestPose =
-        currentPose.nearest(
-            Arrays.asList(
-                FieldConstants.Reef.branchPositions2d.stream()
-                    .map(map -> map.get(FieldConstants.ReefLevel.L2))
-                    .toArray(Pose2d[]::new)));
+  // public Pose2d getNearestReefFacePose() {
+  //   Pose2d currentPose = PoseEstimator.getInstance().getEstimatedPose();
 
-    return closestPose;
+  //   Pose2d nearestFace =
+  //       currentPose.nearest(
+  //           Arrays.asList(FieldConstants.Reef.centerFaces).stream()
+  //               .map(pose -> AllianceFlipUtil.apply(pose))
+  //               .toList());
 
-    // int faceNum = Arrays.binarySearch(FieldConstants.Reef.centerFaces, closestPose);
+  //   return nearestFace;
+  // }
 
-    // return AllianceFlipUtil.shouldFlip() ? redAllianceAprilTagReefPoses.get(faceNum) :
-    // blueAllianceAprilTagReefPoses.get(faceNum);
-  }
+  public double getOffsetX(int cameraindex) {
+    // for (int i = 0; i < cameras.length; i++) {
+    // int i = isLeftPole ? 0 : 1;
+    var input = cameraInputs[cameraindex];
 
-  public int getReefAprilTagId() {
-    int closestFace = getNearestReefSide();
-    // System.out.println(closestFace);
-    return VisionConstants.redAllianceAprilTagReefPoses[closestFace];
-  }
+    if (!input.hasResult) return 0;
 
-  public int getNearestReefSide() {
-    Pose2d closestPose = getNearestReefPose();
-    int closestFace;
-    for (int i = 0; i < 6; i++) {
-      // if (FieldConstants.Reef.centerFaces[i].equals(closestPose)) {
-      //   closestFace = i;
-      //   return closestFace;
-      // }
-      if (FieldConstants.Reef.branchPositions2d
-          .get(i)
-          .get(FieldConstants.ReefLevel.L2)
-          .equals(closestPose)) {
-        closestFace = i;
-        return closestFace;
-      }
+    Translation2d[] corners = input.detectedCorners;
+
+    double centerx = 0.0;
+
+    for (int i = 0; i < 4; i++) {
+      centerx += corners[i].getX();
     }
-    // int closestFace = Arrays.binarySearch(FieldConstants.Reef.centerFaces, closestPose);
-    return -1;
+
+    centerx /= 4.0;
+
+    if (cameraindex == 0) {
+      return centerx - leftCameraCenterXAligned;
+    } else if (cameraindex == 1) {
+      return centerx - rightCameraCenterXAlined;
+    } else return Integer.MAX_VALUE;
+
+    // return cameraindex == 0
+    //     ? centerx - leftCameraCenterXAligned
+    //     : centerx - rightCameraCenterXAlined;
   }
+
+  // public double getHorizontalDistanceToTag() {
+
+  // }
+
+  // public Pose2d getNearestReefPose() {
+  //   Pose2d currentPose = PoseEstimator.getInstance().getEstimatedPose();
+  //   // Pose2d closestPose = Pose2d.kZero;
+  //   // for (Pose2d pose : FieldConstants.Reef.centerFaces) {
+
+  //   Pose2d closestPose =
+  //       currentPose.nearest(
+  //           Arrays.asList(
+  //               FieldConstants.Reef.branchPositions2d.stream()
+  //                   .map(map -> map.get(FieldConstants.ReefLevel.L2))
+  //                   .toArray(Pose2d[]::new)));
+
+  //   return closestPose;
+
+  // int faceNum = Arrays.binarySearch(FieldConstants.Reef.centerFaces, closestPose);
+
+  // return AllianceFlipUtil.shouldFlip() ? redAllianceAprilTagReefPoses.get(faceNum) :
+  // blueAllianceAprilTagReefPoses.get(faceNum);
+  // }
+
+  // public int getReefAprilTagId() {
+  //   int closestFace = getNearestReefSide();
+  //   // System.out.println(closestFace);
+
+  //   return VisionConstants.redAllianceAprilTagReefPoses[closestFace];
+  // }
+
+  // public int getNearestReefSide() {
+  //   Pose2d closestPose = getNearestReefPose();
+  //   int closestFace;
+  //   for (int i = 0; i < 6; i++) {
+  //     // if (FieldConstants.Reef.centerFaces[i].equals(closestPose)) {
+  //     //   closestFace = i;
+  //     //   return closestFace;
+  //     // }
+  //     if (FieldConstants.Reef.branchPositions2d
+  //         .get(i)
+  //         .get(FieldConstants.ReefLevel.L2)
+  //         .equals(closestPose)) {
+  //       closestFace = i;
+  //       return closestFace;
+  //     }
+  //   }
+  //   // int closestFace = Arrays.binarySearch(FieldConstants.Reef.centerFaces, closestPose);
+  //   return -1;
+  // }
 }

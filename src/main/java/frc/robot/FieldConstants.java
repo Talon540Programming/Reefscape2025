@@ -5,34 +5,25 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.*;
-import lombok.Getter;
 
 /**
  * Contains various field dimensions and useful reference points. All units are in meters and poses
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  public static AprilTagFieldLayout fieldLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+  // @Getter
+  public static final AprilTagFieldLayout aprilTagFieldLayout =
+      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
-  static {
-    System.out.println(Path.of(AprilTagFields.k2025ReefscapeWelded.toString()));
-  }
-
-  public static final double fieldLength =
-      AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
-  public static final double fieldWidth =
-      AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldWidth();
+  public static final double fieldLength = aprilTagFieldLayout.getFieldLength();
+  public static final double fieldWidth = aprilTagFieldLayout.getFieldWidth();
   public static final double startingLineX =
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
 
   public static class Processor {
     public static final Pose2d centerFace =
-        new Pose2d(
-            AprilTagLayoutType.OFFICIAL.getFieldLayout().getTagPose(16).get().getX(),
-            0,
-            Rotation2d.fromDegrees(90));
+        new Pose2d(aprilTagFieldLayout.getTagPose(16).get().getX(), 0, Rotation2d.fromDegrees(90));
   }
 
   public static class Barge {
@@ -99,13 +90,13 @@ public class FieldConstants {
 
     static {
       // Initialize faces
-      var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
-      centerFaces[0] = aprilTagLayout.getTagPose(18).get().toPose2d();
-      centerFaces[1] = aprilTagLayout.getTagPose(19).get().toPose2d();
-      centerFaces[2] = aprilTagLayout.getTagPose(20).get().toPose2d();
-      centerFaces[3] = aprilTagLayout.getTagPose(21).get().toPose2d();
-      centerFaces[4] = aprilTagLayout.getTagPose(22).get().toPose2d();
-      centerFaces[5] = aprilTagLayout.getTagPose(17).get().toPose2d();
+      // var aprilTagLayout = aprilTagFieldLayout;
+      centerFaces[0] = aprilTagFieldLayout.getTagPose(18).get().toPose2d();
+      centerFaces[1] = aprilTagFieldLayout.getTagPose(19).get().toPose2d();
+      centerFaces[2] = aprilTagFieldLayout.getTagPose(20).get().toPose2d();
+      centerFaces[3] = aprilTagFieldLayout.getTagPose(21).get().toPose2d();
+      centerFaces[4] = aprilTagFieldLayout.getTagPose(22).get().toPose2d();
+      centerFaces[5] = aprilTagFieldLayout.getTagPose(17).get().toPose2d();
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {
@@ -173,7 +164,6 @@ public class FieldConstants {
         new Pose2d(Units.inchesToMeters(48), middleIceCream.getY() - separation, new Rotation2d());
   }
 
-  @Getter
   public enum AprilTagLayoutType {
     OFFICIAL("2025-reefscape-welded.json");
 

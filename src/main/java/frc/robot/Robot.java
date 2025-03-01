@@ -13,6 +13,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
@@ -134,7 +136,7 @@ public class Robot extends LoggedRobot {
     //   )
     // );
 
-    PoseEstimator.getInstance().resetPose(new Pose2d(1.37, 7.19, Rotation2d.fromDegrees(-55)));
+    // PoseEstimator.getInstance().resetPose(new Pose2d(1.37, 7.19, Rotation2d.fromDegrees(-55)));
   }
 
   @Override

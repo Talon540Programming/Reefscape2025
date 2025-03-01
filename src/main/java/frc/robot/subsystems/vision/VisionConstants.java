@@ -11,29 +11,30 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.util.LoggedTunableNumber;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 
 public class VisionConstants {
 
-  public static final Map<Integer, Integer> blueAllianceAprilTagReefPoses = new HashMap<>();
+  //   public static final Map<Integer, Integer> blueAllianceAprilTagReefPoses = new HashMap<>();
+  public static final int[] blueAllianceAprilTagReefPoses = new int[] {18, 19, 20, 21, 22, 17};
 
-  static {
-    blueAllianceAprilTagReefPoses.put(18, 0);
-    blueAllianceAprilTagReefPoses.put(19, 1);
-    blueAllianceAprilTagReefPoses.put(20, 2);
-    blueAllianceAprilTagReefPoses.put(21, 3);
-    blueAllianceAprilTagReefPoses.put(22, 4);
-    blueAllianceAprilTagReefPoses.put(17, 5);
-  }
+  //   static {
+  //     blueAllianceAprilTagReefPoses.put(18, 0);
+  //     blueAllianceAprilTagReefPoses.put(19, 1);
+  //     blueAllianceAprilTagReefPoses.put(20, 2);
+  //     blueAllianceAprilTagReefPoses.put(21, 3);
+  //     blueAllianceAprilTagReefPoses.put(22, 4);
+  //     blueAllianceAprilTagReefPoses.put(17, 5);
+  //   }
 
   //   public static final Map<Integer, Integer> redAllianceAprilTagReefPoses = new HashMap<>();
   public static final int[] redAllianceAprilTagReefPoses = new int[] {7, 6, 11, 10, 9, 8};
@@ -55,6 +56,9 @@ public class VisionConstants {
   public static final double thetaStdDevCoefficient = 0.03;
   public static final double demoTagPosePersistenceSecs = 0.5;
   public static final double objDetectConfidenceThreshold = 0.8;
+
+  public static final Translation2d branchPoseToScorePose =
+      new Translation2d(Units.inchesToMeters(20), 0);
   public static final LoggedTunableNumber timestampOffset =
       new LoggedTunableNumber("AprilTagVision/TimestampOffset", 0.0);
 
@@ -91,101 +95,71 @@ public class VisionConstants {
                             0.272,
                             0.221,
                             new Rotation3d(0, Math.toRadians(-20), Math.toRadians(-35))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
                         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build()
-                //     ,
-                // CameraConfig.builder()
-                //     .cameraName("frontright")
-                //     .robotToCamera(
-                //         new Transform3d(
-                //             0.206,
-                //             -0.272,
-                //             0.221,
-                //             new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
-                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
-                //     .calibrationPath(
-                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                //     .build(),
-                // CameraConfig.builder()
-                //     .cameraName("elevator")
-                //     .robotToCamera(
-                //         new Transform3d(
-                //             0.05,
-                //             0,
-                //             0.783,
-                //             new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
-                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
-                //     .calibrationPath(
-                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                //     .build()
-                // ,
-                // CameraConfig.builder()
-                //     .cameraName("testcam2")
-                //     .robotToCamera(
-                //         new Transform3d(
-                //             -0.330312,
-                //             0.138773,
-                //             0.157061,
-                //             new Rotation3d(0, Math.toRadians(-30), Math.PI)))
-                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
-                //     .calibrationPath(
-                //         Path.of(
-
-                // "camera_calibrations/mrcalibration_testcam2@800x600.json"))
-                //     .build()
-                );
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("frontright")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.206,
+                            -0.272,
+                            0.221,
+                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
+                    .calibrationPath(
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("elevator")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.05,
+                            0,
+                            0.783,
+                            new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
+                    .calibrationPath(
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                    .build());
         case COMPBOT ->
             List.of(
                 CameraConfig.builder()
-                    .cameraName("UNDER_SHOOTER")
+                    .cameraName("frontleft")
                     .robotToCamera(
                         new Transform3d(
-                            -0.330312,
-                            0.138773,
-                            0.157061,
-                            new Rotation3d(0, Math.toRadians(-30), Math.PI)))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                            0.206,
+                            0.272,
+                            0.221,
+                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(-35))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
-                        Path.of(
-                            "camera_calibrations/photon_calibration_UNDER_SHOOTER_1280x720.json"))
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
                     .build(),
                 CameraConfig.builder()
-                    .cameraName("BACK_LEFT")
+                    .cameraName("frontright")
                     .robotToCamera(
                         new Transform3d(
-                            -0.285206,
-                            0.283806,
-                            0.272624,
-                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(135))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                            0.206,
+                            -0.272,
+                            0.221,
+                            new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
-                        Path.of("camera_calibrations/photon_calibration_BACK_LEFT_1280x720.json"))
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
                     .build(),
                 CameraConfig.builder()
-                    .cameraName("FRONT_LEFT")
+                    .cameraName("elevator")
                     .robotToCamera(
                         new Transform3d(
-                            0.278740,
-                            0.280968,
-                            0.272098,
-                            new Rotation3d(0, Math.toRadians(-45), Math.toRadians(-22.5))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
+                            0.05,
+                            0,
+                            0.783,
+                            new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
-                        Path.of("camera_calibrations/photon_calibration_FRONT_LEFT_1280x720.json"))
-                    .build(),
-                CameraConfig.builder()
-                    .cameraName("FRONT_RIGHT")
-                    .robotToCamera(
-                        new Transform3d(
-                            0.281034,
-                            -0.278751,
-                            0.272098,
-                            new Rotation3d(0, Math.toRadians(-45), Math.toRadians(67.5))))
-                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0)) // TODO
-                    .calibrationPath(
-                        Path.of("camera_calibrations/photon_calibration_FRONT_RIGHT_1280x720.json"))
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
                     .build());
         default -> Collections.<CameraConfig>emptyList();
       };

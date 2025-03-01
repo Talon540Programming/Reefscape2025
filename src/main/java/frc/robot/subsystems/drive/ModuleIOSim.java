@@ -9,8 +9,11 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants;
 import java.util.Queue;
+import org.littletonrobotics.junction.Logger;
 
 public class ModuleIOSim implements ModuleIO {
+  static int key = -1;
+  final int index;
   private final DCMotor driveMotorModel = DCMotor.getNEO(1);
   private final DCMotor turnMotorModel = DCMotor.getNEO(1);
 
@@ -40,6 +43,8 @@ public class ModuleIOSim implements ModuleIO {
   private final Queue<Double> turnPositionQueue;
 
   public ModuleIOSim() {
+    key++;
+    index = key;
     // Enable wrapping for turn PID
     turnController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -91,6 +96,8 @@ public class ModuleIOSim implements ModuleIO {
     inputs.odometryTurnPositions =
         turnPositionQueue.stream().map(Rotation2d::fromRadians).toArray(Rotation2d[]::new);
     turnPositionQueue.clear();
+
+    Logger.recordOutput("error" + index, driveController.getError());
   }
 
   @Override
@@ -108,7 +115,7 @@ public class ModuleIOSim implements ModuleIO {
   @Override
   public void runDriveVelocity(double velocityRadPerSec) {
     driveClosedLoop = true;
-    driveFFVolts = driveFeedforward.calculate(velocityRadPerSec);
+    // driveFFVolts = driveFeedforward.calculate(velocityRadPerSec);
     driveController.setSetpoint(velocityRadPerSec);
   }
 

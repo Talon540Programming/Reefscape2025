@@ -33,5 +33,17 @@ public interface ControlsInterface {
 
   public Trigger slowMode();
 
-  public Trigger enableReefAutoAlignment();
+  public Trigger enableRightReefAutoAlignment();
+
+  public Trigger enableLeftReefAutoAlignment();
+
+  public Trigger back();
+
+  public Trigger stow();
+
+  public Trigger L1();
+
+  public Trigger L2();
+
+  public Trigger L3();
 }

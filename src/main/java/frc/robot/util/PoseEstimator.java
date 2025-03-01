@@ -21,7 +21,8 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.FieldConstants;
+import frc.robot.subsystems.drive.DriveBase;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -45,16 +46,16 @@ public class PoseEstimator {
 
   private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
 
-  // static {
-  //   for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
-  //     tagPoses2d.put(
-  //         i,
-  //         FieldConstants.aprilTagFieldlayout
-  //             .getTagPose(i)
-  //             .map(Pose3d::toPose2d)
-  //             .orElse(new Pose2d()));
-  //   }
-  // }
+  static {
+    for (int i = 1; i <= 22; i++) {
+      tagPoses2d.put(
+          i,
+          FieldConstants.aprilTagFieldLayout
+              .getTagPose(i)
+              .map(Pose3d::toPose2d)
+              .orElse(new Pose2d()));
+    }
+  }
 
   private static PoseEstimator instance;
 
@@ -91,12 +92,14 @@ public class PoseEstimator {
 
   private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
 
+  private final Map<Integer, CornersRecord> cornerPoses = new HashMap<>();
+
   private PoseEstimator() {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
 
-    kinematics = new SwerveDriveKinematics(DriveConstants.moduleTranslations);
+    kinematics = new SwerveDriveKinematics(DriveBase.getModuleTranslations());
   }
 
   public void resetPose(Pose2d pose) {
@@ -255,6 +258,38 @@ public class PoseEstimator {
         new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), observation.timestamp()));
   }
 
+  public void addCornerObservation(TxTyObservation observation) {
+    if (txTyPoses.containsKey(observation.tagId())
+        && txTyPoses.get(observation.tagId()).timestamp() >= observation.timestamp()) {
+      return;
+    }
+
+    cornerPoses.put(
+        observation.tagId(), new CornersRecord(observation.t(), observation.timestamp()));
+  }
+
+  public double get1DReefPose(int tagId) {
+    double centerx = 0.0;
+
+    if (!cornerPoses.containsKey(tagId)) {
+      DriverStation.reportError("No tag with id: " + tagId, true);
+      return 0;
+    }
+    var corners = cornerPoses.get(tagId);
+    // Check if stale
+    if (Timer.getTimestamp() - corners.timestamp() >= txTyObservationStaleSecs.get()) {
+      return 0;
+    }
+
+    for (int i = 0; i < 4; i++) {
+      centerx += corners.t()[i].getX();
+    }
+
+    centerx /= 4.0;
+
+    return estimatedPose.getX() - centerx;
+  }
+
   /** Get 2d pose estimate of robot if not stale. */
   public Optional<Pose2d> getTxTyPose(int tagId) {
     if (!txTyPoses.containsKey(tagId)) {
@@ -320,4 +355,6 @@ public class PoseEstimator {
       int tagId, Transform3d robotToCamera, Translation2d[] t, double distance, double timestamp) {}
 
   public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
+
+  public record CornersRecord(Translation2d[] t, double timestamp) {}
 }

@@ -97,7 +97,37 @@ public class SingleXbox implements ControlsInterface {
   ;
 
   @Override
-  public Trigger enableReefAutoAlignment() {
-    return controller.leftTrigger();
+  public Trigger enableLeftReefAutoAlignment() {
+    return controller.leftBumper();
+  }
+
+  @Override
+  public Trigger enableRightReefAutoAlignment() {
+    return controller.rightBumper();
+  }
+
+  @Override
+  public Trigger back() {
+    return controller.back();
+  }
+
+  @Override
+  public Trigger stow() {
+    return controller.povDown();
+  }
+
+  @Override
+  public Trigger L1() {
+    return controller.povLeft();
+  }
+
+  @Override
+  public Trigger L2() {
+    return controller.povUp();
+  }
+
+  @Override
+  public Trigger L3() {
+    return controller.povRight();
   }
 }

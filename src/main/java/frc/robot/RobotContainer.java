@@ -1,16 +1,3 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -22,43 +9,36 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.AlignToReef;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.oi.ControlsInterface;
+import frc.robot.oi.SimKeyboard;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
 import frc.robot.subsystems.dispenser.DispenserIOSim;
 import frc.robot.subsystems.dispenser.DispenserIOSpark;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.elevator.*;
-import frc.robot.subsystems.intake.IntakeBase;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.intake.IntakeIOSpark;
-import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionConstants;
-import frc.robot.subsystems.vision.VisionIOPhotonCamera;
+import frc.robot.subsystems.intake.*;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.PoseEstimator;
+import java.nio.file.Path;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
-/**
- * This class is where the bulk of the robot should be declared. Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
- * subsystems, commands, and button mappings) should be declared here.
- */
 public class RobotContainer {
   // Subsystems
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
   //   private final ControlsInterface controlsInterface = new SingleXbox(0);
-  //   private final ControlsInterface controlsInterface = new SimKeyboard(0);
-  private final boolean slowModeEnabled = false;
+  private final ControlsInterface controlsInterface = new SimKeyboard(0);
+  //   private final boolean slowModeEnabled = false;
 
   // Load PoseEstimator class
-  private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
+  PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
   // Subsystems
   private final DriveBase driveBase;
@@ -66,9 +46,6 @@ public class RobotContainer {
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
   private final Vision vision;
-
-  // Controller
-  //   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -89,16 +66,15 @@ public class RobotContainer {
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
 
-        // vision =
-        //     new Vision(
-        //         VisionConstants.cameras.stream()
-        //             .map(
-        //                 v ->
-        //                     new VisionIOPhotonCamera(
-        //                         v.cameraName(), v.robotToCamera(), v.cameraBias()))
-        //             .toArray(VisionIOPhotonCamera[]::new));
+        vision =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOPhotonCamera(
+                                v.cameraName(), v.robotToCamera(), v.cameraBias()))
+                    .toArray(VisionIOPhotonCamera[]::new));
 
-        // Sim robot, instantiate physics sim IO implementations
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
@@ -111,20 +87,18 @@ public class RobotContainer {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
-        // vision =
-        //     new Vision(
-        //         VisionConstants.cameras.stream()
-        //             .map(
-        //                 v ->
-        //                     new VisionIOSim(
-        //                         v.cameraName(),
-        //                         v.robotToCamera(),
-        //                         v.cameraBias(),
-        //
-        // Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json")))
-        //             .toArray(VisionIOSim[]::new));
+        vision =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOSim(
+                                v.cameraName(),
+                                v.robotToCamera(),
+                                v.cameraBias(),
+                                Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json")))
+                    .toArray(VisionIOSim[]::new));
 
-        // Replayed robot, disable IO implementations
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
@@ -137,20 +111,12 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
-        // vision = new Vision(new VisionIO[] {});
+        vision = new Vision(new VisionIO[] {});
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
       }
     }
-
-    vision =
-        new Vision(
-            VisionConstants.cameras.stream()
-                .map(
-                    v ->
-                        new VisionIOPhotonCamera(v.cameraName(), v.robotToCamera(), v.cameraBias()))
-                .toArray(VisionIOPhotonCamera[]::new));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
@@ -184,16 +150,9 @@ public class RobotContainer {
           "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
 
-    // Configure the button bindings
     configureButtonBindings();
   }
 
-  /**
-   * Use this method to define your button->command mappings. Buttons can be created by
-   * instantiating a {@link GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
-   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-   */
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
@@ -245,7 +204,29 @@ public class RobotContainer {
     controller.back().debounce(0.5).onTrue(elevatorBase.homingSequence());
 
     // Auto Align (Left or Right)
-    // TODO
+    controller
+        .leftBumper()
+        .whileTrue(
+            new AlignToReef(
+                driveBase,
+                () -> vision.getOffsetX(0) // right-side camera is used to align to left post
+                ).alongWith(
+                    Commands.run(
+                        () -> System.out.println("Enabled left")
+                    )
+                ));
+
+    controller
+        .rightBumper()
+        .whileTrue(
+            new AlignToReef(
+                driveBase,
+                () -> vision.getOffsetX(1) // left-side camera is used to align to right post
+                ).alongWith(
+                    Commands.run(
+                        () -> System.out.println("Enabled left")
+                    )
+                ));
 
     // Human Player Alert (Strobe LEDs)
     // TODO

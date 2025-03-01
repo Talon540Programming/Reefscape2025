@@ -34,53 +34,49 @@ public class SimKeyboard implements ControlsInterface {
   public Trigger depositL1() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger depositL2left() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger depositL2right() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger removeL2Algae() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger depositL3left() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger depositL3right() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger removeL3Algae() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
   public Trigger intake() {
     return new Trigger(() -> false);
   }
-  ;
 
   @Override
-  public Trigger enableReefAutoAlignment() {
-    System.out.println("here");
+  public Trigger enableLeftReefAutoAlignment() {
+    return new Trigger(() -> hid.getRawButton(0));
+  }
+
+  @Override
+  public Trigger enableRightReefAutoAlignment() {
     return new Trigger(() -> hid.getRawButton(1));
   }
 
@@ -96,6 +92,31 @@ public class SimKeyboard implements ControlsInterface {
 
   @Override
   public Trigger slowMode() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger back() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger stow() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger L1() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger L2() {
+    return new Trigger(() -> false);
+  }
+
+  @Override
+  public Trigger L3() {
     return new Trigger(() -> false);
   }
 }

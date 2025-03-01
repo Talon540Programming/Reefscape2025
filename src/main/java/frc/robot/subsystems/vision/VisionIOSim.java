@@ -23,7 +23,7 @@ public class VisionIOSim extends VisionIOPhotonCamera {
   static {
     if (Constants.getMode() == Constants.Mode.SIM) {
       visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(FieldConstants.aprilTagFieldlayout);
+      visionSim.addAprilTags(FieldConstants.aprilTagFieldLayout);
     }
   }
 
@@ -62,29 +62,29 @@ public class VisionIOSim extends VisionIOPhotonCamera {
 
     super.updateInputs(inputs);
 
-    inputs.pipelineIndex = pipeline;
+    // inputs.pipelineIndex = pipeline;
 
-    if (inputs.pipelineIndex == 0) {
-      updateAprilTag(inputs);
-    } else if (inputs.pipelineIndex == 1) {
-      updateCorners(inputs);
-    } else {
-      System.out.println("Pipeline index not found");
-    }
+    // if (inputs.pipelineIndex == 0) {
+    //   updateAprilTag(inputs);
+    // } else if (inputs.pipelineIndex == 1) {
+    updateCorners(inputs);
+    // } else {
+    //   System.out.println("Pipeline index not found");
+    // }
   }
 
-  @Override
-  public void updateAprilTag(VisionIOInputs inputs) {
-    super.updateAprilTag(inputs);
-    if (inputs.hasAprilTagResult) {
-      visionSim
-          .getDebugField()
-          .getObject("VisionEstimation")
-          .setPose(inputs.estimatedRobotPose.toPose2d());
-    } else {
-      visionSim.getDebugField().getObject("VisionEstimation").setPoses();
-    }
-  }
+  // @Override
+  // public void updateAprilTag(VisionIOInputs inputs) {
+  //   super.updateAprilTag(inputs);
+  //   if (inputs.hasAprilTagResult) {
+  //     visionSim
+  //         .getDebugField()
+  //         .getObject("VisionEstimation")
+  //         .setPose(inputs.estimatedRobotPose.toPose2d());
+  //   } else {
+  //     visionSim.getDebugField().getObject("VisionEstimation").setPoses();
+  //   }
+  // }
 
   @Override
   public void updateCorners(VisionIOInputs inputs) {
@@ -93,10 +93,10 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     super.updateCorners(inputs);
   }
 
-  @Override
-  public void setPipelineIndex(int index) {
-    this.pipeline = index;
-  }
+  // @Override
+  // public void setPipelineIndex(int index) {
+  //   this.pipeline = index;
+  // }
 
   private void setCalibrationFromConfig(
       Path path, int resWidth, int resHeight, SimCameraProperties properties)
