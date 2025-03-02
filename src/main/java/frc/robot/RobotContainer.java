@@ -177,7 +177,7 @@ public class RobotContainer {
         .and(controller.leftTrigger().negate())
         .onTrue(
             dispenserBase
-                .eject()
+                .eject(elevatorBase::getGoal)
                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))));
 
     // Reserialize
