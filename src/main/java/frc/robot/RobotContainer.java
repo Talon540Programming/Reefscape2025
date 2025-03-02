@@ -122,7 +122,10 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
-    autoChooser.addOption("taxi auto", autoFactory.TaxiL2());
+    autoChooser.addOption("taxi auto", autoFactory.centerToBackL2());
+    autoChooser.addOption("right to front l2", autoFactory.rightToFrontL2());
+    autoChooser.addOption("right l2 feeder l2", autoFactory.rightL2FeederL2());
+
 
     configureButtonBindings();
   }

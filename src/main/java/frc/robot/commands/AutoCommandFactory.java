@@ -31,16 +31,33 @@ public class AutoCommandFactory {
             PoseEstimator.getInstance()::getOdometryPose,
             PoseEstimator.getInstance()::resetPose,
             drive::followTrajectory,
-            AllianceFlipUtil.shouldFlip(),
+            !AllianceFlipUtil.shouldFlip(),
             drive);
   }
 
-  public Command TaxiL2() {
+  public Command centerToBackL2() {
     return Commands.sequence(
-        autoFactory.resetOdometry("taxiScore"),
+        autoFactory.resetOdometry("centerToBackL2"),
         Commands.deadline(
-            autoFactory.trajectoryCmd("taxiScore"),
+            autoFactory.trajectoryCmd("centerToBackL2"),
+            Commands.runOnce(() -> elevator.setGoal(ElevatorState.L2_CORAL))
+            ),
+            dispenser.eject()
+            );
+  }
+
+  public Command rightToFrontL2() {
+    return Commands.sequence(
+        autoFactory.resetOdometry("rightToFrontL2"),
+        Commands.deadline(
+            autoFactory.trajectoryCmd("rightToFrontL2"),
             Commands.runOnce(() -> elevator.setGoal(ElevatorState.L2_CORAL))
                 .andThen(dispenser.eject())));
+  }
+
+  public Command rightL2FeederL2() {
+    return Commands.sequence(
+        autoFactory.resetOdometry("rightL2FeederL2"),
+autoFactory.trajectoryCmd("rightL2FeederL2"));
   }
 }

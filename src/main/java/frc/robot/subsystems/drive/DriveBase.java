@@ -3,7 +3,9 @@ package frc.robot.subsystems.drive;
 import static edu.wpi.first.units.Units.Volts;
 
 import choreo.trajectory.SwerveSample;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -37,6 +39,11 @@ public class DriveBase extends SubsystemBase {
   private static final double FF_RAMP_RATE = 3.5; // Volts/Sec
   private static final double WHEEL_RADIUS_MAX_VELOCITY = 0.25; // Rad/Sec
   private static final double WHEEL_RADIUS_RAMP_RATE = 0.05; // Rad/Sec^2
+
+  private static final PIDController autoXController = new PIDController(0.01, 0.0, 0.0);
+  private static final PIDController autoYController = new PIDController(0.01, 0.0, 0.0);
+  private static final PIDController autoThetaController = new PIDController(0, 0.0, 0.0);
+
 
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged m_gyroInputs = new GyroIOInputsAutoLogged();
@@ -230,9 +237,22 @@ public class DriveBase extends SubsystemBase {
   }
 
   public void followTrajectory(SwerveSample sample) {
+    Pose2d pose = PoseEstimator.getInstance().getOdometryPose();
+
     // Get the current pose of the robot
     // Generate the next speeds for the robot
-    ChassisSpeeds speeds = new ChassisSpeeds(sample.vx, sample.vy, sample.omega);
+    ChassisSpeeds speeds = new ChassisSpeeds(
+      sample.vx
+       + autoXController.calculate(pose.getX(), sample.x)
+       ,
+      sample.vy
+       + autoYController.calculate(pose.getY(), sample.y)
+       ,
+      sample.omega
+       + autoThetaController.calculate(pose.getRotation().getRadians(), sample.heading)
+      );
+
+      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, PoseEstimator.getInstance().getOdometryPose().getRotation());
 
     // Apply the generated speeds
     runVelocity(speeds);
