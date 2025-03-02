@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.Volts;
 
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -226,6 +227,15 @@ public class DriveBase extends SubsystemBase {
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(setpointStates[i]);
     }
+  }
+
+  public void followTrajectory(SwerveSample sample) {
+    // Get the current pose of the robot
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds = new ChassisSpeeds(sample.vx, sample.vy, sample.omega);
+
+    // Apply the generated speeds
+    runVelocity(speeds);
   }
 
   // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP

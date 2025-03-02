@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.commands.AutoCommandFactory;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -90,6 +91,8 @@ public class RobotContainer {
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+    AutoCommandFactory autoFactory =
+        new AutoCommandFactory(driveBase, intakeBase, dispenserBase, elevatorBase);
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -119,6 +122,7 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
+    autoChooser.addOption("taxi auto", autoFactory.TaxiL2());
 
     configureButtonBindings();
   }
