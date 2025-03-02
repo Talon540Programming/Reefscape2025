@@ -59,7 +59,10 @@ public class DispenserBase extends SubsystemBase {
   }
 
   public Command intakeTillHolding() {
-    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop).until(() -> holdingCoral);
+    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop)
+        .raceWith(
+            Commands.sequence(
+                Commands.waitSeconds(0.25), Commands.waitUntil(this::isHoldingCoral)));
   }
 
   public Command eject(Supplier<ElevatorState> state) {
