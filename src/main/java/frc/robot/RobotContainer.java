@@ -153,7 +153,8 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
-            () -> slowModeEnabled));
+            () -> slowModeEnabled,
+            () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
