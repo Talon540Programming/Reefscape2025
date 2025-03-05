@@ -110,21 +110,19 @@ public class VisionConstants {
                     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
                     .calibrationPath(
                         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                    .build()
-                // ,
-                // CameraConfig.builder()
-                //     .cameraName("elevator")
-                //     .robotToCamera(
-                //         new Transform3d(
-                //             0.05,
-                //             0,
-                //             0.783,
-                //             new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
-                //     .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
-                //     .calibrationPath(
-                //         Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
-                //     .build()
-                );
+                    .build(),
+                CameraConfig.builder()
+                    .cameraName("elevator")
+                    .robotToCamera(
+                        new Transform3d(
+                            0.05,
+                            0,
+                            0.783,
+                            new Rotation3d(0, Math.toRadians(-40), Math.toRadians(180))))
+                    .cameraBias(VecBuilder.fill(1.0, 1.0, 1.0))
+                    .calibrationPath(
+                        Path.of("camera_calibrations/mrcalibration_testcam@1280x800.json"))
+                    .build());
         case COMPBOT ->
             List.of(
                 CameraConfig.builder()

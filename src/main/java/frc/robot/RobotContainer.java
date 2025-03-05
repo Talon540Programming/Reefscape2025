@@ -32,7 +32,7 @@ public class RobotContainer {
   private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
   // Subsystems
-  private final Drive driveBase;
+  private final DriveBase driveBase;
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
@@ -55,7 +55,7 @@ public class RobotContainer {
     switch (Constants.getMode()) {
       case REAL -> {
         driveBase =
-            new Drive(
+            new DriveBase(
                 new GyroIOPigeon2(),
                 new ModuleIOSpark(0),
                 new ModuleIOSpark(1),
@@ -65,18 +65,18 @@ public class RobotContainer {
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
 
-        // visionBase =
-        //     new Vision(
-        //         VisionConstants.cameras.stream()
-        //             .map(
-        //                 v ->
-        //                     new VisionIOPhotonCamera(
-        //                         v.cameraName(), v.robotToCamera(), v.cameraBias()))
-        //             .toArray(VisionIOPhotonCamera[]::new));
+        visionBase =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOPhotonCamera(
+                                v.cameraName(), v.robotToCamera(), v.cameraBias()))
+                    .toArray(VisionIOPhotonCamera[]::new));
       }
       case SIM -> {
         driveBase =
-            new Drive(
+            new DriveBase(
                 new GyroIO() {},
                 new ModuleIOSim(),
                 new ModuleIOSim(),
@@ -85,21 +85,21 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
-        // visionBase =
-        //     new Vision(
-        //         VisionConstants.cameras.stream()
-        //             .map(
-        //                 v ->
-        //                     new VisionIOSim(
-        //                         v.cameraName(),
-        //                         v.robotToCamera(),
-        //                         v.cameraBias(),
-        //                         v.calibrationPath()))
-        //             .toArray(VisionIOSim[]::new));
+        visionBase =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOSim(
+                                v.cameraName(),
+                                v.robotToCamera(),
+                                v.cameraBias(),
+                                v.calibrationPath()))
+                    .toArray(VisionIOSim[]::new));
       }
       default -> {
         driveBase =
-            new Drive(
+            new DriveBase(
                 new GyroIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
@@ -108,18 +108,19 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
-        // visionBase = new Vision(new VisionIO() {});
+        visionBase = new Vision(new VisionIO() {});
       }
     }
 
-    visionBase =
-        new Vision(
-            VisionConstants.cameras.stream()
-                .map(
-                    v ->
-                        new VisionIOSim(
-                            v.cameraName(), v.robotToCamera(), v.cameraBias(), v.calibrationPath()))
-                .toArray(VisionIOSim[]::new));
+    // visionBase =
+    //     new Vision(
+    //         VisionConstants.cameras.stream()
+    //             .map(
+    //                 v ->
+    //                     new VisionIOSim(
+    //                         v.cameraName(), v.robotToCamera(), v.cameraBias(),
+    // v.calibrationPath()))
+    //             .toArray(VisionIOSim[]::new));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
@@ -130,14 +131,6 @@ public class RobotContainer {
       //       "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       //   autoChooser.addOption(
       //       "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
-      autoChooser.addOption(
-          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
-          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
       autoChooser.addOption(
           "Elevator Dynamic Forward",
           elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
@@ -150,9 +143,18 @@ public class RobotContainer {
       autoChooser.addOption(
           "Elevator Quasi Reverse",
           elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
+
+      //   autoChooser.addOption(
+      //       "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      //   autoChooser.addOption(
+      //       "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      //   autoChooser.addOption(
+      //       "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      //   autoChooser.addOption(
+      //       "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
 
-    autoChooser.addDefaultOption("Noting", Commands.none());
+    autoChooser.addOption("Do Nothing", Commands.none());
     autoChooser.addOption(
         "Taxi",
         Commands.runEnd(
@@ -184,8 +186,7 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
-            () -> slowModeEnabled,
-            () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
+            () -> slowModeEnabled));
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
@@ -194,35 +195,30 @@ public class RobotContainer {
         .povLeft()
         .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
     // L2
-    controller
-        .povUp()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
-
+    controller.povUp().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
     // L3
     controller
         .povRight()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)));
 
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
 
+    // Dispense
     controller
         .rightTrigger()
+        .and(controller.leftTrigger().negate())
         .onTrue(
-            Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
-                IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
-                controller.leftTrigger().negate().debounce(0.25)));
+            dispenserBase
+                .eject(elevatorBase::getGoal)
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))));
+
+    // Reserialize
+    controller
+        .leftTrigger()
+        .and(controller.rightTrigger())
+        .debounce(0.25)
+        .onTrue(IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase));
 
     // Home Elevator
     controller

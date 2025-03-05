@@ -3,6 +3,8 @@ package frc.robot.subsystems.vision;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.PoseEstimator;
+import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import org.littletonrobotics.junction.Logger;
 
@@ -29,12 +31,12 @@ public class Vision extends SubsystemBase {
 
       // Don't report if there is no valid global pose estimate
 
-      // PoseEstimator.getInstance()
-      //     .addVisionObservation(
-      //         new VisionObservation(
-      //             input.estimatedRobotPose.toPose2d(),
-      //             input.timestampSeconds,
-      //             input.visionMeasurementStdDevs));
+      PoseEstimator.getInstance()
+          .addVisionObservation(
+              new VisionObservation(
+                  input.estimatedRobotPose.toPose2d(),
+                  input.timestampSeconds,
+                  input.visionMeasurementStdDevs));
     }
   }
 }

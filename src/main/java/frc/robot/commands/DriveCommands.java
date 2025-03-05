@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.PoseEstimator;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -71,12 +71,11 @@ public class DriveCommands {
    * velocities).
    */
   public static Command joystickDrive(
-      Drive drive,
+      DriveBase drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
-      BooleanSupplier slowSupplier,
-      BooleanSupplier robotRelativeSupplier) {
+      BooleanSupplier robotRelative) {
     return Commands.run(
         () -> {
           // Get linear velocity
@@ -88,21 +87,19 @@ public class DriveCommands {
 
           ChassisSpeeds speeds =
               new ChassisSpeeds(
-                  linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                  linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
-                  omega * drive.getMaxAngularSpeedRadPerSec());
+                  linearVelocity.getX() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
+                  linearVelocity.getY() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
+                  omega * DriveBase.getMaxAngularVelocityRadPerSec());
 
-          // Convert to field relative
-          if (!robotRelativeSupplier.getAsBoolean()) {
-            Rotation2d rotation = PoseEstimator.getInstance().getRotation();
-            if (AllianceFlipUtil.shouldFlip()) {
-              rotation = rotation.rotateBy(Rotation2d.kPi);
-            }
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
-          }
-
-          // Apply speeds
-          driveBase.runVelocity(speeds);
+          drive.runVelocity(
+              robotRelative.getAsBoolean()
+                  ? speeds
+                  : ChassisSpeeds.fromFieldRelativeSpeeds(
+                      speeds,
+                      DriverStation.getAlliance().isPresent()
+                              && DriverStation.getAlliance().get() == Alliance.Red
+                          ? PoseEstimator.getInstance().getRotation().plus(new Rotation2d(Math.PI))
+                          : PoseEstimator.getInstance().getRotation()));
         },
         drive);
   }
@@ -113,7 +110,7 @@ public class DriveCommands {
    * absolute rotation with a joystick.
    */
   public static Command joystickDriveAtAngle(
-      Drive drive,
+      DriveBase drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       Supplier<Rotation2d> rotationSupplier) {
@@ -143,8 +140,8 @@ public class DriveCommands {
               // Convert to field relative speeds & send command
               ChassisSpeeds speeds =
                   new ChassisSpeeds(
-                      linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
-                      linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
+                      linearVelocity.getX() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
+                      linearVelocity.getY() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
                       omega);
               boolean isFlipped =
                   DriverStation.getAlliance().isPresent()
@@ -165,7 +162,7 @@ public class DriveCommands {
    *
    * <p>This command should only be used in voltage control mode.
    */
-  public static Command feedforwardCharacterization(Drive drive) {
+  public static Command feedforwardCharacterization(DriveBase drive) {
     List<Double> velocitySamples = new LinkedList<>();
     List<Double> voltageSamples = new LinkedList<>();
     Timer timer = new Timer();
@@ -219,7 +216,7 @@ public class DriveCommands {
   }
 
   /** Measures the robot's wheel radius by spinning in a circle. */
-  public static Command wheelRadiusCharacterization(Drive drive) {
+  public static Command wheelRadiusCharacterization(DriveBase drive) {
     SlewRateLimiter limiter = new SlewRateLimiter(WHEEL_RADIUS_RAMP_RATE);
     WheelRadiusCharacterizationState state = new WheelRadiusCharacterizationState();
 

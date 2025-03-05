@@ -1,15 +1,9 @@
-// Copyright (c) 2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// Use of this source code is governed by an MIT-style
-// license that can be found in the LICENSE file at
-// the root directory of this project.
-
 package frc.robot.subsystems.drive;
 
-import static frc.robot.subsystems.drive.DriveConstants.*;
+import static frc.robot.subsystems.drive.DriveConstants.PigeonConstants.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.StatusCode;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
@@ -19,40 +13,38 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import java.util.Queue;
 
-/** IO implementation for Pigeon 2. */
 public class GyroIOPigeon2 implements GyroIO {
-  private final Pigeon2 pigeon = new Pigeon2(PigeonConstants.id, "*");
-  private final StatusSignal<Angle> yaw = pigeon.getYaw();
+  private final Pigeon2 m_gyro = new Pigeon2(id);
+
+  private final StatusSignal<Angle> yaw;
+  private final StatusSignal<AngularVelocity> yawVelocity;
+
   private final Queue<Double> yawPositionQueue;
-  private final Queue<Double> yawTimestampQueue;
-  private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
 
   public GyroIOPigeon2() {
-    pigeon.getConfigurator().apply(new Pigeon2Configuration());
-    pigeon.getConfigurator().setYaw(0.0);
+    m_gyro.getConfigurator().apply(new Pigeon2Configuration());
+    m_gyro.getConfigurator().setYaw(0.0);
+
+    yaw = m_gyro.getYaw();
+    yawVelocity = m_gyro.getAngularVelocityZWorld();
+
     yaw.setUpdateFrequency(DriveConstants.odometryFrequencyHz);
     yawVelocity.setUpdateFrequency(50.0);
-    pigeon.optimizeBusUtilization();
-    yawTimestampQueue = OdometryManager.getInstance().getTimestampQueue();
+    m_gyro.optimizeBusUtilization();
+
     yawPositionQueue =
-        OdometryManager.getInstance().registerSignal(() -> pigeon.getYaw().getValueAsDouble());
-    // PhoenixUtil.registerSignals(true, yaw, yawVelocity);
-    pigeon.setYaw(0.0, 0.25);
+        OdometryManager.getInstance().registerSignal(() -> m_gyro.getYaw().getValueAsDouble());
   }
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
-    inputs.data =
-        new GyroIOData(
-            BaseStatusSignal.isAllGood(yaw, yawVelocity),
-            Rotation2d.fromDegrees(yaw.getValueAsDouble()),
-            Units.degreesToRadians(yawVelocity.getValueAsDouble()));
+    inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
 
-    inputs.odometryYawTimestamps =
-        yawTimestampQueue.stream().mapToDouble((Double value) -> value).toArray();
+    inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
+    inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
+
     inputs.odometryYawPositions =
         yawPositionQueue.stream().map(Rotation2d::fromDegrees).toArray(Rotation2d[]::new);
-    yawTimestampQueue.clear();
     yawPositionQueue.clear();
   }
 }

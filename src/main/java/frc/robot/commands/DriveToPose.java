@@ -18,7 +18,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveBase;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
@@ -66,7 +66,7 @@ public class DriveToPose extends Command {
     ffMaxRadius.initDefault(0.1);
   }
 
-  private final Drive drive;
+  private final DriveBase drive;
   private final Supplier<Pose2d> target;
 
   private final ProfiledPIDController driveController =
@@ -85,7 +85,7 @@ public class DriveToPose extends Command {
   private Supplier<Translation2d> linearFF = () -> Translation2d.kZero;
   private DoubleSupplier omegaFF = () -> 0.0;
 
-  public DriveToPose(Drive drive, Supplier<Pose2d> target) {
+  public DriveToPose(DriveBase drive, Supplier<Pose2d> target) {
     this.drive = drive;
     this.target = target;
 
@@ -95,13 +95,13 @@ public class DriveToPose extends Command {
     addRequirements(drive);
   }
 
-  public DriveToPose(Drive drive, Supplier<Pose2d> target, Supplier<Pose2d> robot) {
+  public DriveToPose(DriveBase drive, Supplier<Pose2d> target, Supplier<Pose2d> robot) {
     this(drive, target);
     this.robot = robot;
   }
 
   public DriveToPose(
-      Drive drive,
+      DriveBase drive,
       Supplier<Pose2d> target,
       Supplier<Pose2d> robot,
       Supplier<Translation2d> linearFF,
