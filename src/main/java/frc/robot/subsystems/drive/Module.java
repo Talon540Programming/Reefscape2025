@@ -17,8 +17,12 @@ class Module {
       new LoggedTunableNumber("Drive/Module/DrivekV");
   private static final LoggedTunableNumber drivekP =
       new LoggedTunableNumber("Drive/Module/DrivekP");
+  private static final LoggedTunableNumber drivekI =
+      new LoggedTunableNumber("Drive/Module/DrivekI");
   private static final LoggedTunableNumber drivekD =
       new LoggedTunableNumber("Drive/Module/DrivekD");
+  private static final LoggedTunableNumber driveIZone =
+      new LoggedTunableNumber("Drive/Module/DrivekIZone");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
@@ -28,15 +32,19 @@ class Module {
         drivekS.initDefault(0.69641);
         drivekV.initDefault(0.12647);
         drivekP.initDefault(0.0);
+        drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
-        turnkP.initDefault(1.5);
-        turnkD.initDefault(0.0);
+        driveIZone.initDefault(0.0);
+        turnkP.initDefault(0.65);
+        turnkD.initDefault(0.1);
       }
       default -> {
         drivekS.initDefault(0.113190);
         drivekV.initDefault(0.841640);
         drivekP.initDefault(0.1);
+        drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
+        driveIZone.initDefault(0.0);
         turnkP.initDefault(10.0);
         turnkD.initDefault(0.0);
       }
@@ -73,10 +81,12 @@ class Module {
         hashCode(), () -> m_io.setDriveFF(drivekS.get(), drivekV.get()), true, drivekS, drivekV);
     LoggedTunableNumber.ifChanged(
         hashCode(),
-        () -> m_io.setDrivePID(drivekP.get(), 0, drivekD.get()),
+        () -> m_io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get(), driveIZone.get()),
         true,
         drivekP,
-        drivekD);
+        drivekI,
+        drivekD,
+        driveIZone);
     LoggedTunableNumber.ifChanged(
         hashCode(), () -> m_io.setTurnPID(turnkP.get(), 0, turnkD.get()), true, turnkP, turnkD);
 
