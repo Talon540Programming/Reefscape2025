@@ -136,14 +136,14 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.drivePositionRad = driveEncoder.getPosition();
     inputs.driveVelocityRadPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSpark.getAppliedOutput() * driveSpark.getBusVoltage();
-    inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
+    inputs.driveSupplyCurrentAmps = driveSpark.getOutputCurrent();
     inputs.driveTempCelsius = driveSpark.getMotorTemperature();
 
     inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
     inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition());
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
-    inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
+    inputs.turnSupplyCurrentAmps = turnSpark.getOutputCurrent();
     inputs.turnTempCelsius = turnSpark.getMotorTemperature();
 
     inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
@@ -168,15 +168,10 @@ public class ModuleIOSpark implements ModuleIO {
   }
 
   @Override
-  public void runDriveVelocity(double velocityRadPerSec) {
-    double ffVolts =
-        driveFeedforward.calculate(
-            velocityRadPerSec
-            //  * 1 / (Math.PI * 2)
-            );
+  public void runDriveVelocity(double velocityRadPerSec, double feedforward) {
+    double ffVolts = feedforward;
     driveController.setReference(
         velocityRadPerSec,
-        //  * 1 / (Math.PI * 2),
         ControlType.kVelocity,
         ClosedLoopSlot.kSlot0,
         ffVolts,
@@ -187,11 +182,7 @@ public class ModuleIOSpark implements ModuleIO {
   public void runTurnPosition(Rotation2d rotation) {
     // Because internal encoder is relative, we want to wrap to the range -π to π radians.
     var updatedSetpoint = MathUtil.angleModulus(rotation.getRadians());
-    turnController.setReference(
-        updatedSetpoint
-        //  * 1 / (Math.PI * 2)
-        ,
-        ControlType.kPosition);
+    turnController.setReference(updatedSetpoint, ControlType.kPosition);
   }
 
   @Override
@@ -204,12 +195,6 @@ public class ModuleIOSpark implements ModuleIO {
   }
 
   @Override
-  public void setDriveFF(double kS, double kV) {
-    driveFeedforward.setKs(kS);
-    driveFeedforward.setKv(kV);
-  }
-
-  @Override
   public void setTurnPID(double kP, double kI, double kD) {
     var turnPIDConfig = new SparkMaxConfig();
     turnPIDConfig.closedLoop.pid(kP, kI, kD);
@@ -218,7 +203,6 @@ public class ModuleIOSpark implements ModuleIO {
         turnPIDConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
-  @Override
   public void setDriveBrakeMode(boolean enabled) {
     var brakeModeConfig = new SparkMaxConfig();
     brakeModeConfig.idleMode(enabled ? IdleMode.kBrake : IdleMode.kCoast);
