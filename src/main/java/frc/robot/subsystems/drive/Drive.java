@@ -31,17 +31,18 @@ import frc.robot.util.swerve.SwerveSetpointGenerator.SwerveSetpoint;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Queue;
 import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
-  static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
   private final Module[] modules = new Module[4]; // FL, FR, BL, BR
+  private final Queue<Double> timestampsQueue;
+  private final OdometryTimestampsInputAutoLogged timestampInputs =
+      new OdometryTimestampsInputAutoLogged();
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
@@ -86,6 +87,7 @@ public class Drive extends SubsystemBase {
     swerveSetpointGenerator =
         new SwerveSetpointGenerator(kinematics, DriveConstants.moduleTranslations);
 
+    timestampsQueue = OdometryManager.getInstance().getTimestampQueue();
     // Start odometry thread
     OdometryManager.getInstance().start();
   }
@@ -100,15 +102,23 @@ public class Drive extends SubsystemBase {
 
   @Override
   public void periodic() {
-    odometryLock.lock(); // Prevents odometry updates while reading data
-    gyroIO.updateInputs(gyroInputs);
-    Logger.processInputs("Drive/Gyro", gyroInputs);
-    for (var module : modules) {
-      module.updateInputs();
+    OdometryManager.odometryLock.lock(); // Prevents odometry updates while reading data
+    try {
+      // Update and log gyro Inputs
+      gyroIO.updateInputs(gyroInputs);
+      Logger.processInputs("Drive/Gyro", gyroInputs);
+      // Update and log only on modules
+      for (var module : modules) {
+        module.updateInputs();
+      }
+      // Get current sample timestamps
+      timestampInputs.timestamps =
+          timestampsQueue.stream().mapToDouble((Double value) -> value).toArray();
+      timestampsQueue.clear();
+      Logger.processInputs("Drive/OdometryTimestamps", timestampInputs);
+    } finally {
+      OdometryManager.odometryLock.unlock();
     }
-    odometryLock.unlock();
-    LoggedTracer.record("Drive/Inputs");
-
     // Call periodic on modules
     for (var module : modules) {
       module.periodic();
@@ -128,14 +138,12 @@ public class Drive extends SubsystemBase {
     }
 
     // Send odometry updates to robot state
-    double[] sampleTimestamps =
-        Constants.getMode() == Mode.SIM
-            ? new double[] {Timer.getTimestamp()}
-            : gyroInputs.odometryYawTimestamps; // All signals are sampled together
-    int sampleCount = sampleTimestamps.length;
+    var timestamps = timestampInputs.timestamps;
+    int sampleCount = timestamps.length;
     for (int i = 0; i < sampleCount; i++) {
       SwerveModulePosition[] wheelPositions = new SwerveModulePosition[4];
       for (int j = 0; j < 4; j++) {
+        // System.out.println("WORKED" + modules[j].toString());
         wheelPositions[j] = modules[j].getOdometryPositions()[i];
       }
       PoseEstimator.getInstance()
@@ -144,7 +152,7 @@ public class Drive extends SubsystemBase {
                   wheelPositions,
                   Optional.ofNullable(
                       gyroInputs.data.connected() ? gyroInputs.odometryYawPositions[i] : null),
-                  sampleTimestamps[i]));
+                  timestamps[i]));
     }
 
     PoseEstimator.getInstance().addDriveSpeeds(getChassisSpeeds());
