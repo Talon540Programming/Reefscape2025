@@ -99,9 +99,6 @@ public class ElevatorBase extends SubsystemBase {
   @Getter
   private boolean atGoal = false;
 
-  private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
-  private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
-
   private final SysIdRoutine sysId;
 
   public ElevatorBase(ElevatorIO io) {
@@ -225,9 +222,6 @@ public class ElevatorBase extends SubsystemBase {
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
-
-    measuredVisualizer.update(getPositionMeters());
-    setpointVisualizer.update(setpoint.position);
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
