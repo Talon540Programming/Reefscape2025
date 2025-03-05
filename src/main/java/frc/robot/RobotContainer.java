@@ -31,7 +31,7 @@ public class RobotContainer {
   private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
   // Subsystems
-  private final DriveBase driveBase;
+  private final Drive driveBase;
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
@@ -53,7 +53,7 @@ public class RobotContainer {
     switch (Constants.getMode()) {
       case REAL -> {
         driveBase =
-            new DriveBase(
+            new Drive(
                 new GyroIOPigeon2(),
                 new ModuleIOSpark(0),
                 new ModuleIOSpark(1),
@@ -65,7 +65,7 @@ public class RobotContainer {
       }
       case SIM -> {
         driveBase =
-            new DriveBase(
+            new Drive(
                 new GyroIO() {},
                 new ModuleIOSim(),
                 new ModuleIOSim(),
@@ -77,7 +77,7 @@ public class RobotContainer {
       }
       default -> {
         driveBase =
-            new DriveBase(
+            new Drive(
                 new GyroIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {},
@@ -94,10 +94,10 @@ public class RobotContainer {
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
-      autoChooser.addOption(
-          "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
-      autoChooser.addOption(
-          "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+      //   autoChooser.addOption(
+      //       "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
+      //   autoChooser.addOption(
+      //       "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
       autoChooser.addOption(
           "Elevator Dynamic Forward",
           elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
@@ -111,14 +111,14 @@ public class RobotContainer {
           "Elevator Quasi Reverse",
           elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
 
-      autoChooser.addOption(
-          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
-          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      //   autoChooser.addOption(
+      //       "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      //   autoChooser.addOption(
+      //       "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      //   autoChooser.addOption(
+      //       "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      //   autoChooser.addOption(
+      //       "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
     }
 
     autoChooser.addOption("Do Nothing", Commands.none());
