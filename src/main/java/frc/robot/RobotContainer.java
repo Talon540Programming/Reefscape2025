@@ -22,6 +22,7 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -35,6 +36,7 @@ public class RobotContainer {
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
+  private final Vision visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -62,6 +64,15 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
+
+        // visionBase =
+        //     new Vision(
+        //         VisionConstants.cameras.stream()
+        //             .map(
+        //                 v ->
+        //                     new VisionIOPhotonCamera(
+        //                         v.cameraName(), v.robotToCamera(), v.cameraBias()))
+        //             .toArray(VisionIOPhotonCamera[]::new));
       }
       case SIM -> {
         driveBase =
@@ -74,6 +85,17 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
+        // visionBase =
+        //     new Vision(
+        //         VisionConstants.cameras.stream()
+        //             .map(
+        //                 v ->
+        //                     new VisionIOSim(
+        //                         v.cameraName(),
+        //                         v.robotToCamera(),
+        //                         v.cameraBias(),
+        //                         v.calibrationPath()))
+        //             .toArray(VisionIOSim[]::new));
       }
       default -> {
         driveBase =
@@ -86,8 +108,18 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
+        // visionBase = new Vision(new VisionIO() {});
       }
     }
+
+    visionBase =
+        new Vision(
+            VisionConstants.cameras.stream()
+                .map(
+                    v ->
+                        new VisionIOSim(
+                            v.cameraName(), v.robotToCamera(), v.cameraBias(), v.calibrationPath()))
+                .toArray(VisionIOSim[]::new));
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");

@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
@@ -12,7 +13,9 @@ import lombok.Getter;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  public static AprilTagFieldLayout fieldLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+  // public static AprilTagFieldLayout fieldLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+  public static AprilTagFieldLayout fieldLayout =
+      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
   public static final double fieldLength =
       AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
