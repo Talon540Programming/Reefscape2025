@@ -136,14 +136,14 @@ public class ModuleIOSpark implements ModuleIO {
     inputs.drivePositionRad = driveEncoder.getPosition();
     inputs.driveVelocityRadPerSec = driveEncoder.getVelocity();
     inputs.driveAppliedVolts = driveSpark.getAppliedOutput() * driveSpark.getBusVoltage();
-    inputs.driveSupplyCurrentAmps = driveSpark.getOutputCurrent();
+    inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
     inputs.driveTempCelsius = driveSpark.getMotorTemperature();
 
     inputs.turnAbsolutePosition = getOffsetAbsoluteAngle();
     inputs.turnPosition = Rotation2d.fromRadians(turnEncoder.getPosition());
     inputs.turnVelocityRadPerSec = turnEncoder.getVelocity();
     inputs.turnAppliedVolts = turnSpark.getAppliedOutput() * turnSpark.getBusVoltage();
-    inputs.turnSupplyCurrentAmps = turnSpark.getOutputCurrent();
+    inputs.turnCurrentAmps = turnSpark.getOutputCurrent();
     inputs.turnTempCelsius = turnSpark.getMotorTemperature();
 
     inputs.driveConnected = driveConnectedDebounce.calculate(!driveSpark.hasActiveFault());
@@ -168,8 +168,8 @@ public class ModuleIOSpark implements ModuleIO {
   }
 
   @Override
-  public void runDriveVelocity(double velocityRadPerSec, double feedforward) {
-    double ffVolts = feedforward;
+  public void runDriveVelocity(double velocityRadPerSec) {
+    double ffVolts = driveFeedforward.calculate(velocityRadPerSec);
     driveController.setReference(
         velocityRadPerSec,
         ControlType.kVelocity,
@@ -195,6 +195,12 @@ public class ModuleIOSpark implements ModuleIO {
   }
 
   @Override
+  public void setDriveFF(double kS, double kV) {
+    driveFeedforward.setKs(kS);
+    driveFeedforward.setKv(kV);
+  }
+
+  @Override
   public void setTurnPID(double kP, double kI, double kD) {
     var turnPIDConfig = new SparkMaxConfig();
     turnPIDConfig.closedLoop.pid(kP, kI, kD);
@@ -203,6 +209,7 @@ public class ModuleIOSpark implements ModuleIO {
         turnPIDConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
   }
 
+  @Override
   public void setDriveBrakeMode(boolean enabled) {
     var brakeModeConfig = new SparkMaxConfig();
     brakeModeConfig.idleMode(enabled ? IdleMode.kBrake : IdleMode.kCoast);
