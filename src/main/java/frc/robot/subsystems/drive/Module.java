@@ -69,15 +69,16 @@ class Module {
 
   public void periodic() {
     // Update tunable numbers
-    if (drivekS.hasChanged(hashCode()) || drivekV.hasChanged(hashCode())) {
-      m_io.setDriveFF(drivekS.get(), drivekV.get());
-    }
-    if (drivekP.hasChanged(hashCode()) || drivekD.hasChanged(hashCode())) {
-      m_io.setDrivePID(drivekP.get(), 0, drivekD.get());
-    }
-    if (turnkP.hasChanged(hashCode()) || turnkD.hasChanged(hashCode())) {
-      m_io.setTurnPID(turnkP.get(), 0, turnkD.get());
-    }
+    LoggedTunableNumber.ifChanged(
+        hashCode(), () -> m_io.setDriveFF(drivekS.get(), drivekV.get()), true, drivekS, drivekV);
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> m_io.setDrivePID(drivekP.get(), 0, drivekD.get()),
+        true,
+        drivekP,
+        drivekD);
+    LoggedTunableNumber.ifChanged(
+        hashCode(), () -> m_io.setTurnPID(turnkP.get(), 0, turnkD.get()), true, turnkP, turnkD);
 
     // Update Odometry Positions
     int sampleCount = m_inputs.odometryDrivePositionsRad.length;

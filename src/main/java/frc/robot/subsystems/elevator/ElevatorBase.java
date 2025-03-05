@@ -99,6 +99,9 @@ public class ElevatorBase extends SubsystemBase {
   @Getter
   private boolean atGoal = false;
 
+  private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
+  private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
+
   private final SysIdRoutine sysId;
 
   public ElevatorBase(ElevatorIO io) {
@@ -133,22 +136,27 @@ public class ElevatorBase extends SubsystemBase {
     followerDisconnectedAlert.set(!inputs.followerConnected);
 
     // Update tunable numbers
-    if (kP.hasChanged(hashCode()) || kD.hasChanged(hashCode())) {
-      io.setPID(kP.get(), 0.0, kD.get());
-    }
-    if (kS.hasChanged(hashCode()) || kG.hasChanged(hashCode()) || kA.hasChanged(hashCode())) {
-      feedforward.setKs(kS.get());
-      feedforward.setKg(kG.get());
-      feedforward.setKa(kA.get());
-    }
+    LoggedTunableNumber.ifChanged(() -> io.setPID(kP.get(), 0.0, kD.get()), true, kP, kD);
+    LoggedTunableNumber.ifChanged(
+        () -> {
+          feedforward.setKs(kS.get());
+          feedforward.setKg(kG.get());
+          feedforward.setKa(kA.get());
+        },
+        true,
+        kS,
+        kG,
+        kA);
 
-    if (maxVelocityMetersPerSec.hasChanged(hashCode())
-        || maxAccelerationMetersPerSec2.hasChanged(hashCode())) {
-      profile =
-          new TrapezoidProfile(
-              new TrapezoidProfile.Constraints(
-                  maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
-    }
+    LoggedTunableNumber.ifChanged(
+        () ->
+            profile =
+                new TrapezoidProfile(
+                    new TrapezoidProfile.Constraints(
+                        maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get())),
+        true,
+        maxVelocityMetersPerSec,
+        maxAccelerationMetersPerSec2);
 
     // Run profile
     final boolean shouldRunProfile =
@@ -222,6 +230,9 @@ public class ElevatorBase extends SubsystemBase {
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
+
+    measuredVisualizer.update(getPositionMeters());
+    setpointVisualizer.update(setpoint.position);
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
