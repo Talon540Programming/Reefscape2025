@@ -17,9 +17,12 @@ class Module {
       new LoggedTunableNumber("Drive/Module/DrivekV");
   private static final LoggedTunableNumber drivekP =
       new LoggedTunableNumber("Drive/Module/DrivekP");
+  private static final LoggedTunableNumber drivekI =
+      new LoggedTunableNumber("Drive/Module/DrivekI");
   private static final LoggedTunableNumber drivekD =
       new LoggedTunableNumber("Drive/Module/DrivekD");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
+  private static final LoggedTunableNumber turnkI = new LoggedTunableNumber("Drive/Module/TurnkI");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
   static {
@@ -28,16 +31,20 @@ class Module {
         drivekS.initDefault(0.69641);
         drivekV.initDefault(0.12647);
         drivekP.initDefault(0.0);
+        drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
         turnkP.initDefault(1.5);
+        turnkI.initDefault(0.0);
         turnkD.initDefault(0.0);
       }
       default -> {
         drivekS.initDefault(0.113190);
         drivekV.initDefault(0.841640);
         drivekP.initDefault(0.1);
+        drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
         turnkP.initDefault(10.0);
+        turnkI.initDefault(0.0);
         turnkD.initDefault(0.0);
       }
     }
@@ -73,12 +80,18 @@ class Module {
         hashCode(), () -> m_io.setDriveFF(drivekS.get(), drivekV.get()), true, drivekS, drivekV);
     LoggedTunableNumber.ifChanged(
         hashCode(),
-        () -> m_io.setDrivePID(drivekP.get(), 0, drivekD.get()),
+        () -> m_io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
         true,
         drivekP,
+        drivekI,
         drivekD);
     LoggedTunableNumber.ifChanged(
-        hashCode(), () -> m_io.setTurnPID(turnkP.get(), 0, turnkD.get()), true, turnkP, turnkD);
+        hashCode(),
+        () -> m_io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get()),
+        true,
+        turnkP,
+        turnkI,
+        turnkD);
 
     // Update Odometry Positions
     int sampleCount = m_inputs.odometryDrivePositionsRad.length;

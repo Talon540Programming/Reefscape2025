@@ -25,6 +25,7 @@ import org.littletonrobotics.junction.Logger;
 public class ElevatorBase extends SubsystemBase {
   // Tunable numbers
   private static final LoggedTunableNumber kP = new LoggedTunableNumber("Elevator/kP");
+  private static final LoggedTunableNumber kI = new LoggedTunableNumber("Elevator/kI");
   private static final LoggedTunableNumber kD = new LoggedTunableNumber("Elevator/kD");
   private static final LoggedTunableNumber kS = new LoggedTunableNumber("Elevator/kS");
   private static final LoggedTunableNumber kG = new LoggedTunableNumber("Elevator/kG");
@@ -49,6 +50,7 @@ public class ElevatorBase extends SubsystemBase {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
         kP.initDefault(0.3);
+        kI.initDefault(0.0);
         kD.initDefault(0.25);
         kS.initDefault(0);
         kG.initDefault(1.05);
@@ -56,6 +58,7 @@ public class ElevatorBase extends SubsystemBase {
       }
       case SIMBOT -> {
         kP.initDefault(0); // TODO
+        kI.initDefault(0.0); // TODO
         kD.initDefault(0); // TODO
         kS.initDefault(0); // TODO
         kG.initDefault(0); // TODO
@@ -136,7 +139,7 @@ public class ElevatorBase extends SubsystemBase {
     followerDisconnectedAlert.set(!inputs.followerConnected);
 
     // Update tunable numbers
-    LoggedTunableNumber.ifChanged(() -> io.setPID(kP.get(), 0.0, kD.get()), true, kP, kD);
+    LoggedTunableNumber.ifChanged(() -> io.setPID(kP.get(), kI.get(), kD.get()), true, kP, kI, kD);
     LoggedTunableNumber.ifChanged(
         () -> {
           feedforward.setKs(kS.get());
