@@ -17,12 +17,12 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 
 public class VisionIOSim extends VisionIOPhotonCamera {
-  private static VisionSystemSim visionSim;
+  private static VisionSystemSim m_visionSystemSim;
 
   static {
-    if (Constants.getMode() == Constants.Mode.SIM) {
-      visionSim = new VisionSystemSim("main");
-      visionSim.addAprilTags(FieldConstants.fieldLayout);
+    if (Constants.getRobot() == Constants.RobotType.SIMBOT) {
+      m_visionSystemSim = new VisionSystemSim("main");
+      m_visionSystemSim.addAprilTags(FieldConstants.fieldLayout);
     }
   }
 
@@ -52,21 +52,22 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     camSim.enableProcessedStream(false);
     camSim.enableDrawWireframe(false);
 
-    visionSim.addCamera(camSim, this.robotToCamera);
+    m_visionSystemSim.addCamera(camSim, this.getRobotToCamera());
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    visionSim.update(PoseEstimator.getInstance().getEstimatedPose());
+    m_visionSystemSim.update(PoseEstimator.getInstance().getOdometryPose());
 
     super.updateInputs(inputs);
+
     if (inputs.hasResult) {
-      visionSim
+      m_visionSystemSim
           .getDebugField()
           .getObject("VisionEstimation")
           .setPose(inputs.estimatedRobotPose.toPose2d());
     } else {
-      visionSim.getDebugField().getObject("VisionEstimation").setPoses();
+      m_visionSystemSim.getDebugField().getObject("VisionEstimation").setPoses();
     }
   }
 

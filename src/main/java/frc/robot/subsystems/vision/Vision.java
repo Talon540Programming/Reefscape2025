@@ -31,6 +31,8 @@ public class Vision extends SubsystemBase {
 
       // Don't report if there is no valid global pose estimate
 
+      if (!input.hasResult) continue;
+
       PoseEstimator.getInstance()
           .addVisionObservation(
               new VisionObservation(
