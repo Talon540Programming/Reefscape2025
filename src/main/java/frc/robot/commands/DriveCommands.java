@@ -39,7 +39,8 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
-      BooleanSupplier slowSupplier) {
+      BooleanSupplier slowSupplier,
+      BooleanSupplier robotRelativeSupplier) {
     return Commands.run(
         () -> {
           // Apply deadband
@@ -66,11 +67,13 @@ public class DriveCommands {
                   omega * DriveBase.getMaxAngularVelocityRadPerSec() * angularVelocityScalar);
 
           // Convert to field relative
-          Rotation2d rotation = PoseEstimator.getInstance().getRotation();
-          if (AllianceFlipUtil.shouldFlip()) {
-            rotation = rotation.rotateBy(Rotation2d.kPi);
+          if (!robotRelativeSupplier.getAsBoolean()) {
+            Rotation2d rotation = PoseEstimator.getInstance().getRotation();
+            if (AllianceFlipUtil.shouldFlip()) {
+              rotation = rotation.rotateBy(Rotation2d.kPi);
+            }
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
           }
-          speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
 
           // Apply speeds
           driveBase.runVelocity(speeds);
