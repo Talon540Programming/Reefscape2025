@@ -23,10 +23,15 @@ import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.util.AllianceFlipUtil;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class RobotContainer {
+  // Button Binding variables
+  @AutoLogOutput private boolean robotRelativeEnabled = false;
+  @AutoLogOutput private boolean slowModeEnabled = false;
+
   // Load PoseEstimator class
   private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
 
@@ -46,8 +51,6 @@ public class RobotContainer {
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
-
-  private boolean slowModeEnabled;
 
   public RobotContainer() {
     switch (Constants.getMode()) {
@@ -145,6 +148,16 @@ public class RobotContainer {
     // Make slow mode toggleable
     controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
 
+    controller
+        .leftBumper()
+        .and(controller.rightBumper())
+        .onTrue(Commands.runOnce(() -> robotRelativeEnabled = true));
+
+    controller
+        .leftBumper()
+        .and(controller.rightBumper())
+        .onFalse(Commands.runOnce(() -> robotRelativeEnabled = false));
+
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
@@ -153,31 +166,51 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
             () -> slowModeEnabled,
-            () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
+            () -> robotRelativeEnabled));
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
     // L1
     controller
         .povLeft()
-        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      robotRelativeEnabled = true;
+                      slowModeEnabled = true;
+                    })
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL))));
     // L2
     controller
         .povUp()
         .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+            Commands.runOnce(
+                    () -> {
+                      robotRelativeEnabled = true;
+                      slowModeEnabled = true;
+                    })
+                .andThen(
+                    Commands.either(
+                        Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
+                        Commands.runOnce(
+                            () -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
+                        controller.b().negate().debounce(0.25))));
 
     // L3
     controller
         .povRight()
         .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+            Commands.runOnce(
+                    () -> {
+                      robotRelativeEnabled = true;
+                      slowModeEnabled = true;
+                    })
+                .andThen(
+                    Commands.either(
+                        Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
+                        Commands.runOnce(
+                            () -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
+                        controller.b().negate().debounce(0.25))));
 
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
@@ -185,12 +218,19 @@ public class RobotContainer {
     controller
         .rightTrigger()
         .onTrue(
-            Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
-                IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
-                controller.leftTrigger().negate().debounce(0.25)));
+            Commands.runOnce(
+                    () -> {
+                      robotRelativeEnabled = false;
+                      slowModeEnabled = false;
+                    })
+                .andThen(
+                    Commands.either(
+                        dispenserBase
+                            .eject(elevatorBase::getGoal)
+                            .andThen(
+                                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
+                        IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
+                        controller.leftTrigger().negate().debounce(0.25))));
 
     // Home Elevator
     controller
