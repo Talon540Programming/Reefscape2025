@@ -1,17 +1,17 @@
 package frc.robot.util;
 
 import frc.robot.Constants;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 /**
  * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
  * value not in dashboard.
  */
-public class LoggedTunableNumber {
-  private static final String tableKey = "TunableNumbers";
+public class LoggedTunableNumber implements DoubleSupplier {
+  private static final String tableKey = "/TunableNumbers";
 
   private final String key;
   private Double defaultValue = null;
@@ -20,38 +20,13 @@ public class LoggedTunableNumber {
 
   private LoggedNetworkNumber dashboardNumber;
 
-  private final boolean ntPubEnabled;
-
-  /**
-   * Create a new LoggedTunableNumber
-   *
-   * @param dashboardKey Key on dashboard
-   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
-   */
-  public LoggedTunableNumber(String dashboardKey, boolean alwaysEnabled) {
-    this.key = tableKey + "/" + dashboardKey;
-    this.ntPubEnabled = alwaysEnabled;
-  }
-
   /**
    * Create a new LoggedTunableNumber
    *
    * @param dashboardKey Key on dashboard
    */
   public LoggedTunableNumber(String dashboardKey) {
-    this(dashboardKey, Constants.TUNING_MODE);
-  }
-
-  /**
-   * Create a new LoggedTunableNumber with the default value
-   *
-   * @param dashboardKey Key on dashboard
-   * @param defaultValue Default value
-   * @param alwaysEnabled Always publish modifiers to NT, even if not in Tuning Mode
-   */
-  public LoggedTunableNumber(String dashboardKey, double defaultValue, boolean alwaysEnabled) {
-    this(dashboardKey, alwaysEnabled);
-    initDefault(defaultValue);
+    this.key = tableKey + "/" + dashboardKey;
   }
 
   /**
@@ -80,7 +55,7 @@ public class LoggedTunableNumber {
     }
 
     this.defaultValue = defaultValue;
-    if (ntPubEnabled) {
+    if (Constants.TUNING_MODE) {
       dashboardNumber = new LoggedNetworkNumber(key, defaultValue);
     }
   }
@@ -99,7 +74,7 @@ public class LoggedTunableNumber {
               key));
     }
 
-    return ntPubEnabled ? dashboardNumber.get() : defaultValue;
+    return Constants.TUNING_MODE ? dashboardNumber.get() : defaultValue;
   }
 
   /**
@@ -133,15 +108,40 @@ public class LoggedTunableNumber {
     return hasChanged(0);
   }
 
+  public void resetLastValue(int id) {
+    lastValues.put(id, get());
+  }
+
+  public void resetLastValue() {
+    resetLastValue(0);
+  }
+
   /**
    * Run callback if any tunable number has changed. See {@link #hasChanged(int)} for usage.
    *
    * @param action action to run
+   * @param resetAll if true and any TunableNumber in the set was changed, will reset the status of
+   *     all TunableNumbers in the set. Useful for avoiding redundant resetting.
    * @param tunableNumbers tunable numbers to check
    */
-  public static void ifChanged(int id, Runnable action, LoggedTunableNumber... tunableNumbers) {
-    if (Arrays.stream(tunableNumbers).anyMatch(v -> v.hasChanged(id))) {
-      action.run();
+  public static void ifChanged(
+      int id, Runnable action, boolean resetAll, LoggedTunableNumber... tunableNumbers) {
+
+    // Only force resetLastValue on numbers that haven't already been checked for changes to avoid
+    // redundancy. If not, break the loop on the first found instance.
+    boolean hasRunAction = false;
+    for (var tunableNumber : tunableNumbers) {
+      if (hasRunAction) {
+        tunableNumber.resetLastValue(id);
+      } else if (tunableNumber.hasChanged(id)) {
+        action.run();
+        hasRunAction = true;
+
+        // Exit early if no further resets are needed
+        if (!resetAll) {
+          break;
+        }
+      }
     }
   }
 
@@ -149,11 +149,17 @@ public class LoggedTunableNumber {
    * Run callback if any tunable number has changed. See {@link #hasChanged()} for usage.
    *
    * @param action action to run
+   * @param resetAll if true and any TunableNumber in the set was changed, will reset the status of
+   *     all TunableNumbers in the set. Useful for avoiding redundant resetting.
    * @param tunableNumbers tunable numbers to check
    */
-  public static void ifChanged(Runnable action, LoggedTunableNumber... tunableNumbers) {
-    if (Arrays.stream(tunableNumbers).anyMatch(LoggedTunableNumber::hasChanged)) {
-      action.run();
-    }
+  public static void ifChanged(
+      Runnable action, boolean resetAll, LoggedTunableNumber... tunableNumbers) {
+    ifChanged(0, action, resetAll, tunableNumbers);
+  }
+
+  @Override
+  public double getAsDouble() {
+    return get();
   }
 }

@@ -11,32 +11,32 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.drive.DriveBase;
 import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 
-public class RobotState {
+public class PoseEstimator {
   // Standard deviations of the pose estimate (x position in meters, y position in meters, and
   // heading in radians).
   // Increase these numbers to trust your state estimate less.
   private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
   private static final double poseBufferSizeSec = 2.0;
 
-  private static RobotState instance;
+  private static PoseEstimator instance;
 
-  public static RobotState getInstance() {
+  public static PoseEstimator getInstance() {
     if (instance == null) {
-      instance = new RobotState();
+      instance = new PoseEstimator();
     }
     return instance;
   }
 
   @Getter
-  @AutoLogOutput(key = "RobotState/OdometryPose")
+  @AutoLogOutput(key = "PoseEstimator/OdometryPose")
   private Pose2d odometryPose = new Pose2d();
 
   @Getter
-  @AutoLogOutput(key = "RobotState/EstimatedPose")
+  @AutoLogOutput(key = "PoseEstimator/EstimatedPose")
   private Pose2d estimatedPose = new Pose2d();
 
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
@@ -55,12 +55,12 @@ public class RobotState {
   // Assume gyro starts at zero
   private Rotation2d gyroOffset = new Rotation2d();
 
-  private RobotState() {
+  private PoseEstimator() {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
 
-    kinematics = new SwerveDriveKinematics(DriveConstants.moduleTranslations);
+    kinematics = new SwerveDriveKinematics(DriveBase.getModuleTranslations());
   }
 
   public void resetPose(Pose2d pose) {
