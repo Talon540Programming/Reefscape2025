@@ -28,6 +28,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class RobotContainer {
+
   // Button Binding variables
   @AutoLogOutput private boolean robotRelativeEnabled = false;
   @AutoLogOutput private boolean slowModeEnabled = false;
