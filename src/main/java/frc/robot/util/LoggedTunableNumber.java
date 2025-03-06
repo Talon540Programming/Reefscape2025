@@ -162,9 +162,4 @@ public class LoggedTunableNumber implements DoubleSupplier {
   public double getAsDouble() {
     return get();
   }
-
-  @Override
-  public double getAsDouble() {
-    return get();
-  }
 }
