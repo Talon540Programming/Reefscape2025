@@ -25,7 +25,7 @@ import lombok.Builder;
 public class VisionConstants {
 
   //   public static final Map<Integer, Integer> blueAllianceAprilTagReefPoses = new HashMap<>();
-  public static final int[] blueAllianceAprilTagReefPoses = new int[] {18, 19, 20, 21, 22, 17};
+  public static final int[] blueAllianceReefAprilTags = new int[] {18, 19, 20, 21, 22, 17};
 
   //   static {
   //     blueAllianceAprilTagReefPoses.put(18, 0);
@@ -37,7 +37,21 @@ public class VisionConstants {
   //   }
 
   //   public static final Map<Integer, Integer> redAllianceAprilTagReefPoses = new HashMap<>();
-  public static final int[] redAllianceAprilTagReefPoses = new int[] {7, 6, 11, 10, 9, 8};
+  public static final int[] redAllianceReefAprilTags = new int[] {7, 6, 11, 10, 9, 8};
+
+  public static final int[] reefAprilTags =
+      new int[blueAllianceReefAprilTags.length + redAllianceReefAprilTags.length];
+
+  static {
+    System.arraycopy(
+        blueAllianceReefAprilTags, 0, reefAprilTags, 0, blueAllianceReefAprilTags.length);
+    System.arraycopy(
+        redAllianceReefAprilTags,
+        0,
+        reefAprilTags,
+        blueAllianceReefAprilTags.length,
+        redAllianceReefAprilTags.length);
+  }
 
   //   static {
   //     redAllianceAprilTagReefPoses.put(0,7);
@@ -55,7 +69,7 @@ public class VisionConstants {
   public static final double xyStdDevCoefficient = 0.015;
   public static final double thetaStdDevCoefficient = 0.03;
   public static final double demoTagPosePersistenceSecs = 0.5;
-  public static final double objDetectConfidenceThreshold = 0.8;
+  public static final double maxReefTagDistance = 2;
 
   public static final Translation2d branchPoseToScorePose =
       new Translation2d(Units.inchesToMeters(20), 0);

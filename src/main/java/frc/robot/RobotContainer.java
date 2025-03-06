@@ -228,7 +228,13 @@ public class RobotContainer {
         .onTrue(elevatorBase.homingSequence());
 
     // Auto Align (Left or Right)
-    // TODO
+    // controller
+    //     .rightBumper()
+    //     .onTrue(
+    //         new DriveToPose(
+
+    //         )
+    //     )
 
     // Human Player Alert (Strobe LEDs)
     // TODO

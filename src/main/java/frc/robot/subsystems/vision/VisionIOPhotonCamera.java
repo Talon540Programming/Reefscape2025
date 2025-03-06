@@ -1,5 +1,7 @@
 package frc.robot.subsystems.vision;
 
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -24,12 +26,9 @@ public class VisionIOPhotonCamera implements VisionIO {
       VecBuilder.fill(0.01, 0.01, Math.toRadians(0.5));
 
   // Single tag the lowest ambiguity tags must be below the threshold
-  private static final double AMBIGUITY_THRESHOLD = 0.4;
   // Robot pose estimates on the side of the field may be slightly off, this accounts for that
-  private static final double FIELD_BORDER_MARGIN = 0.5;
   // AprilTag estimation may result in 3d estimations with poor z estimates, reject estimates with
   // too crazy z estimates
-  private static final double Z_MARGIN = 0.75;
 
   public VisionIOPhotonCamera(
       String cameraName, Transform3d robotToCamera, Matrix<N3, N1> cameraBias) {
@@ -68,6 +67,7 @@ public class VisionIOPhotonCamera implements VisionIO {
             res.getMultiTagResult().get().fiducialIDsUsed.stream()
                 .mapToInt(Short::intValue)
                 .toArray();
+
         inputs.visionMeasurementStdDevs = MULTI_TARGET_STDDEVS;
       } else if (!res.getTargets().isEmpty()) {
 
@@ -85,7 +85,7 @@ public class VisionIOPhotonCamera implements VisionIO {
           tagsUsed.add(target.getFiducialId());
 
           if (targetPoseAmbiguity < lowestAmbiguityScore
-              && targetPoseAmbiguity <= AMBIGUITY_THRESHOLD) {
+              && targetPoseAmbiguity <= ambiguityThreshold) {
             lowestAmbiguityScore = targetPoseAmbiguity;
             lowestAmbiguityTarget = target;
           }
@@ -109,20 +109,21 @@ public class VisionIOPhotonCamera implements VisionIO {
 
       // Reject pose estimates outside reasonable bounds
       if (!inputs.hasResult
-          || inputs.estimatedRobotPose.getX() < -FIELD_BORDER_MARGIN
+          || inputs.estimatedRobotPose.getX() < -fieldBorderMargin
           || inputs.estimatedRobotPose.getX()
-              > FieldConstants.fieldLayout.getFieldLength() + FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getY() < -FIELD_BORDER_MARGIN
+              > FieldConstants.fieldLayout.getFieldLength() + fieldBorderMargin
+          || inputs.estimatedRobotPose.getY() < -fieldBorderMargin
           || inputs.estimatedRobotPose.getY()
-              > FieldConstants.fieldLayout.getFieldWidth() + FIELD_BORDER_MARGIN
-          || inputs.estimatedRobotPose.getZ() < -Z_MARGIN
-          || inputs.estimatedRobotPose.getZ() > Z_MARGIN) {
+              > FieldConstants.fieldLayout.getFieldWidth() + fieldBorderMargin
+          || inputs.estimatedRobotPose.getZ() < -zMargin
+          || inputs.estimatedRobotPose.getZ() > zMargin) {
         // Record default values if no results or invalid were found
         inputs.hasResult = false;
         inputs.estimatedRobotPose = new Pose3d();
         inputs.detectedTagsIds = new int[] {};
         inputs.detectedTagPoses = new Pose3d[] {};
         inputs.visionMeasurementStdDevs = INVALID_STDDEVS;
+        inputs.tagDistances = new double[] {};
       } else {
         // Calculate the average distance between the estimated pose and the pose of all detected
         // fiducial targets in three dimensions
@@ -130,13 +131,15 @@ public class VisionIOPhotonCamera implements VisionIO {
         // Guaranteed to have at least one target
         int numTags = inputs.detectedTagsIds.length;
         inputs.detectedTagPoses = new Pose3d[numTags];
+        inputs.tagDistances = new double[numTags];
         for (int i = 0; i < numTags; i++) {
           int tagId = inputs.detectedTagsIds[i];
           // All values are guaranteed to exist within the ATFL
           var tagPose = FieldConstants.fieldLayout.getTagPose(tagId).orElseThrow();
           inputs.detectedTagPoses[i] = tagPose;
-          totalDistance +=
+          inputs.tagDistances[i] =
               tagPose.getTranslation().getDistance(inputs.estimatedRobotPose.getTranslation());
+          totalDistance += inputs.tagDistances[i];
         }
         double averageDistance = totalDistance / numTags;
         // Increase std devs based on the average distance to the target and per camera bias

@@ -19,6 +19,7 @@ public interface VisionIO {
         MatBuilder.fill(Nat.N3(), Nat.N1(), 0.0, 0.0, 0.0);
     public int[] detectedTagsIds = new int[] {};
     public Pose3d[] detectedTagPoses = new Pose3d[] {};
+    public double[] tagDistances = new double[] {};
 
     @Override
     public void toLog(LogTable table) {
@@ -28,6 +29,7 @@ public interface VisionIO {
       table.put("EstimatedRobotPose", estimatedRobotPose);
       table.put("DetectedTagsIds", detectedTagsIds);
       table.put("DetectedTagPoses", detectedTagPoses);
+      table.put("DetectedTagDistances", tagDistances);
       table.put("VisionMeasurementStdDevs", visionMeasurementStdDevs.getData());
     }
 
@@ -39,6 +41,7 @@ public interface VisionIO {
       estimatedRobotPose = table.get("EstimatedRobotPose", estimatedRobotPose);
       detectedTagsIds = table.get("DetectedTagsIds", detectedTagsIds);
       detectedTagPoses = table.get("DetectedTagPoses", detectedTagPoses);
+      tagDistances = table.get("DetectedTagDistances", tagDistances);
       visionMeasurementStdDevs =
           MatBuilder.fill(
               Nat.N3(),
@@ -54,6 +57,7 @@ public interface VisionIO {
       copy.estimatedRobotPose = this.estimatedRobotPose;
       copy.detectedTagsIds = this.detectedTagsIds.clone();
       copy.detectedTagPoses = this.detectedTagPoses.clone();
+      copy.tagDistances = this.tagDistances.clone();
       copy.visionMeasurementStdDevs = this.visionMeasurementStdDevs.copy();
       return copy;
     }

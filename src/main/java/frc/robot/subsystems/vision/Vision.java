@@ -2,10 +2,12 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -41,4 +43,26 @@ public class Vision extends SubsystemBase {
                   input.visionMeasurementStdDevs));
     }
   }
+
+  @AutoLogOutput
+  public boolean atReefFace() {
+    System.out.println("CHECKPOINT");
+
+    for (int i = 0; i < cameras.length; i++) {
+      var input = cameraInputs[i];
+      if (input.detectedTagsIds.length == 0) continue;
+      for (int j = 0; j < input.detectedTagsIds.length; j++) {
+        for (int k = 0; k < VisionConstants.reefAprilTags.length; k++) {
+          if (input.detectedTagsIds[j] == VisionConstants.reefAprilTags[k]
+              && input.tagDistances[j] <= maxReefTagDistance) return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  // public Pose2d getNearestReefFace() {
+
+  // }
 }
