@@ -2,9 +2,12 @@ package frc.robot.subsystems.dispenser;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.elevator.ElevatorState;
 import frc.robot.util.Debouncer;
 import frc.robot.util.LoggedTunableNumber;
+import java.util.function.Supplier;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
@@ -12,13 +15,15 @@ public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
   private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 4.0);
+      new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
+  private static final LoggedTunableNumber ejectVoltsSlow =
+      new LoggedTunableNumber("Dispenser/EjectVoltsSlow", 1.3);
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
 
   private static final LoggedTunableNumber ejectPeriod =
-      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.35);
+      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.75);
 
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();
@@ -54,10 +59,20 @@ public class DispenserBase extends SubsystemBase {
   }
 
   public Command intakeTillHolding() {
-    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop).until(() -> holdingCoral);
+    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop)
+        .raceWith(
+            Commands.sequence(
+                Commands.waitSeconds(0.25), Commands.waitUntil(this::isHoldingCoral)));
   }
 
-  public Command eject() {
-    return startEnd(() -> io.runVolts(ejectVolts.get()), io::stop).withTimeout(ejectPeriod.get());
+  public Command eject(Supplier<ElevatorState> state) {
+    return startEnd(
+            () ->
+                io.runVolts(
+                    state.get() == ElevatorState.L1_CORAL
+                        ? ejectVoltsSlow.get()
+                        : ejectVolts.get()),
+            io::stop)
+        .withTimeout(ejectPeriod.get());
   }
 }

@@ -11,8 +11,6 @@ import frc.robot.util.LoggedTunableNumber;
 public class IntakeCommands {
   public static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Intake/HopperIntakeVolts", 5.5);
-  public static final LoggedTunableNumber intakeTimeout =
-      new LoggedTunableNumber("Intake/IntakeTimeoutSecs", 5.0);
 
   public static Command intake(ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
     return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
@@ -20,8 +18,7 @@ public class IntakeCommands {
             Commands.waitUntil(elevator::isAtGoal)
                 .andThen(
                     Commands.deadline(
-                            dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))
-                        .withTimeout(intakeTimeout.get())))
+                        dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))))
         .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
   }
 
