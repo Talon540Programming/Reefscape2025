@@ -17,10 +17,13 @@ public class FieldConstants {
   public static AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
 
-  public static final double fieldLength =
-      AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
-  public static final double fieldWidth =
-      AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldWidth();
+  // public static final double fieldLength =
+  //     AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
+  // public static final double fieldWidth =
+  //     AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldWidth();
+
+  public static final double fieldLength = fieldLayout.getFieldLength();
+  public static final double fieldWidth = fieldLayout.getFieldWidth();
   public static final double startingLineX =
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
 
@@ -87,6 +90,14 @@ public class FieldConstants {
         new Translation2d(Units.inchesToMeters(176.746), fieldWidth / 2.0);
     public static final double faceToZoneLine =
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
+    
+    public static final Transform2d centerToRightBranch = new Transform2d(
+      30.738, 6.469, Rotation2d.fromDegrees(180)
+    );
+
+    public static final Transform2d centerToLeftBranch = new Transform2d(
+      30.738, -6.469, Rotation2d.fromDegrees(180)
+    );
 
     public static final Pose2d[] centerFaces =
         new Pose2d[6]; // Starting facing the driver station in clockwise order
@@ -96,13 +107,13 @@ public class FieldConstants {
 
     static {
       // Initialize faces
-      var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
-      centerFaces[0] = aprilTagLayout.getTagPose(18).get().toPose2d();
-      centerFaces[1] = aprilTagLayout.getTagPose(19).get().toPose2d();
-      centerFaces[2] = aprilTagLayout.getTagPose(20).get().toPose2d();
-      centerFaces[3] = aprilTagLayout.getTagPose(21).get().toPose2d();
-      centerFaces[4] = aprilTagLayout.getTagPose(22).get().toPose2d();
-      centerFaces[5] = aprilTagLayout.getTagPose(17).get().toPose2d();
+      // var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+      centerFaces[0] = fieldLayout.getTagPose(18).get().toPose2d();
+      centerFaces[1] = fieldLayout.getTagPose(19).get().toPose2d();
+      centerFaces[2] = fieldLayout.getTagPose(20).get().toPose2d();
+      centerFaces[3] = fieldLayout.getTagPose(21).get().toPose2d();
+      centerFaces[4] = fieldLayout.getTagPose(22).get().toPose2d();
+      centerFaces[5] = fieldLayout.getTagPose(17).get().toPose2d();
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {

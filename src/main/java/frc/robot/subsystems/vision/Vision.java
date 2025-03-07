@@ -4,10 +4,10 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.FieldConstants;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
-import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -44,9 +44,8 @@ public class Vision extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput
-  public boolean atReefFace() {
-    System.out.println("CHECKPOINT");
+  // @AutoLogOutput(key = "Vision/NearestReefPose")
+  public Pose2d getNearestReefFace() {
 
     for (int i = 0; i < cameras.length; i++) {
       var input = cameraInputs[i];
@@ -54,15 +53,23 @@ public class Vision extends SubsystemBase {
       for (int j = 0; j < input.detectedTagsIds.length; j++) {
         for (int k = 0; k < VisionConstants.reefAprilTags.length; k++) {
           if (input.detectedTagsIds[j] == VisionConstants.reefAprilTags[k]
-              && input.tagDistances[j] <= maxReefTagDistance) return true;
+              && input.tagDistances[j] <= maxReefTagDistance) {
+            // Logger.recordOutput("Vision/ReefFacePose", FieldConstants.Reef.centerFaces[k]);
+            return FieldConstants.Reef.centerFaces[k];
+          }
+          ;
         }
       }
     }
 
-    return false;
+    return PoseEstimator.getInstance().getEstimatedPose();
   }
 
-  // public Pose2d getNearestReefFace() {
+  public Pose2d getNearestLeftBranch() {
+    return getNearestReefFace().plus(FieldConstants.Reef.centerToLeftBranch);
+  }
 
-  // }
+  public Pose2d getNearestRightBranch() {
+    return getNearestReefFace().plus(FieldConstants.Reef.centerToRightBranch);
+  }
 }

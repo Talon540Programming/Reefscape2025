@@ -59,7 +59,7 @@ public class PoseEstimator {
   private Rotation2d gyroOffset = new Rotation2d();
 
   @Getter
-  @AutoLogOutput(key = "RobotState/RobotVelocity")
+  @AutoLogOutput(key = "PoseEstimator/RobotVelocity")
   private ChassisSpeeds robotVelocity = new ChassisSpeeds();
 
   @Getter @Setter private OptionalDouble distanceToBranch = OptionalDouble.empty();
@@ -159,7 +159,7 @@ public class PoseEstimator {
     robotVelocity = speeds;
   }
 
-  @AutoLogOutput(key = "RobotState/FieldVelocity")
+  @AutoLogOutput(key = "PoseEstimator/FieldVelocity")
   public ChassisSpeeds getFieldVelocity() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getRotation());
   }

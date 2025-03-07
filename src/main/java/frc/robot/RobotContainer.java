@@ -11,6 +11,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
@@ -50,6 +51,7 @@ public class RobotContainer {
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
   private boolean slowModeEnabled;
+  private Pose2d currentDriveToPoseTarget;
 
   public RobotContainer() {
     switch (Constants.getMode()) {
@@ -228,13 +230,17 @@ public class RobotContainer {
         .onTrue(elevatorBase.homingSequence());
 
     // Auto Align (Left or Right)
-    // controller
-    //     .rightBumper()
-    //     .onTrue(
-    //         new DriveToPose(
+    controller
+        .rightBumper()
+        .whileTrue(new DriveToPose(driveBase,
+        () -> visionBase.getNearestRightBranch()
+        ));
 
-    //         )
-    //     )
+    controller
+        .leftBumper()
+        .whileTrue(new DriveToPose(driveBase,
+        () -> visionBase.getNearestLeftBranch()
+        ));
 
     // Human Player Alert (Strobe LEDs)
     // TODO

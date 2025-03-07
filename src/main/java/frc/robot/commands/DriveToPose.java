@@ -57,6 +57,7 @@ public class DriveToPose extends Command {
     thetakP.initDefault(4.0);
     thetakD.initDefault(0.0);
     driveMaxVelocity.initDefault(3.8);
+    driveMaxVelocitySlow.initDefault(1.5);
     driveMaxAcceleration.initDefault(3.0);
     thetaMaxVelocity.initDefault(Units.degreesToRadians(360.0));
     thetaMaxAcceleration.initDefault(8.0);
@@ -235,6 +236,8 @@ public class DriveToPose extends Command {
               Rotation2d.fromRadians(thetaController.getSetpoint().position))
         });
     Logger.recordOutput("DriveToPose/Goal", new Pose2d[] {targetPose});
+
+    if (atGoal()) end(false);
   }
 
   @Override
