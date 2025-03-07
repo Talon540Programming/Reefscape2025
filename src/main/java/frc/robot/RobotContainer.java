@@ -185,8 +185,8 @@ public class RobotContainer {
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
             driveBase,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
+            () -> controller.getLeftY(),
+            () -> controller.getLeftX(),
             () -> -controller.getRightX(),
             () -> slowModeEnabled));
 
@@ -232,15 +232,11 @@ public class RobotContainer {
     // Auto Align (Left or Right)
     controller
         .rightBumper()
-        .whileTrue(new DriveToPose(driveBase,
-        () -> visionBase.getNearestRightBranch()
-        ));
+        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestRightBranch()));
 
     controller
         .leftBumper()
-        .whileTrue(new DriveToPose(driveBase,
-        () -> visionBase.getNearestLeftBranch()
-        ));
+        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestLeftBranch()));
 
     // Human Player Alert (Strobe LEDs)
     // TODO

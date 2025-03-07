@@ -90,14 +90,12 @@ public class FieldConstants {
         new Translation2d(Units.inchesToMeters(176.746), fieldWidth / 2.0);
     public static final double faceToZoneLine =
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
-    
-    public static final Transform2d centerToRightBranch = new Transform2d(
-      30.738, 6.469, Rotation2d.fromDegrees(180)
-    );
 
-    public static final Transform2d centerToLeftBranch = new Transform2d(
-      30.738, -6.469, Rotation2d.fromDegrees(180)
-    );
+    public static final Transform2d centerToRightBranch =
+        new Transform2d(Units.inchesToMeters(20),Units.inchesToMeters(6.469), Rotation2d.fromDegrees(180)); //TODO
+
+    public static final Transform2d centerToLeftBranch =
+        new Transform2d(Units.inchesToMeters(20),Units.inchesToMeters(-6.469), Rotation2d.fromDegrees(180)); //TODO
 
     public static final Pose2d[] centerFaces =
         new Pose2d[6]; // Starting facing the driver station in clockwise order

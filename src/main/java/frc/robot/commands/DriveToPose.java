@@ -52,13 +52,13 @@ public class DriveToPose extends Command {
       new LoggedTunableNumber("DriveToPose/FFMaxRadius");
 
   static {
-    drivekP.initDefault(0.8);
+    drivekP.initDefault(0.1); //TODO
     drivekD.initDefault(0.0);
-    thetakP.initDefault(4.0);
+    thetakP.initDefault(1.0); //TODO
     thetakD.initDefault(0.0);
-    driveMaxVelocity.initDefault(3.8);
-    driveMaxVelocitySlow.initDefault(1.5);
-    driveMaxAcceleration.initDefault(3.0);
+    driveMaxVelocity.initDefault(3.8); //TODO
+    driveMaxVelocitySlow.initDefault(1); //TODO
+    driveMaxAcceleration.initDefault(3.0); //TODO
     thetaMaxVelocity.initDefault(Units.degreesToRadians(360.0));
     thetaMaxAcceleration.initDefault(8.0);
     driveTolerance.initDefault(0.01);
@@ -155,7 +155,7 @@ public class DriveToPose extends Command {
       driveController.setP(drivekP.get());
       driveController.setD(drivekD.get());
       driveController.setConstraints(
-          new TrapezoidProfile.Constraints(driveMaxVelocity.get(), driveMaxAcceleration.get()));
+          new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(), driveMaxAcceleration.get()));
       driveController.setTolerance(driveTolerance.get());
       thetaController.setP(thetakP.get());
       thetaController.setD(thetakD.get());
