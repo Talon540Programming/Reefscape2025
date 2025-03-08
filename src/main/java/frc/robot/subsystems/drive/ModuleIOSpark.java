@@ -159,6 +159,8 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void runDriveOpenLoop(double output) {
+    System.out.println("CHECKPOINT314");
+    System.out.println(output);
     driveSpark.setVoltage(output);
   }
 

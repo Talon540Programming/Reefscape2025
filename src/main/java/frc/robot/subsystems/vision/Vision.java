@@ -8,6 +8,7 @@ import frc.robot.FieldConstants;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
@@ -44,7 +45,7 @@ public class Vision extends SubsystemBase {
     }
   }
 
-  // @AutoLogOutput(key = "Vision/NearestReefPose")
+  @AutoLogOutput(key = "Vision/NearestReefPose")
   public Pose2d getNearestReefFace() {
 
     for (int i = 0; i < cameras.length; i++) {
@@ -65,10 +66,12 @@ public class Vision extends SubsystemBase {
     return PoseEstimator.getInstance().getEstimatedPose();
   }
 
+  @AutoLogOutput(key = "Vision/NearestLeftBranch")
   public Pose2d getNearestLeftBranch() {
     return getNearestReefFace().plus(FieldConstants.Reef.centerToLeftBranch);
   }
 
+  @AutoLogOutput(key = "Vision/NearestRightBranch")
   public Pose2d getNearestRightBranch() {
     return getNearestReefFace().plus(FieldConstants.Reef.centerToRightBranch);
   }

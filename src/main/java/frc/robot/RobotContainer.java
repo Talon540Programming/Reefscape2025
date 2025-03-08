@@ -2,7 +2,6 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -25,6 +24,7 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -49,6 +49,13 @@ public class RobotContainer {
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
+
+  private static final LoggedTunableNumber voltage =
+      new LoggedTunableNumber("Drive/AppliedVoltage");
+
+  static {
+    voltage.initDefault(1);
+  }
 
   private boolean slowModeEnabled;
   private Pose2d currentDriveToPoseTarget;
@@ -159,10 +166,7 @@ public class RobotContainer {
     autoChooser.addOption("Do Nothing", Commands.none());
     autoChooser.addOption(
         "Taxi",
-        Commands.runEnd(
-                () -> driveBase.runVelocity(new ChassisSpeeds(1.0, 0.0, 0.0)),
-                driveBase::stop,
-                driveBase)
+        Commands.runEnd(() -> driveBase.runCharacterization(8), driveBase::stop, driveBase)
             .withTimeout(2.0)
             .beforeStarting(
                 Commands.runOnce(
@@ -185,8 +189,8 @@ public class RobotContainer {
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
             driveBase,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
             () -> slowModeEnabled));
 

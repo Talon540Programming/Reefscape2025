@@ -226,10 +226,20 @@ public class DriveBase extends SubsystemBase {
     Logger.recordOutput(
         "SwerveChassisSpeeds/SetpointsUnoptimized", currentSetpoint.chassisSpeeds());
 
+    SwerveModuleState[] measuredStates = getModuleStates();
+    SwerveModuleState[] stateErrors = new SwerveModuleState[4];
+
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(setpointStates[i]);
+
+      stateErrors[i] =
+          new SwerveModuleState(
+              setpointStates[i].speedMetersPerSecond - measuredStates[i].speedMetersPerSecond,
+              setpointStates[i].angle.minus(measuredStates[i].angle));
     }
+
+    Logger.recordOutput("SwerveStates/Error", stateErrors);
   }
 
   // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP
@@ -271,6 +281,16 @@ public class DriveBase extends SubsystemBase {
     return states;
   }
 
+  // @AutoLogOutput(key = "SwerveStates/Error")
+  // private SwerveModuleState[] getStateError() {
+  //   SwerveModuleState[] states = getModuleStates();
+
+  //   SwerveModuleState[] errors = new SwerveModuleState[4];
+  //   for (int i = 0; i < 4; i++) {
+  //     errors[i] = states[i] -
+  //   }
+  // }
+
   /** Returns the module positions (turn angles and drive positions) for all the modules. */
   private SwerveModulePosition[] getModulePositions() {
     SwerveModulePosition[] states = new SwerveModulePosition[4];
@@ -307,6 +327,16 @@ public class DriveBase extends SubsystemBase {
   /** Returns the raw gyro rotation read by the IMU */
   public Rotation2d getGyroRotation() {
     return m_gyroInputs.yawPosition;
+  }
+
+  public Command runAtVolts(double volts) {
+    return Commands.run(
+        () -> {
+          // System.out.println(volts);
+          for (int i = 0; i < 4; i++) {
+            modules[i].runCharacterization(volts);
+          }
+        });
   }
 
   /**

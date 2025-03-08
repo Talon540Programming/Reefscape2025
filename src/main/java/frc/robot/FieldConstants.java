@@ -92,13 +92,19 @@ public class FieldConstants {
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
     public static final Transform2d centerToRightBranch =
-        new Transform2d(Units.inchesToMeters(20),Units.inchesToMeters(6.469), Rotation2d.fromDegrees(180)); //TODO
+        new Transform2d(
+            Units.inchesToMeters(20),
+            Units.inchesToMeters(6.469),
+            Rotation2d.fromDegrees(180)); // TODO
 
     public static final Transform2d centerToLeftBranch =
-        new Transform2d(Units.inchesToMeters(20),Units.inchesToMeters(-6.469), Rotation2d.fromDegrees(180)); //TODO
+        new Transform2d(
+            Units.inchesToMeters(20),
+            Units.inchesToMeters(-6.469),
+            Rotation2d.fromDegrees(180)); // TODO
 
     public static final Pose2d[] centerFaces =
-        new Pose2d[6]; // Starting facing the driver station in clockwise order
+        new Pose2d[12]; // Starting facing the driver station in clockwise order
     public static final List<Map<ReefLevel, Pose3d>> branchPositions =
         new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
     public static final List<Map<ReefLevel, Pose2d>> branchPositions2d = new ArrayList<>();
@@ -112,6 +118,12 @@ public class FieldConstants {
       centerFaces[3] = fieldLayout.getTagPose(21).get().toPose2d();
       centerFaces[4] = fieldLayout.getTagPose(22).get().toPose2d();
       centerFaces[5] = fieldLayout.getTagPose(17).get().toPose2d();
+      centerFaces[6] = fieldLayout.getTagPose(7).get().toPose2d();
+      centerFaces[7] = fieldLayout.getTagPose(6).get().toPose2d();
+      centerFaces[8] = fieldLayout.getTagPose(11).get().toPose2d();
+      centerFaces[9] = fieldLayout.getTagPose(10).get().toPose2d();
+      centerFaces[10] = fieldLayout.getTagPose(9).get().toPose2d();
+      centerFaces[11] = fieldLayout.getTagPose(8).get().toPose2d();
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {
