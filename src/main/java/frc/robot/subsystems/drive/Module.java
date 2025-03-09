@@ -31,10 +31,10 @@ class Module {
       case COMPBOT -> {
         drivekS.initDefault(0.69641);
         drivekV.initDefault(0.12647);
-        drivekP.initDefault(0.0);
-        drivekI.initDefault(0.0);
-        drivekD.initDefault(0.0);
-        driveIZone.initDefault(0.0);
+        drivekP.initDefault(0.0075);
+        drivekI.initDefault(0.0000005);
+        drivekD.initDefault(0.001);
+        driveIZone.initDefault(0.01);
         turnkP.initDefault(0.65);
         turnkD.initDefault(0.1);
       }
