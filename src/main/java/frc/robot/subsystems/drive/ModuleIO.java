@@ -41,7 +41,7 @@ public interface ModuleIO {
   public default void runTurnPosition(Rotation2d rotation) {}
 
   /** Set P, I, and D gains for closed loop control on drive motor. */
-  public default void setDrivePID(double kP, double kI, double kD) {}
+  public default void setDrivePID(double kP, double kI, double kD, double IZone) {}
 
   /** Set kS, kV gains for closed loop control on drive motor. */
   public default void setDriveFF(double kS, double kV) {}
