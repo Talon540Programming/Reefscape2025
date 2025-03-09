@@ -21,8 +21,9 @@ class Module {
       new LoggedTunableNumber("Drive/Module/DrivekI");
   private static final LoggedTunableNumber drivekD =
       new LoggedTunableNumber("Drive/Module/DrivekD");
+  private static final LoggedTunableNumber driveIZone =
+      new LoggedTunableNumber("Drive/Module/DrivekIZone");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
-  private static final LoggedTunableNumber turnkI = new LoggedTunableNumber("Drive/Module/TurnkI");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
   static {
@@ -35,8 +36,8 @@ class Module {
         drivekP.initDefault(0.0);
         drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
+        driveIZone.initDefault(0.0);
         turnkP.initDefault(0.65);
-        turnkI.initDefault(0.0);
         turnkD.initDefault(0.1);
       }
       default -> {
@@ -45,8 +46,8 @@ class Module {
         drivekP.initDefault(0.1);
         drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
+        driveIZone.initDefault(0.0);
         turnkP.initDefault(10.0);
-        turnkI.initDefault(0.0);
         turnkD.initDefault(0.0);
       }
     }
@@ -82,18 +83,14 @@ class Module {
         hashCode(), () -> m_io.setDriveFF(drivekS.get(), drivekV.get()), true, drivekS, drivekV);
     LoggedTunableNumber.ifChanged(
         hashCode(),
-        () -> m_io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get()),
+        () -> m_io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get(), driveIZone.get()),
         true,
         drivekP,
         drivekI,
-        drivekD);
+        drivekD,
+        driveIZone);
     LoggedTunableNumber.ifChanged(
-        hashCode(),
-        () -> m_io.setTurnPID(turnkP.get(), turnkI.get(), turnkD.get()),
-        true,
-        turnkP,
-        turnkI,
-        turnkD);
+        hashCode(), () -> m_io.setTurnPID(turnkP.get(), 0, turnkD.get()), true, turnkP, turnkD);
 
     // Update Odometry Positions
     int sampleCount = m_inputs.odometryDrivePositionsRad.length;
