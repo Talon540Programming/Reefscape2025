@@ -89,6 +89,7 @@ public class ModuleIOSpark implements ModuleIO {
 
     driveSpark.configure(
         driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    driveEncoder.setPosition(0.0);
 
     // Configure Turn
     var turnConfig = new SparkMaxConfig();
@@ -185,9 +186,9 @@ public class ModuleIOSpark implements ModuleIO {
   }
 
   @Override
-  public void setDrivePID(double kP, double kI, double kD) {
+  public void setDrivePID(double kP, double kI, double kD, double IZone) {
     var drivePIDConfig = new SparkMaxConfig();
-    drivePIDConfig.closedLoop.pid(kP, kI, kD);
+    drivePIDConfig.closedLoop.pid(kP, kI, kD).iZone(IZone);
 
     driveSpark.configure(
         drivePIDConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);

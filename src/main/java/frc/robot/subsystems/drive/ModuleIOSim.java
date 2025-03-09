@@ -119,8 +119,9 @@ public class ModuleIOSim implements ModuleIO {
   }
 
   @Override
-  public void setDrivePID(double kP, double kI, double kD) {
+  public void setDrivePID(double kP, double kI, double kD, double IZone) {
     driveController.setPID(kP, kI, kD);
+    driveController.setI(IZone);
   }
 
   @Override
