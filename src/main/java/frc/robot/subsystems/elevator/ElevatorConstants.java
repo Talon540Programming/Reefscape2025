@@ -20,4 +20,7 @@ public class ElevatorConstants {
 
   public static final double carriageMassKg = Units.lbsToKilograms(6.0);
   public static final double stagesMassKg = Units.lbsToKilograms(12.0);
+
+  public static final int leaderId = 12;
+  public static final int followerId = 13;
 }
