@@ -5,9 +5,9 @@ import edu.wpi.first.math.util.Units;
 
 public class ElevatorConstants {
   // Pitch from Floor to Elevator
-  public static final Rotation2d elevatorPitch = Rotation2d.fromDegrees(84.5);
+  public static final Rotation2d elevatorPitch = Rotation2d.fromDegrees(86.0);
   // Pitch from Elevator to Dispenser
-  public static final Rotation2d dispenserPitch = Rotation2d.fromDegrees(73.0);
+  public static final Rotation2d dispenserPitch = Rotation2d.fromDegrees(64.0);
 
   public static final double originToBaseHeightMeters = Units.inchesToMeters(5.149922);
 
@@ -15,8 +15,8 @@ public class ElevatorConstants {
   public static final double gearing = 3.0;
   public static final int numStages = 2;
 
-  // public static final double maxTravel = Units.inchesToMeters(42.244094); // TODO
-  public static final double maxTravel = Units.inchesToMeters(42); // TODO
+  // public static final double maxTravel = Units.inchesToMeters(41); // TODO
+  public static final double maxTravel = Units.inchesToMeters(41); // TODO
 
   public static final double carriageMassKg = Units.lbsToKilograms(6.0);
   public static final double stagesMassKg = Units.lbsToKilograms(12.0);
