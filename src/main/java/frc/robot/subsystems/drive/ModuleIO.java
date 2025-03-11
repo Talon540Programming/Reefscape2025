@@ -11,6 +11,7 @@ public interface ModuleIO {
     public double driveVelocityRadPerSec = 0.0;
     public double driveAppliedVolts = 0.0;
     public double driveCurrentAmps = 0.0;
+    public double driveTempCelsius = 0.0;
 
     public boolean turnConnected = false;
     public Rotation2d turnAbsolutePosition = new Rotation2d();
@@ -18,6 +19,7 @@ public interface ModuleIO {
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
+    public double turnTempCelsius = 0.0;
 
     public double[] odometryDrivePositionsRad = new double[] {};
     public Rotation2d[] odometryTurnPositions = new Rotation2d[] {};
@@ -39,7 +41,7 @@ public interface ModuleIO {
   public default void runTurnPosition(Rotation2d rotation) {}
 
   /** Set P, I, and D gains for closed loop control on drive motor. */
-  public default void setDrivePID(double kP, double kI, double kD) {}
+  public default void setDrivePID(double kP, double kI, double kD, double IZone) {}
 
   /** Set kS, kV gains for closed loop control on drive motor. */
   public default void setDriveFF(double kS, double kV) {}
