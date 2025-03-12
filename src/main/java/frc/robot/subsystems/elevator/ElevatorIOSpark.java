@@ -22,8 +22,8 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer followerConnectedDebouncer = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-    leaderSpark = new SparkMax(12, MotorType.kBrushless);
-    followerSpark = new SparkMax(13, MotorType.kBrushless);
+    leaderSpark = new SparkMax(leaderId, MotorType.kBrushless);
+    followerSpark = new SparkMax(followerId, MotorType.kBrushless);
 
     encoder = leaderSpark.getEncoder();
     controller = leaderSpark.getClosedLoopController();
