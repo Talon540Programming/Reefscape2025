@@ -1,7 +1,5 @@
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Volts;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -17,7 +15,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
 import frc.robot.util.LoggedTunableNumber;
@@ -75,16 +72,6 @@ public class DriveBase extends SubsystemBase {
 
   @AutoLogOutput(key = "Drive/BrakeModeEnabled")
   private boolean BRAKE_MODE = true;
-
-  private final SysIdRoutine sysId =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              null,
-              null,
-              null,
-              (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-          new SysIdRoutine.Mechanism(
-              (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
 
   public DriveBase(
       GyroIO gyroIO,
@@ -434,18 +421,6 @@ public class DriveBase extends SubsystemBase {
                               + formatter.format(Units.metersToInches(wheelRadius))
                               + " inches");
                     })));
-  }
-
-  /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0))
-        .withTimeout(1.0)
-        .andThen(sysId.quasistatic(direction));
-  }
-
-  /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
   }
 
   private static class WheelRadiusCharacterizationState {

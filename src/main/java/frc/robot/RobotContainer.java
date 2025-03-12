@@ -99,14 +99,6 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
       autoChooser.addOption(
-          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
-          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
           "Elevator Dynamic Forward",
           elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
       autoChooser.addOption(
