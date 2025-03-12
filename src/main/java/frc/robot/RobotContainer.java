@@ -28,7 +28,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class RobotContainer {
-
   // Button Binding variables
   @AutoLogOutput private boolean robotRelativeEnabled = false;
   @AutoLogOutput private boolean slowModeEnabled = false;
@@ -169,6 +168,7 @@ public class RobotContainer {
             () -> slowModeEnabled,
             () -> robotRelativeEnabled));
 
+
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
     // L1
@@ -181,6 +181,7 @@ public class RobotContainer {
                       slowModeEnabled = true;
                     })
                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL))));
+
     // L2
     controller
         .povUp()
@@ -197,6 +198,7 @@ public class RobotContainer {
                             () -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
                         controller.b().negate().debounce(0.25))));
 
+
     // L3
     controller
         .povRight()
@@ -212,6 +214,7 @@ public class RobotContainer {
                         Commands.runOnce(
                             () -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
                         controller.b().negate().debounce(0.25))));
+
 
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
@@ -232,6 +235,7 @@ public class RobotContainer {
                                 Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
                         IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
                         controller.leftTrigger().negate().debounce(0.25))));
+
 
     // Home Elevator
     controller

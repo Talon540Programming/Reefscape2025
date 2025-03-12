@@ -41,6 +41,7 @@ public class AlertsUtil {
       new Alert("At least one joystick button is not detected", AlertType.kWarning);
   private final Debouncer joystickDebouncer = new Debouncer(2);
 
+
   // Program Alerts
   private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", AlertType.kInfo);
   private final Alert ledsDisabledAlert =
@@ -80,6 +81,7 @@ public class AlertsUtil {
 
     joystickDisconnectedAlert.set(
         joystickDebouncer.calculate(DriverStation.isJoystickConnected(0)));
+
 
     // Update Program Alerts
     // TODO
