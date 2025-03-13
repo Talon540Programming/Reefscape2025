@@ -24,6 +24,7 @@ class Module {
   private static final LoggedTunableNumber driveIZone =
       new LoggedTunableNumber("Drive/Module/DrivekIZone");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
+  private static final LoggedTunableNumber turnkI = new LoggedTunableNumber("Drive/Module/TurnkI");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
   static {
@@ -46,6 +47,7 @@ class Module {
         drivekD.initDefault(0.0);
         driveIZone.initDefault(0.0);
         turnkP.initDefault(10.0);
+        turnkI.initDefault(0.0);
         turnkD.initDefault(0.0);
       }
     }

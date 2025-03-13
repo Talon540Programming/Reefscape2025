@@ -75,7 +75,10 @@ public class Robot extends LoggedRobot {
     // Configure brownout voltage
     RobotController.setBrownoutVoltage(6.0);
 
-    // Create RobotConatiner
+    // Disable joysick warnings in Driver Station
+    DriverStation.silenceJoystickConnectionWarning(true);
+
+    // Create RobotContainer
     robotContainer = new RobotContainer();
   }
 

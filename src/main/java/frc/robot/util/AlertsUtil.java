@@ -37,6 +37,9 @@ public class AlertsUtil {
   private final Alert lowBatteryVoltageAlert =
       new Alert("Battery voltage is too low, change the battery", AlertType.kWarning);
   private final Debouncer batteryVoltageDebouncer = new Debouncer(1.5);
+  private final Alert joystickDisconnectedAlert =
+      new Alert("At least one joystick button is not detected", AlertType.kWarning);
+  private final Debouncer joystickDebouncer = new Debouncer(2);
 
   // Program Alerts
   private final Alert tuningModeAlert = new Alert("Robot in Tuning Mode", AlertType.kInfo);
@@ -74,6 +77,9 @@ public class AlertsUtil {
     lowBatteryVoltageAlert.set(
         batteryVoltageDebouncer.calculate(
             RobotController.getBatteryVoltage() <= LOW_VOLTAGE_WARNING_THRESHOLD));
+
+    joystickDisconnectedAlert.set(
+        joystickDebouncer.calculate(DriverStation.isJoystickConnected(0)));
 
     // Update Program Alerts
     // TODO

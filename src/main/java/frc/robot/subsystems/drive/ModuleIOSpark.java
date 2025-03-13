@@ -169,9 +169,14 @@ public class ModuleIOSpark implements ModuleIO {
 
   @Override
   public void runDriveVelocity(double velocityRadPerSec) {
-    double ffVolts = driveFeedforward.calculate(velocityRadPerSec);
+    double ffVolts =
+        driveFeedforward.calculate(
+            velocityRadPerSec
+            //  * 1 / (Math.PI * 2)
+            );
     driveController.setReference(
         velocityRadPerSec,
+        //  * 1 / (Math.PI * 2),
         ControlType.kVelocity,
         ClosedLoopSlot.kSlot0,
         ffVolts,
@@ -182,7 +187,11 @@ public class ModuleIOSpark implements ModuleIO {
   public void runTurnPosition(Rotation2d rotation) {
     // Because internal encoder is relative, we want to wrap to the range -π to π radians.
     var updatedSetpoint = MathUtil.angleModulus(rotation.getRadians());
-    turnController.setReference(updatedSetpoint, ControlType.kPosition);
+    turnController.setReference(
+        updatedSetpoint
+        //  * 1 / (Math.PI * 2)
+        ,
+        ControlType.kPosition);
   }
 
   @Override
