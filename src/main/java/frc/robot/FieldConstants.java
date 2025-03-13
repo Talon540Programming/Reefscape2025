@@ -2,6 +2,7 @@ package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
@@ -24,6 +25,7 @@ public class FieldConstants {
 
   public static final double fieldLength = fieldLayout.getFieldLength();
   public static final double fieldWidth = fieldLayout.getFieldWidth();
+
   public static final double startingLineX =
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
 
@@ -105,6 +107,7 @@ public class FieldConstants {
 
     public static final Pose2d[] centerFaces =
         new Pose2d[12]; // Starting facing the driver station in clockwise order
+
     public static final List<Map<ReefLevel, Pose3d>> branchPositions =
         new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
     public static final List<Map<ReefLevel, Pose2d>> branchPositions2d = new ArrayList<>();
@@ -124,6 +127,7 @@ public class FieldConstants {
       centerFaces[9] = fieldLayout.getTagPose(10).get().toPose2d();
       centerFaces[10] = fieldLayout.getTagPose(9).get().toPose2d();
       centerFaces[11] = fieldLayout.getTagPose(8).get().toPose2d();
+
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {

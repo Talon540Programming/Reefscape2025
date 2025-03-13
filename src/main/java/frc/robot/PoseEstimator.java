@@ -1,10 +1,3 @@
-// Copyright (c) 2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// Use of this source code is governed by an MIT-style
-// license that can be found in the LICENSE file at
-// the root directory of this project.
-
 package frc.robot;
 
 import edu.wpi.first.math.Matrix;
@@ -13,6 +6,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
@@ -32,6 +26,7 @@ public class PoseEstimator {
   private static final Matrix<N3, N1> odometryStateStdDevs =
       new Matrix<>(VecBuilder.fill(0.003, 0.003, 0.002));
 
+
   private static PoseEstimator instance;
 
   public static PoseEstimator getInstance() {
@@ -43,9 +38,11 @@ public class PoseEstimator {
   @Getter @AutoLogOutput private Pose2d odometryPose = new Pose2d();
   @Getter @AutoLogOutput private Pose2d estimatedPose = new Pose2d();
 
+
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
       TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
   private final Matrix<N3, N1> qStdDevs = new Matrix<>(Nat.N3(), Nat.N1());
+
   // Odometry
   private final SwerveDriveKinematics kinematics;
   private SwerveModulePosition[] lastWheelPositions =
@@ -68,13 +65,16 @@ public class PoseEstimator {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
-    kinematics = new SwerveDriveKinematics(DriveConstants.moduleTranslations);
+
+
+    kinematics = new SwerveDriveKinematics(DriveBase.getModuleTranslations());
   }
 
   public void resetPose(Pose2d pose) {
     // Gyro offset is the rotation that maps the old gyro rotation (estimated - offset) to the new
     // frame of rotation
-    gyroOffset = pose.getRotation().minus(odometryPose.getRotation().minus(gyroOffset));
+    gyroOffset = pose.getRotation().minus(estimatedPose.getRotation().minus(gyroOffset));
+   
     estimatedPose = pose;
     odometryPose = pose;
     poseBuffer.clear();
@@ -162,6 +162,7 @@ public class PoseEstimator {
   @AutoLogOutput(key = "PoseEstimator/FieldVelocity")
   public ChassisSpeeds getFieldVelocity() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getRotation());
+
   }
 
   public Rotation2d getRotation() {
@@ -181,4 +182,5 @@ public class PoseEstimator {
   public record AlgaeTxTyObservation(int camera, double[] tx, double[] ty, double timestamp) {}
 
   public record AlgaePoseRecord(Translation2d translation, double timestamp) {}
+
 }

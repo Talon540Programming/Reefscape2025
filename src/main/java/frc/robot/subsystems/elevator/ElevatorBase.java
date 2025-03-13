@@ -148,13 +148,16 @@ public class ElevatorBase extends SubsystemBase {
         kG,
         kA);
 
-    if (maxVelocityMetersPerSec.hasChanged(hashCode())
-        || maxAccelerationMetersPerSec2.hasChanged(hashCode())) {
-      profile =
-          new TrapezoidProfile(
-              new TrapezoidProfile.Constraints(
-                  maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
-    }
+
+    LoggedTunableNumber.ifChanged(
+        () ->
+            profile =
+                new TrapezoidProfile(
+                    new TrapezoidProfile.Constraints(
+                        maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get())),
+        true,
+        maxVelocityMetersPerSec,
+        maxAccelerationMetersPerSec2);
 
     // Run profile
     final boolean shouldRunProfile =
