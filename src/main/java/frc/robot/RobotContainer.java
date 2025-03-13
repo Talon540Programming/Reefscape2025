@@ -10,7 +10,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+// import frc.robot.commands.AutoRoutine;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
@@ -22,7 +24,9 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -35,17 +39,26 @@ public class RobotContainer {
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
+  private final Vision visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
+  //   private final AutoRoutine autoRoutine;
 
   private final LoggedNetworkNumber endgameAlert1 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
+
+  private static final LoggedTunableNumber voltage =
+      new LoggedTunableNumber("Drive/AppliedVoltage");
+
+  static {
+    voltage.initDefault(1);
+  }
 
   private boolean slowModeEnabled;
 
@@ -62,6 +75,15 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
+
+        visionBase =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOPhotonCamera(
+                                v.cameraName(), v.robotToCamera(), v.cameraBias()))
+                    .toArray(VisionIOPhotonCamera[]::new));
       }
       case SIM -> {
         driveBase =
@@ -74,6 +96,17 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
+        visionBase =
+            new Vision(
+                VisionConstants.cameras.stream()
+                    .map(
+                        v ->
+                            new VisionIOSim(
+                                v.cameraName(),
+                                v.robotToCamera(),
+                                v.cameraBias(),
+                                v.calibrationPath()))
+                    .toArray(VisionIOSim[]::new));
       }
       default -> {
         driveBase =
@@ -86,14 +119,36 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
+        visionBase = new Vision(new VisionIO() {});
       }
     }
 
+    // visionBase =
+    //     new Vision(
+    //         VisionConstants.cameras.stream()
+    //             .map(
+    //                 v ->
+    //                     new VisionIOSim(
+    //                         v.cameraName(), v.robotToCamera(), v.cameraBias(),
+    // v.calibrationPath()))
+    //             .toArray(VisionIOSim[]::new));
+
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+    //     autoRoutine = new AutoRoutine(driveBase, elevatorBase, dispenserBase, intakeBase);
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
+      //   autoChooser.addOption(
+      //       "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
+      //   autoChooser.addOption(
+      //       "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+      autoChooser.addOption(
+          "Elevator Dynamic Forward",
+          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
+      autoChooser.addOption(
+          "Elevator Dynamic Reverse",
+          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kReverse, 0.25));
       autoChooser.addOption(
           "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
@@ -200,7 +255,13 @@ public class RobotContainer {
         .onTrue(elevatorBase.homingSequence());
 
     // Auto Align (Left or Right)
-    // TODO
+    controller
+        .rightBumper()
+        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestRightBranch()));
+
+    controller
+        .leftBumper()
+        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestLeftBranch()));
 
     // Human Player Alert (Strobe LEDs)
     // TODO

@@ -20,12 +20,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
+import frc.robot.PoseEstimator.OdometryObservation;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -157,9 +159,11 @@ public class DriveBase extends SubsystemBase {
       }
       PoseEstimator.getInstance()
           .addOdometryObservation(
-              wheelPositions,
-              m_gyroInputs.connected ? m_gyroInputs.odometryYawPositions[i] : null,
-              timestamps[i]);
+              new OdometryObservation(
+                  wheelPositions,
+                  Optional.ofNullable(
+                      m_gyroInputs.connected ? m_gyroInputs.odometryYawPositions[i] : null),
+                  timestamps[i]));
     }
 
     // Disable brake mode a short duration after the robot is disabled
@@ -222,10 +226,20 @@ public class DriveBase extends SubsystemBase {
     Logger.recordOutput(
         "SwerveChassisSpeeds/SetpointsUnoptimized", currentSetpoint.chassisSpeeds());
 
+    SwerveModuleState[] measuredStates = getModuleStates();
+    SwerveModuleState[] stateErrors = new SwerveModuleState[4];
+
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(setpointStates[i]);
+
+      stateErrors[i] =
+          new SwerveModuleState(
+              setpointStates[i].speedMetersPerSecond - measuredStates[i].speedMetersPerSecond,
+              setpointStates[i].angle.minus(measuredStates[i].angle));
     }
+
+    Logger.recordOutput("SwerveStates/Error", stateErrors);
   }
 
   // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP
@@ -266,6 +280,16 @@ public class DriveBase extends SubsystemBase {
     }
     return states;
   }
+
+  // @AutoLogOutput(key = "SwerveStates/Error")
+  // private SwerveModuleState[] getStateError() {
+  //   SwerveModuleState[] states = getModuleStates();
+
+  //   SwerveModuleState[] errors = new SwerveModuleState[4];
+  //   for (int i = 0; i < 4; i++) {
+  //     errors[i] = states[i] -
+  //   }
+  // }
 
   /** Returns the module positions (turn angles and drive positions) for all the modules. */
   private SwerveModulePosition[] getModulePositions() {

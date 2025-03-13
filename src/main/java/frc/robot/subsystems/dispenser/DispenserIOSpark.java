@@ -21,6 +21,7 @@ public class DispenserIOSpark implements DispenserIO {
   private final DigitalInput rearBeamBreak = new DigitalInput(0);
 
   public DispenserIOSpark() {
+
     spark = new SparkMax(id, MotorType.kBrushless);
     encoder = spark.getEncoder();
 
