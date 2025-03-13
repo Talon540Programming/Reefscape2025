@@ -6,13 +6,12 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.interpolation.TimeInterpolatableBuffer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import frc.robot.util.GeomUtil;
 import frc.robot.subsystems.drive.DriveBase;
+import frc.robot.util.GeomUtil;
 import java.util.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +24,6 @@ public class PoseEstimator {
   private static final Matrix<N3, N1> odometryStateStdDevs =
       new Matrix<>(VecBuilder.fill(0.003, 0.003, 0.002));
 
-
   private static PoseEstimator instance;
 
   public static PoseEstimator getInstance() {
@@ -36,7 +34,6 @@ public class PoseEstimator {
   // Pose Estimation Members
   @Getter @AutoLogOutput private Pose2d odometryPose = new Pose2d();
   @Getter @AutoLogOutput private Pose2d estimatedPose = new Pose2d();
-
 
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
       TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
@@ -65,7 +62,6 @@ public class PoseEstimator {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
 
-
     kinematics = new SwerveDriveKinematics(DriveBase.getModuleTranslations());
   }
 
@@ -73,7 +69,7 @@ public class PoseEstimator {
     // Gyro offset is the rotation that maps the old gyro rotation (estimated - offset) to the new
     // frame of rotation
     gyroOffset = pose.getRotation().minus(estimatedPose.getRotation().minus(gyroOffset));
-   
+
     estimatedPose = pose;
     odometryPose = pose;
     poseBuffer.clear();
@@ -161,7 +157,6 @@ public class PoseEstimator {
   @AutoLogOutput(key = "PoseEstimator/FieldVelocity")
   public ChassisSpeeds getFieldVelocity() {
     return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getRotation());
-
   }
 
   public Rotation2d getRotation() {
@@ -181,5 +176,4 @@ public class PoseEstimator {
   public record AlgaeTxTyObservation(int camera, double[] tx, double[] ty, double timestamp) {}
 
   public record AlgaePoseRecord(Translation2d translation, double timestamp) {}
-
 }

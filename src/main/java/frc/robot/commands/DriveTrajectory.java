@@ -47,7 +47,6 @@
 //   private static final LoggedTunableNumber thetaTolerance =
 //       new LoggedTunableNumber("DriveTrajectory/ThetaTolerance");
 
-
 //   static {
 //     drivekP.initDefault(0.1); // TODO
 //     drivekD.initDefault(0.0);
@@ -71,10 +70,10 @@
 //       new ProfiledPIDController(
 //           0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), Constants.kLoopPeriodSecs);
 
-// //   private final PIDController driveController2 = 
+// //   private final PIDController driveController2 =
 // //     new PIDController(0.1, 0, 0);
 
-// //   private final PIDController thetaController2 = 
+// //   private final PIDController thetaController2 =
 // //     new PIDController(1, 0, 0);
 
 //   private Translation2d lastSetpointTranslation = new Translation2d();
@@ -104,7 +103,8 @@
 //       driveController.setP(drivekP.get());
 //       driveController.setD(drivekD.get());
 //       driveController.setConstraints(
-//           new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(), driveMaxAcceleration.get()));
+//           new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(),
+// driveMaxAcceleration.get()));
 //       driveController.setTolerance(driveTolerance.get());
 //       thetaController.setP(thetakP.get());
 //       thetaController.setD(thetakD.get());
@@ -128,7 +128,8 @@
 //     drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, currentPose.getRotation()));
 
 //     // Log data
-//     Logger.recordOutput("DriveTrajectory/DistanceSetpoint", driveController.getSetpoint().position);
+//     Logger.recordOutput("DriveTrajectory/DistanceSetpoint",
+// driveController.getSetpoint().position);
 //     Logger.recordOutput("DriveTrajectory/ThetaMeasured", currentPose.getRotation().getRadians());
 //     Logger.recordOutput("DriveTrajectory/ThetaSetpoint", thetaController.getSetpoint().position);
 //     Logger.recordOutput(

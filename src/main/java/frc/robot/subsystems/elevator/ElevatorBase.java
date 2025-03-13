@@ -148,7 +148,6 @@ public class ElevatorBase extends SubsystemBase {
         kG,
         kA);
 
-
     LoggedTunableNumber.ifChanged(
         () ->
             profile =

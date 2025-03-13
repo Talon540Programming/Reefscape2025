@@ -23,5 +23,4 @@ public class ElevatorConstants {
 
   public static final int leaderId = 12;
   public static final int followerId = 13;
-
 }

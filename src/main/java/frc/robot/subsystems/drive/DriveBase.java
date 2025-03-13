@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.OdometryObservation;
-
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
@@ -29,7 +28,6 @@ import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-
 import java.util.Queue;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -230,7 +228,6 @@ public class DriveBase extends SubsystemBase {
 
     SwerveModuleState[] measuredStates = getModuleStates();
     SwerveModuleState[] stateErrors = new SwerveModuleState[4];
-
 
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {

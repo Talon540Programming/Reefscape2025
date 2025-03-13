@@ -2,7 +2,6 @@ package frc.robot;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
-
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
 import java.io.IOException;
@@ -127,7 +126,6 @@ public class FieldConstants {
       centerFaces[9] = fieldLayout.getTagPose(10).get().toPose2d();
       centerFaces[10] = fieldLayout.getTagPose(9).get().toPose2d();
       centerFaces[11] = fieldLayout.getTagPose(8).get().toPose2d();
-
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {
