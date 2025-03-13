@@ -50,7 +50,7 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
-  private final AutoRoutine autoRoutine;
+//   private final AutoRoutine autoRoutine;
 
   private final LoggedNetworkNumber endgameAlert1 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
@@ -63,14 +63,6 @@ public class RobotContainer {
   static {
     voltage.initDefault(1);
   }
-
-  private boolean slowModeEnabled;
-  private Pose2d currentDriveToPoseTarget;
-
-  private final LoggedNetworkNumber endgameAlert1 =
-      new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
-  private final LoggedNetworkNumber endgameAlert2 =
-      new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
   private boolean slowModeEnabled;
 

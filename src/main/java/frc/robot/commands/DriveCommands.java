@@ -1,35 +1,21 @@
-// Copyright (c) 2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// Use of this source code is governed by an MIT-style
-// license that can be found in the LICENSE file at
-// the root directory of this project.
-
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
-
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
-
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
-import org.littletonrobotics.junction.Logger;
 
 public class DriveCommands {
-
   // Drive
   private static final double DEADBAND = 0.1;
 
@@ -46,11 +32,10 @@ public class DriveCommands {
   private static final double ANGLE_MAX_ACCELERATION = 20.0;
 
   /**
-   * Field or robot relative drive command using two joysticks (controlling linear and angular
-   * velocities).
+   * Field relative drive command using two joysticks (controlling linear and angular velocities).
    */
   public static Command joystickDrive(
-      DriveBase drive,
+      DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
@@ -90,23 +75,10 @@ public class DriveCommands {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, rotation);
           }
 
-          ChassisSpeeds speeds =
-              new ChassisSpeeds(
-                  linearVelocity.getX() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
-                  linearVelocity.getY() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
-                  omega * DriveBase.getMaxAngularVelocityRadPerSec());
-
-          drive.runVelocity(
-              robotRelative.getAsBoolean()
-                  ? speeds
-                  : ChassisSpeeds.fromFieldRelativeSpeeds(
-                      speeds,
-                      DriverStation.getAlliance().isPresent()
-                              && DriverStation.getAlliance().get() == Alliance.Red
-                          ? PoseEstimator.getInstance().getRotation().plus(new Rotation2d(Math.PI))
-                          : PoseEstimator.getInstance().getRotation()));
+          // Apply speeds
+          driveBase.runVelocity(speeds);
         },
-        drive);
+        driveBase);
   }
 
   /**
@@ -115,10 +87,9 @@ public class DriveCommands {
    * absolute rotation with a joystick.
    */
   public static Command joystickDriveAtAngle(
-      DriveBase drive,
+      DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-
       Supplier<Rotation2d> rotationSupplier,
       BooleanSupplier slowSupplier) {
     ProfiledPIDController angleController =
@@ -129,19 +100,21 @@ public class DriveCommands {
             new TrapezoidProfile.Constraints(ANGLE_MAX_VELOCITY, ANGLE_MAX_ACCELERATION));
     angleController.enableContinuousInput(-Math.PI, Math.PI);
 
-    // Construct command
     return Commands.run(
             () -> {
-              // Get linear velocity
-              Translation2d linearVelocity =
-                  getLinearVelocityFromJoysticks(xSupplier.getAsDouble(), ySupplier.getAsDouble());
+              // Apply deadband
+              double x = MathUtil.applyDeadband(xSupplier.getAsDouble(), DEADBAND);
+              double y = MathUtil.applyDeadband(ySupplier.getAsDouble(), DEADBAND);
+
+              // Square rotation value for more precise control
+              x = Math.copySign(Math.pow(x, 2), x);
+              y = Math.copySign(Math.pow(y, 2), y);
 
               // Calculate angular speed
               Rotation2d rotation = PoseEstimator.getInstance().getRotation();
               double omega =
                   angleController.calculate(
                       rotation.getRadians(), rotationSupplier.get().getRadians());
-
 
               // Generate robot relative speeds
               double linearVelocityScalar =
@@ -163,9 +136,7 @@ public class DriveCommands {
               // Apply speeds
               driveBase.runVelocity(speeds);
             },
-            drive)
-
-        // Reset PID controller when command starts
+            driveBase)
         .beforeStarting(
             () -> angleController.reset(PoseEstimator.getInstance().getRotation().getRadians()));
   }
