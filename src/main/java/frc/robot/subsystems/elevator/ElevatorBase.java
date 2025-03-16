@@ -186,7 +186,7 @@ public class ElevatorBase extends SubsystemBase {
       }
 
       io.runPosition(
-          setpoint.position / drumRadius / numStages,
+          setpoint.position / drumRadius,
           feedforward.calculateWithVelocities(setpoint.velocity, previousVelocity));
 
       // Check at goal
@@ -284,7 +284,7 @@ public class ElevatorBase extends SubsystemBase {
 
   @AutoLogOutput(key = "Elevator/MeasuredHeightMeters")
   public double getPositionMeters() {
-    return inputs.positionRads * drumRadius * numStages;
+    return inputs.positionRads * drumRadius;
   }
 
   public double getGoalMeters() {
