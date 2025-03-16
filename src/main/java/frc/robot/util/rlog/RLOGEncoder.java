@@ -6,13 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.LogTable.LogValue;
 
 /**
- * Converts log tables to the RLOG format. Based on RLOG R2 with
- * support for custom type strings.
+ * Converts log tables to the RLOG format. Based on RLOG R2 with support for custom type strings.
  */
 class RLOGEncoder {
   public static final byte logRevision = (byte) 2;
@@ -29,10 +27,7 @@ class RLOGEncoder {
     return nextOutput;
   }
 
-  /**
-   * Returns data required to start a new receiver (full contents of last table +
-   * all key IDs).
-   */
+  /** Returns data required to start a new receiver (full contents of last table + all key IDs). */
   public ByteBuffer getNewcomerData() {
     List<ByteBuffer> buffers = new ArrayList<>();
 
@@ -123,8 +118,9 @@ class RLOGEncoder {
     try {
       byte[] keyBytes = key.getBytes("UTF-8");
       byte[] typeBytes = type.getBytes("UTF-8");
-      ByteBuffer buffer = ByteBuffer.allocate(
-          1 + Short.BYTES + Short.BYTES + keyBytes.length + Short.BYTES + typeBytes.length);
+      ByteBuffer buffer =
+          ByteBuffer.allocate(
+              1 + Short.BYTES + Short.BYTES + keyBytes.length + Short.BYTES + typeBytes.length);
       buffer.put((byte) 1);
       buffer.putShort(keyID);
       buffer.putShort((short) keyBytes.length);
@@ -217,7 +213,8 @@ class RLOGEncoder {
       }
 
       keyBuffer.putShort((short) valueBuffer.capacity());
-      return ByteBuffer.allocate(keyBuffer.capacity() + valueBuffer.capacity()).put(keyBuffer.array())
+      return ByteBuffer.allocate(keyBuffer.capacity() + valueBuffer.capacity())
+          .put(keyBuffer.array())
           .put(valueBuffer.array());
     } catch (UnsupportedEncodingException e) {
       return ByteBuffer.allocate(0);
