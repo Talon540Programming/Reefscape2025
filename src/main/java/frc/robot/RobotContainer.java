@@ -27,9 +27,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class RobotContainer {
-  // Load PoseEstimator class
-  private final PoseEstimator poseEstimator = PoseEstimator.getInstance();
-
   // Subsystems
   private final DriveBase driveBase;
   private final IntakeBase intakeBase;
