@@ -26,6 +26,7 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
@@ -55,10 +56,10 @@ public class Robot extends LoggedRobot {
           DriverStation.reportWarning("Logging USB Drive Not Found. Disabling File Logging", false);
         }
 
-        Logger.addDataReceiver(new NT4Publisher());
+        Logger.addDataReceiver(new RLOGServer());
       }
       case SIM -> {
-        Logger.addDataReceiver(new NT4Publisher());
+        Logger.addDataReceiver(new RLOGServer());
       }
       case REPLAY -> {
         setUseTiming(false); // Run as fast as possible
