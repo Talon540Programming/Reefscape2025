@@ -54,6 +54,10 @@ public class Robot extends LoggedRobot {
         }
 
         Logger.addDataReceiver(new RLOGServer());
+
+        if(Constants.getRobot() == Constants.RobotType.COMPBOT) {
+          LoggedPowerDistribution.getInstance(1, PowerDistribution.ModuleType.kRev);
+        }
       }
       case SIM -> {
         Logger.addDataReceiver(new RLOGServer());
