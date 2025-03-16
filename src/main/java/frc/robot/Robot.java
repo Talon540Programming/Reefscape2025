@@ -90,20 +90,19 @@ public class Robot extends LoggedRobot {
 
     // Create RobotConatiner
     robotContainer = new RobotContainer();
+
+    // Switch thread to high priority to improve loop timing
+    Threads.setCurrentThreadPriority(true, 10);
   }
 
   @Override
   public void robotPeriodic() {
-    // Switch thread to high priority to improve loop timing
-    Threads.setCurrentThreadPriority(true, 99);
 
     // Run command scheduler
     CommandScheduler.getInstance().run();
 
     AlertsUtil.getInstance().periodic();
 
-    // Return to normal thread priority
-    Threads.setCurrentThreadPriority(false, 10);
   }
 
   @Override
