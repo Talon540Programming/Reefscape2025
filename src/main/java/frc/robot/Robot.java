@@ -39,6 +39,9 @@ public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private final RobotContainer robotContainer;
 
+  private double autoStart;
+  private boolean autoMessagePrinted;
+
   public Robot() {
     super(Constants.kLoopPeriodSecs);
 
@@ -121,6 +124,19 @@ public class Robot extends LoggedRobot {
 
     AlertsUtil.getInstance().periodic();
 
+    // Print auto duration
+    if (autonomousCommand != null) {
+      if (!autonomousCommand.isScheduled() && !autoMessagePrinted) {
+        if (DriverStation.isAutonomousEnabled()) {
+          System.out.printf(
+              "*** Auto finished in %.2f secs ***%n", Timer.getTimestamp() - autoStart);
+        } else {
+          System.out.printf(
+              "*** Auto cancelled in %.2f secs ***%n", Timer.getTimestamp() - autoStart);
+        }
+        autoMessagePrinted = true;
+      }
+    }
   }
 
   @Override
@@ -134,6 +150,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
+    autoStart = Timer.getTimestamp();
     autonomousCommand = robotContainer.getAutonomousCommand();
 
     if (autonomousCommand != null) {
