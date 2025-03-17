@@ -9,12 +9,8 @@ package frc.robot.commands;
 
 import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
@@ -63,22 +59,18 @@ public class DriveTrajectory {
 
   private final DriveBase drive;
 
-  private final ProfiledPIDController driveController =
-      new ProfiledPIDController(
-          0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), Constants.kLoopPeriodSecs);
-  private final ProfiledPIDController thetaController =
-      new ProfiledPIDController(
-          0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), Constants.kLoopPeriodSecs);
+  private final PIDController driveController =
+      new PIDController(0.1, 0.0, 0.0, Constants.kLoopPeriodSecs);
+  private final PIDController thetaController =
+      new PIDController(1, 0.0, 0.0, Constants.kLoopPeriodSecs);
 
-//   private final PIDController driveController2 =
-//     new PIDController(0.1, 0, 0);
+  //   private final PIDController driveController2 =
+  //     new PIDController(0.1, 0, 0);
 
-//   private final PIDController thetaController2 =
-//     new PIDController(1, 0, 0);
+  //   private final PIDController thetaController2 =
+  //     new PIDController(1, 0, 0);
 
-  private Translation2d lastSetpointTranslation = new Translation2d();
-
-  private Supplier<Pose2d> robot = PoseEstimator.getInstance()::getEstimatedPose;
+  private Supplier<Pose2d> robot = PoseEstimator.getInstance()::getOdometryPose;
 
   public DriveTrajectory(DriveBase drive) {
     this.drive = drive;
@@ -89,29 +81,30 @@ public class DriveTrajectory {
 
   public void followTrajectory(SwerveSample sample) {
     // Update from tunable numbers
-    if (driveMaxVelocity.hasChanged(hashCode())
-        || driveMaxVelocitySlow.hasChanged(hashCode())
-        || driveMaxAcceleration.hasChanged(hashCode())
-        || driveTolerance.hasChanged(hashCode())
-        || thetaMaxVelocity.hasChanged(hashCode())
-        || thetaMaxAcceleration.hasChanged(hashCode())
-        || thetaTolerance.hasChanged(hashCode())
-        || drivekP.hasChanged(hashCode())
-        || drivekD.hasChanged(hashCode())
-        || thetakP.hasChanged(hashCode())
-        || thetakD.hasChanged(hashCode())) {
-      driveController.setP(drivekP.get());
-      driveController.setD(drivekD.get());
-      driveController.setConstraints(
-          new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(),
-driveMaxAcceleration.get()));
-      driveController.setTolerance(driveTolerance.get());
-      thetaController.setP(thetakP.get());
-      thetaController.setD(thetakD.get());
-      thetaController.setConstraints(
-          new TrapezoidProfile.Constraints(thetaMaxVelocity.get(), thetaMaxAcceleration.get()));
-      thetaController.setTolerance(thetaTolerance.get());
-    }
+    // if (driveMaxVelocity.hasChanged(hashCode())
+    //     || driveMaxVelocitySlow.hasChanged(hashCode())
+    //     || driveMaxAcceleration.hasChanged(hashCode())
+    //     || driveTolerance.hasChanged(hashCode())
+    //     || thetaMaxVelocity.hasChanged(hashCode())
+    //     || thetaMaxAcceleration.hasChanged(hashCode())
+    //     || thetaTolerance.hasChanged(hashCode())
+    //     || drivekP.hasChanged(hashCode())
+    //     || drivekD.hasChanged(hashCode())
+    //     || thetakP.hasChanged(hashCode())
+    //     || thetakD.hasChanged(hashCode())) {
+    //   driveController.setP(drivekP.get());
+    //   driveController.setD(drivekD.get());
+    // //   driveController.setConstraints(
+    // //       new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(),
+    // driveMaxAcceleration.get()));
+    //   driveController.setTolerance(driveTolerance.get());
+    //   thetaController.setP(thetakP.get());
+    //   thetaController.setD(thetakD.get());
+    // //   thetaController.setConstraints(
+    // //       new TrapezoidProfile.Constraints(thetaMaxVelocity.get(),
+    // thetaMaxAcceleration.get()));
+    //   thetaController.setTolerance(thetaTolerance.get());
+    // }
 
     // Get current pose and target pose
     Pose2d currentPose = robot.get();
@@ -128,16 +121,9 @@ driveMaxAcceleration.get()));
     drive.runVelocity(ChassisSpeeds.fromFieldRelativeSpeeds(speeds, currentPose.getRotation()));
 
     // Log data
-    Logger.recordOutput("DriveTrajectory/DistanceSetpoint",
-driveController.getSetpoint().position);
+    Logger.recordOutput("DriveTrajectory/DistanceMeasured", currentPose.getTranslation());
+    Logger.recordOutput("DriveTrajectory/DistanceSetpoint", driveController.getSetpoint());
     Logger.recordOutput("DriveTrajectory/ThetaMeasured", currentPose.getRotation().getRadians());
-    Logger.recordOutput("DriveTrajectory/ThetaSetpoint", thetaController.getSetpoint().position);
-    Logger.recordOutput(
-        "DriveTrajectory/Setpoint",
-        new Pose2d[] {
-          new Pose2d(
-              lastSetpointTranslation,
-              Rotation2d.fromRadians(thetaController.getSetpoint().position))
-        });
+    Logger.recordOutput("DriveTrajectory/ThetaSetpoint", thetaController.getSetpoint());
   }
 }

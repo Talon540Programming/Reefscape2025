@@ -31,7 +31,7 @@ public class AutoRoutine {
 
     autoFactory =
         new AutoFactory(
-            PoseEstimator.getInstance()::getEstimatedPose,
+            PoseEstimator.getInstance()::getOdometryPose,
             PoseEstimator.getInstance()::resetPose,
             trajectoryFollower::followTrajectory,
             AllianceFlipUtil.shouldFlip(),
@@ -45,5 +45,32 @@ public class AutoRoutine {
             autoFactory.trajectoryCmd("taxi"),
             Commands.runOnce(() -> elevator.setGoal(ElevatorState.L2_CORAL))
                 .andThen(dispenser.eject(() -> ElevatorState.L2_CORAL))));
+  }
+
+  public Command TopToBack2L4Intake() {
+    return Commands.sequence(
+        autoFactory.resetOdometry("toptobackleft"),
+        autoFactory
+            .trajectoryCmd("toptobackleft")
+            .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.L4_CORAL)))
+            .andThen(
+                dispenser
+                    .eject(elevator::getGoal)
+                    .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.STOW)))),
+        autoFactory.resetOdometry("backlefttostation"),
+        autoFactory.trajectoryCmd("backlefttostation"),
+        // .andThen(IntakeCommands.intake(elevator, intake, dispenser)),
+        autoFactory.resetOdometry("stationtobackright"),
+        autoFactory
+            .trajectoryCmd("stationtobackright")
+            .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.L4_CORAL)))
+            .andThen(
+                dispenser
+                    .eject(elevator::getGoal)
+                    .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.STOW)))),
+        autoFactory.resetOdometry("backrighttostation"),
+        autoFactory.trajectoryCmd("backrighttostation")
+        // .andThen(IntakeCommands.intake(elevator, intake, dispenser))
+        );
   }
 }
