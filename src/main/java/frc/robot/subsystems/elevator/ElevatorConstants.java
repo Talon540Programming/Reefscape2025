@@ -7,9 +7,10 @@ public class ElevatorConstants {
   // Pitch from Floor to Elevator
   public static final Rotation2d elevatorPitch = Rotation2d.fromDegrees(86.0);
   // Pitch from Elevator to Dispenser
-  public static final Rotation2d dispenserPitch = Rotation2d.fromDegrees(73.0);
+  public static final Rotation2d dispenserPitch = Rotation2d.fromDegrees(61.6);
 
-  public static final double originToBaseHeightMeters = Units.inchesToMeters(5.149922);
+  public static final double originToBaseHeightMeters = Units.inchesToMeters(6.288); //<-- highest edge on slam plate
+                                                                                     //    6.148 to the lowest edge, 6.218 to centroid
 
   public static final double drumRadius = Units.inchesToMeters(1.0);
   public static final double gearing = 4.0;
