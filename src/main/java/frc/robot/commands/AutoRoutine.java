@@ -58,8 +58,9 @@ public class AutoRoutine {
                     .eject(elevator::getGoal)
                     .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.STOW)))),
         autoFactory.resetOdometry("backlefttostation"),
-        autoFactory.trajectoryCmd("backlefttostation")
-        .andThen(IntakeCommands.intake(elevator, intake, dispenser)),
+        autoFactory
+            .trajectoryCmd("backlefttostation")
+            .andThen(IntakeCommands.intake(elevator, intake, dispenser)),
         autoFactory.resetOdometry("stationtobackright"),
         autoFactory
             .trajectoryCmd("stationtobackright")
@@ -69,8 +70,8 @@ public class AutoRoutine {
                     .eject(elevator::getGoal)
                     .andThen(Commands.runOnce(() -> elevator.setGoal(ElevatorState.STOW)))),
         autoFactory.resetOdometry("backrighttostation"),
-        autoFactory.trajectoryCmd("backrighttostation")
-        .andThen(IntakeCommands.intake(elevator, intake, dispenser))
-        );
+        autoFactory
+            .trajectoryCmd("backrighttostation")
+            .andThen(IntakeCommands.intake(elevator, intake, dispenser)));
   }
 }

@@ -64,12 +64,6 @@ public class DriveTrajectory {
   private final PIDController thetaController =
       new PIDController(1, 0.0, 0.0, Constants.kLoopPeriodSecs);
 
-  //   private final PIDController driveController2 =
-  //     new PIDController(0.1, 0, 0);
-
-  //   private final PIDController thetaController2 =
-  //     new PIDController(1, 0, 0);
-
   private Supplier<Pose2d> robot = PoseEstimator.getInstance()::getOdometryPose;
 
   public DriveTrajectory(DriveBase drive) {
@@ -81,30 +75,24 @@ public class DriveTrajectory {
 
   public void followTrajectory(SwerveSample sample) {
     // Update from tunable numbers
-    // if (driveMaxVelocity.hasChanged(hashCode())
-    //     || driveMaxVelocitySlow.hasChanged(hashCode())
-    //     || driveMaxAcceleration.hasChanged(hashCode())
-    //     || driveTolerance.hasChanged(hashCode())
-    //     || thetaMaxVelocity.hasChanged(hashCode())
-    //     || thetaMaxAcceleration.hasChanged(hashCode())
-    //     || thetaTolerance.hasChanged(hashCode())
-    //     || drivekP.hasChanged(hashCode())
-    //     || drivekD.hasChanged(hashCode())
-    //     || thetakP.hasChanged(hashCode())
-    //     || thetakD.hasChanged(hashCode())) {
-    //   driveController.setP(drivekP.get());
-    //   driveController.setD(drivekD.get());
-    // //   driveController.setConstraints(
-    // //       new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(),
-    // driveMaxAcceleration.get()));
-    //   driveController.setTolerance(driveTolerance.get());
-    //   thetaController.setP(thetakP.get());
-    //   thetaController.setD(thetakD.get());
-    // //   thetaController.setConstraints(
-    // //       new TrapezoidProfile.Constraints(thetaMaxVelocity.get(),
-    // thetaMaxAcceleration.get()));
-    //   thetaController.setTolerance(thetaTolerance.get());
-    // }
+    if (driveMaxVelocity.hasChanged(hashCode())
+        || driveMaxVelocitySlow.hasChanged(hashCode())
+        || driveMaxAcceleration.hasChanged(hashCode())
+        || driveTolerance.hasChanged(hashCode())
+        || thetaMaxVelocity.hasChanged(hashCode())
+        || thetaMaxAcceleration.hasChanged(hashCode())
+        || thetaTolerance.hasChanged(hashCode())
+        || drivekP.hasChanged(hashCode())
+        || drivekD.hasChanged(hashCode())
+        || thetakP.hasChanged(hashCode())
+        || thetakD.hasChanged(hashCode())) {
+      driveController.setP(drivekP.get());
+      driveController.setD(drivekD.get());
+      driveController.setTolerance(driveTolerance.get());
+      thetaController.setP(thetakP.get());
+      thetaController.setD(thetakD.get());
+      thetaController.setTolerance(thetaTolerance.get());
+    }
 
     // Get current pose and target pose
     Pose2d currentPose = robot.get();

@@ -13,14 +13,8 @@ import lombok.Getter;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  // public static AprilTagFieldLayout fieldLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
   public static AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-
-  // public static final double fieldLength =
-  //     AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldLength();
-  // public static final double fieldWidth =
-  //     AprilTagLayoutType.OFFICIAL.getFieldLayout().getFieldWidth();
 
   public static final double fieldLength = fieldLayout.getFieldLength();
   public static final double fieldWidth = fieldLayout.getFieldWidth();

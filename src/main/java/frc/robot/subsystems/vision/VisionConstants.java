@@ -81,22 +81,6 @@ public class VisionConstants {
   private static double monoGain = 0.3;
   private static double colorGain = 0.3;
 
-  //   public static LoggedTunableNumber[] pitchAdjustments =
-  //       switch (Constants.getRobot()) {
-  //         case SIMBOT ->
-  //             new LoggedTunableNumber[] {
-  //               new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
-  //               new LoggedTunableNumber("Vision/PitchAdjust1", 0.0)
-  //             };
-  //         case COMPBOT ->
-  //             new LoggedTunableNumber[] {
-  //               new LoggedTunableNumber("Vision/PitchAdjust0", 0.0),
-  //               new LoggedTunableNumber("Vision/PitchAdjust1", 0.0),
-  //               new LoggedTunableNumber("Vision/PitchAdjust2", 0.0),
-  //               new LoggedTunableNumber("Vision/PitchAdjust3", 0.0)
-  //             };
-  //         default -> new LoggedTunableNumber[] {};
-  //       };
   public static List<CameraConfig> cameras =
       switch (Constants.getRobot()) {
         case SIMBOT ->
