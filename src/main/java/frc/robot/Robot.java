@@ -14,19 +14,21 @@
 package frc.robot;
 
 import edu.wpi.first.hal.AllianceStationID;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.AlertsUtil;
 import frc.robot.util.LoggerUtil;
+import frc.robot.util.rlog.RLOGServer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import org.littletonrobotics.junction.AutoLogOutputManager;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.NT4Publisher;
-import org.littletonrobotics.junction.rlog.RLOGServer;
+import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
@@ -40,6 +42,9 @@ import org.littletonrobotics.urcl.URCL;
 public class Robot extends LoggedRobot {
   private Command autonomousCommand;
   private final RobotContainer robotContainer;
+
+  private double autoStart;
+  private boolean autoMessagePrinted;
 
   public Robot() {
     super(Constants.kLoopPeriodSecs);
@@ -57,6 +62,10 @@ public class Robot extends LoggedRobot {
         }
 
         Logger.addDataReceiver(new RLOGServer());
+
+        if (Constants.getRobot() == Constants.RobotType.COMPBOT) {
+          LoggedPowerDistribution.getInstance(1, PowerDistribution.ModuleType.kRev);
+        }
       }
       case SIM -> {
         Logger.addDataReceiver(new RLOGServer());
@@ -69,11 +78,32 @@ public class Robot extends LoggedRobot {
       }
     }
 
+    // Set up auto logging for PoseEstimator
+    AutoLogOutputManager.addObject(PoseEstimator.getInstance());
+
     // Initialize URCL
     Logger.registerURCL(URCL.startExternal());
 
     // Start AdvantageKit logger
     if (Constants.ENABLE_LOGGING) Logger.start();
+
+    // Log active commands
+    Map<String, Integer> commandCounts = new HashMap<>();
+    BiConsumer<Command, Boolean> logCommandFunction =
+        (Command command, Boolean active) -> {
+          String name = command.getName();
+          int count = commandCounts.getOrDefault(name, 0) + (active ? 1 : -1);
+          commandCounts.put(name, count);
+          Logger.recordOutput(
+              "CommandsUnique/" + name + "_" + Integer.toHexString(command.hashCode()), active);
+          Logger.recordOutput("CommandsAll/" + name, count > 0);
+        };
+    CommandScheduler.getInstance()
+        .onCommandInitialize((Command command) -> logCommandFunction.accept(command, true));
+    CommandScheduler.getInstance()
+        .onCommandFinish((Command command) -> logCommandFunction.accept(command, false));
+    CommandScheduler.getInstance()
+        .onCommandInterrupt((Command command) -> logCommandFunction.accept(command, false));
 
     // Configure brownout voltage
     RobotController.setBrownoutVoltage(6.0);
@@ -85,20 +115,31 @@ public class Robot extends LoggedRobot {
 
     // Create RobotConatiner
     robotContainer = new RobotContainer();
+
+    // Switch thread to high priority to improve loop timing
+    Threads.setCurrentThreadPriority(true, 10);
   }
 
   @Override
   public void robotPeriodic() {
-    // Switch thread to high priority to improve loop timing
-    Threads.setCurrentThreadPriority(true, 99);
-
     // Run command scheduler
     CommandScheduler.getInstance().run();
 
     AlertsUtil.getInstance().periodic();
 
-    // Return to normal thread priority
-    Threads.setCurrentThreadPriority(false, 10);
+    // Print auto duration
+    if (autonomousCommand != null) {
+      if (!autonomousCommand.isScheduled() && !autoMessagePrinted) {
+        if (DriverStation.isAutonomousEnabled()) {
+          System.out.printf(
+              "*** Auto finished in %.2f secs ***%n", Timer.getTimestamp() - autoStart);
+        } else {
+          System.out.printf(
+              "*** Auto cancelled in %.2f secs ***%n", Timer.getTimestamp() - autoStart);
+        }
+        autoMessagePrinted = true;
+      }
+    }
   }
 
   @Override
@@ -112,6 +153,7 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void autonomousInit() {
+    autoStart = Timer.getTimestamp();
     autonomousCommand = robotContainer.getAutonomousCommand();
 
     if (autonomousCommand != null) {
