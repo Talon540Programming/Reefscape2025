@@ -51,13 +51,6 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
-  private static final LoggedTunableNumber voltage =
-      new LoggedTunableNumber("Drive/AppliedVoltage");
-
-  static {
-    voltage.initDefault(1);
-  }
-
   private boolean slowModeEnabled;
 
   public RobotContainer() {
@@ -126,40 +119,10 @@ public class RobotContainer {
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
-      //   autoChooser.addOption(
-      //       "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
-      //   autoChooser.addOption(
-      //       "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
-      autoChooser.addOption(
-          "Elevator Dynamic Forward",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
-      autoChooser.addOption(
-          "Elevator Dynamic Reverse",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kReverse, 0.25));
-      autoChooser.addOption(
-          "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
-      autoChooser.addOption(
-          "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
-      autoChooser.addOption(
-          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
-          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-      autoChooser.addOption(
-          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-      autoChooser.addOption(
-          "Elevator Dynamic Forward",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
-      autoChooser.addOption(
-          "Elevator Dynamic Reverse",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kReverse, 0.25));
-      autoChooser.addOption(
-          "Elevator Quasi Forward",
-          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward, 25));
-      autoChooser.addOption(
-          "Elevator Quasi Reverse",
-          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
+        autoChooser.addOption(
+            "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
+        autoChooser.addOption(
+            "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
 
     autoChooser.addDefaultOption("Nothing", Commands.none());

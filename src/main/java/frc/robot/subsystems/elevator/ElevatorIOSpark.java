@@ -22,7 +22,6 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer followerConnectedDebouncer = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-
     leaderSpark = new SparkMax(leaderId, MotorType.kBrushless);
     followerSpark = new SparkMax(followerId, MotorType.kBrushless);
 
