@@ -19,7 +19,10 @@ import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.util.AlertsUtil;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.LoggerUtil;
+import frc.robot.util.rlog.RLOGServer;
+import frc.robot.util.VirtualSubsystem;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -28,7 +31,6 @@ import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.inputs.LoggedPowerDistribution;
-import org.littletonrobotics.junction.rlog.RLOGServer;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
@@ -48,6 +50,9 @@ public class Robot extends LoggedRobot {
 
   public Robot() {
     super(Constants.kLoopPeriodSecs);
+
+    // Set LED Loading State
+    LEDBase.getInstance();
 
     LoggerUtil.initializeLoggerMetadata();
 
@@ -122,6 +127,8 @@ public class Robot extends LoggedRobot {
 
   @Override
   public void robotPeriodic() {
+    // Run virtual subsystems
+    VirtualSubsystem.periodicAll();
 
     // Run command scheduler
     CommandScheduler.getInstance().run();
