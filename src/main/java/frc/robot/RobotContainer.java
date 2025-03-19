@@ -10,8 +10,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import frc.robot.commands.AutoRoutine;
-// import frc.robot.commands.AutoRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
@@ -47,7 +45,6 @@ public class RobotContainer {
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
-  private final AutoRoutine autoRoutine;
 
   private final LoggedNetworkNumber endgameAlert1 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #1", 30.0);
@@ -124,19 +121,8 @@ public class RobotContainer {
       }
     }
 
-    // visionBase =
-    //     new Vision(
-    //         VisionConstants.cameras.stream()
-    //             .map(
-    //                 v ->
-    //                     new VisionIOSim(
-    //                         v.cameraName(), v.robotToCamera(), v.cameraBias(),
-    // v.calibrationPath()))
-    //             .toArray(VisionIOSim[]::new));
-
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
-    autoRoutine = new AutoRoutine(driveBase, elevatorBase, dispenserBase, intakeBase);
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -193,8 +179,6 @@ public class RobotContainer {
                                     PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
                                     AllianceFlipUtil.apply(Rotation2d.kPi))),
                     driveBase)));
-
-    autoChooser.addOption("TopToBack2L4Intake", autoRoutine.TopToBack2L4Intake());
 
     configureButtonBindings();
   }
