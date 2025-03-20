@@ -7,20 +7,19 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.FieldConstants;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
-import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
 
   private final VisionIO[] cameras;
-  private final VisionIOInputs[] cameraInputs;
+  private final VisionIOInputsAutoLogged[] cameraInputs;
 
   public Vision(VisionIO... cameras) {
     this.cameras = cameras;
-    cameraInputs = new VisionIOInputs[this.cameras.length];
+    cameraInputs = new VisionIOInputsAutoLogged[this.cameras.length];
     for (int i = 0; i < this.cameras.length; i++) {
-      cameraInputs[i] = new VisionIOInputs();
+      cameraInputs[i] = new VisionIOInputsAutoLogged();
     }
   }
 
@@ -33,7 +32,6 @@ public class Vision extends SubsystemBase {
       Logger.processInputs("Vision/Cam" + i, input);
 
       // Don't report if there is no valid global pose estimate
-
       if (!input.hasResult) continue;
 
       PoseEstimator.getInstance()
@@ -47,7 +45,6 @@ public class Vision extends SubsystemBase {
 
   @AutoLogOutput(key = "Vision/NearestReefPose")
   public Pose2d getNearestReefFace() {
-
     for (int i = 0; i < cameras.length; i++) {
       var input = cameraInputs[i];
       if (input.detectedTagsIds.length == 0) continue;
@@ -58,7 +55,6 @@ public class Vision extends SubsystemBase {
             // Logger.recordOutput("Vision/ReefFacePose", FieldConstants.Reef.centerFaces[k]);
             return FieldConstants.Reef.centerFaces[k];
           }
-          ;
         }
       }
     }
