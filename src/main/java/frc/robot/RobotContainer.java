@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
@@ -25,7 +24,6 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
-import frc.robot.util.LoggedTunableNumber;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
@@ -119,10 +117,10 @@ public class RobotContainer {
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
-        autoChooser.addOption(
-            "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
-        autoChooser.addOption(
-            "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+      autoChooser.addOption(
+          "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
+      autoChooser.addOption(
+          "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
 
     autoChooser.addDefaultOption("Nothing", Commands.none());
