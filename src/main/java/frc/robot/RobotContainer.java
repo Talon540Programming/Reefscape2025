@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -102,9 +103,29 @@ public class RobotContainer {
           "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
+      autoChooser.addOption(
+          "Drive Dynamic Forward", driveBase.sysIdDynamic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive Dynamic Reverse", driveBase.sysIdDynamic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Drive Quasi Forward", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
+      autoChooser.addOption(
+          "Drive Quasi Reverse", driveBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
+      autoChooser.addOption(
+          "Elevator Dynamic Forward",
+          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
+      autoChooser.addOption(
+          "Elevator Dynamic Reverse",
+          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kReverse, 0.25));
+      autoChooser.addOption(
+          "Elevator Quasi Forward",
+          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward, 25));
+      autoChooser.addOption(
+          "Elevator Quasi Reverse",
+          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
     }
 
-    autoChooser.addDefaultOption("Nothing", Commands.none());
+    autoChooser.addDefaultOption("Noting", Commands.none());
     autoChooser.addOption(
         "Taxi",
         Commands.runEnd(
@@ -182,6 +203,9 @@ public class RobotContainer {
         .and(controller.start().negate())
         .debounce(0.5)
         .onTrue(elevatorBase.homingSequence());
+
+    // Auto Align (Left or Right)
+    // TODO
 
     // Human Player Alert (Strobe LEDs)
     // TODO
