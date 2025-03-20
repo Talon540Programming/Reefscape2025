@@ -11,16 +11,16 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.FieldConstants;
 import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
+import frc.robot.util.VirtualSubsystem;
 import java.util.*;
 import org.littletonrobotics.junction.Logger;
 
-public class VisionBase extends SubsystemBase {
+public class VisionBase extends VirtualSubsystem {
   private static final double disconnectedTimeout = 0.5;
   public static final LoggedTunableNumber timestampOffset =
       new LoggedTunableNumber("AprilTagVision/TimestampOffset", 0.0);
