@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
-import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
@@ -109,7 +108,9 @@ public class DriveToPose extends Command {
   @Override
   public void initialize() {
     Pose2d currentPose = robot.get();
-    ChassisSpeeds fieldVelocity = PoseEstimator.getInstance().getFieldVelocity();
+    ChassisSpeeds fieldVelocity =
+        ChassisSpeeds.fromRobotRelativeSpeeds(
+            drive.getChassisSpeeds(), PoseEstimator.getInstance().getRotation());
     Translation2d linearFieldVelocity =
         new Translation2d(fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
     driveController.reset(
@@ -205,11 +206,11 @@ public class DriveToPose extends Command {
     final double thetaS = Math.abs(omegaFF.getAsDouble()) * 3.0;
     driveVelocity =
         driveVelocity.interpolate(
-            linearFF.get().times(DriveConstants.maxLinearVelocityMetersPerSec), linearS);
+            linearFF.get().times(DriveBase.getMaxLinearVelocityMetersPerSecond()), linearS);
     thetaVelocity =
         MathUtil.interpolate(
             thetaVelocity,
-            omegaFF.getAsDouble() * DriveConstants.maxAngularVelocityRadPerSec,
+            omegaFF.getAsDouble() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
             thetaS);
 
     // Command speeds

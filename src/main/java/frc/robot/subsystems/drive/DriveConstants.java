@@ -7,7 +7,7 @@ import frc.robot.Constants;
 import frc.robot.util.swerve.SwerveSetpointGenerator.ModuleLimits;
 import lombok.Builder;
 
-public class DriveConstants {
+class DriveConstants {
   public static final double odometryFrequencyHz =
       Constants.getMode() == Constants.Mode.SIM ? 50 : 250;
 
