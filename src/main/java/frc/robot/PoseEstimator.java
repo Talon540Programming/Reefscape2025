@@ -20,10 +20,6 @@ import org.littletonrobotics.junction.AutoLogOutput;
 
 @ExtensionMethod({GeomUtil.class})
 public class PoseEstimator {
-  private static final double poseBufferSizeSec = 2.0;
-  private static final Matrix<N3, N1> odometryStateStdDevs =
-      new Matrix<>(VecBuilder.fill(0.003, 0.003, 0.002));
-
   private static PoseEstimator instance;
 
   public static PoseEstimator getInstance() {
@@ -31,9 +27,19 @@ public class PoseEstimator {
     return instance;
   }
 
-  // Pose Estimation Members
-  @Getter @AutoLogOutput private Pose2d odometryPose = new Pose2d();
-  @Getter @AutoLogOutput private Pose2d estimatedPose = new Pose2d();
+  // Standard deviations of the pose estimate (x position in meters, y position in meters, and
+  // heading in radians).
+  // Increase these numbers to trust your state estimate less.
+  private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
+  private static final double poseBufferSizeSec = 2.0;
+
+  @Getter
+  @AutoLogOutput(key = "PoseEstimator/OdometryPose")
+  private Pose2d odometryPose = new Pose2d();
+
+  @Getter
+  @AutoLogOutput(key = "PoseEstimator/EstimatedPose")
+  private Pose2d estimatedPose = new Pose2d();
 
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
       TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
@@ -50,12 +56,6 @@ public class PoseEstimator {
       };
   // Assume gyro starts at zero
   private Rotation2d gyroOffset = new Rotation2d();
-
-  @Getter
-  @AutoLogOutput(key = "PoseEstimator/RobotVelocity")
-  private ChassisSpeeds robotVelocity = new ChassisSpeeds();
-
-  @Getter @Setter private OptionalDouble distanceToBranch = OptionalDouble.empty();
 
   private PoseEstimator() {
     for (int i = 0; i < 3; ++i) {
@@ -150,30 +150,18 @@ public class PoseEstimator {
     estimatedPose = estimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
   }
 
-  public void addDriveSpeeds(ChassisSpeeds speeds) {
-    robotVelocity = speeds;
-  }
-
-  @AutoLogOutput(key = "PoseEstimator/FieldVelocity")
-  public ChassisSpeeds getFieldVelocity() {
-    return ChassisSpeeds.fromRobotRelativeSpeeds(robotVelocity, getRotation());
-  }
+  // public void addTxTyObservation(TxTyObservation observation) {}
 
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
   }
 
-  public record OdometryObservation(
-      SwerveModulePosition[] wheelPositions, Optional<Rotation2d> gyroAngle, double timestamp) {}
+  public record OdometryObservation(SwerveModulePosition[] wheelPositions, Optional<Rotation2d> gyroAngle, double timestamp) {}
 
   public record VisionObservation(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {}
 
-  public record TxTyObservation(
-      int tagId, int camera, double[] tx, double[] ty, double distance, double timestamp) {}
-
-  public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
-
-  public record AlgaeTxTyObservation(int camera, double[] tx, double[] ty, double timestamp) {}
-
-  public record AlgaePoseRecord(Translation2d translation, double timestamp) {}
+  // public record TxTyObservation(
+  //     int tagId, int camera, double[] tx, double[] ty, double distance, double timestamp) {}
+  //
+  // public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
 }

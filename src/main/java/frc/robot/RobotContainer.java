@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
@@ -64,15 +63,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
-
-        visionBase =
-            new VisionBase(
-                VisionConstants.cameras.stream()
-                    .map(
-                        v ->
-                            new VisionIOPhotonCamera(
-                                v.cameraName(), v.robotToCamera(), v.cameraBias()))
-                    .toArray(VisionIOPhotonCamera[]::new));
+        visionBase = new VisionBase(new VisionIOPhotonCamera(0), new VisionIOPhotonCamera(1));
       }
       case SIM -> {
         driveBase =
@@ -85,17 +76,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
-        visionBase =
-            new VisionBase(
-                VisionConstants.cameras.stream()
-                    .map(
-                        v ->
-                            new VisionIOSim(
-                                v.cameraName(),
-                                v.robotToCamera(),
-                                v.cameraBias(),
-                                v.calibrationPath()))
-                    .toArray(VisionIOSim[]::new));
+        visionBase = new VisionBase(new VisionIOSim(0), new VisionIOSim(1));
       }
       default -> {
         driveBase =
@@ -108,7 +89,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
-        visionBase = new VisionBase(new VisionIO() {});
+        visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
       }
     }
 
@@ -201,15 +182,6 @@ public class RobotContainer {
         .and(controller.start().negate())
         .debounce(0.5)
         .onTrue(elevatorBase.homingSequence());
-
-    // Auto Align (Left or Right)
-    controller
-        .rightBumper()
-        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestRightBranch()));
-
-    controller
-        .leftBumper()
-        .whileTrue(new DriveToPose(driveBase, () -> visionBase.getNearestLeftBranch()));
 
     // Human Player Alert (Strobe LEDs)
     // TODO

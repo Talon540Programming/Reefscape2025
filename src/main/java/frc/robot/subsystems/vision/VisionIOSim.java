@@ -1,12 +1,10 @@
 package frc.robot.subsystems.vision;
 
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.math.MatBuilder;
-import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
-import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N3;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.PoseEstimator;
@@ -26,17 +24,13 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     }
   }
 
-  public VisionIOSim(
-      String cameraName,
-      Transform3d robotToCamera,
-      Matrix<N3, N1> cameraBias,
-      Path calibrationPath) {
-    super(cameraName, robotToCamera, cameraBias);
+  public VisionIOSim(int index) {
+    super(index);
     var cameraProps = new SimCameraProperties();
     // Photon camera sim is currently out of date with the calibration export model, so we can only
     // pull the camera intrinsics and distortion from it
     try {
-      setCalibrationFromConfig(calibrationPath, 1280, 800, cameraProps);
+      setCalibrationFromConfig(cameras[index].calibrationPath(), 1280, 800, cameraProps);
     } catch (IOException e) {
       throw new RuntimeException("Unable to parse calibration data from file");
     }
@@ -52,23 +46,13 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     camSim.enableProcessedStream(false);
     camSim.enableDrawWireframe(false);
 
-    m_visionSystemSim.addCamera(camSim, this.getRobotToCamera());
+    m_visionSystemSim.addCamera(camSim, cameras[index].robotToCamera());
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    m_visionSystemSim.update(PoseEstimator.getInstance().getOdometryPose());
-
+    m_visionSystemSim.update(PoseEstimator.getInstance().getEstimatedPose());
     super.updateInputs(inputs);
-
-    if (inputs.hasResult) {
-      m_visionSystemSim
-          .getDebugField()
-          .getObject("VisionEstimation")
-          .setPose(inputs.estimatedRobotPose.toPose2d());
-    } else {
-      m_visionSystemSim.getDebugField().getObject("VisionEstimation").setPoses();
-    }
   }
 
   private void setCalibrationFromConfig(
