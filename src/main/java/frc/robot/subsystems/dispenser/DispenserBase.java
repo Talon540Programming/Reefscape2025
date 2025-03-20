@@ -14,10 +14,11 @@ import org.littletonrobotics.junction.Logger;
 public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
-  private static final LoggedTunableNumber ejectVolts =
+
+  private static final LoggedTunableNumber ejectVoltsL1 =
       new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
-  private static final LoggedTunableNumber ejectVoltsSlow =
-      new LoggedTunableNumber("Dispenser/EjectVoltsSlow", 1.3);
+  private static final LoggedTunableNumber ejectVolts =
+      new LoggedTunableNumber("Dispenser/EjectVolts", 3.0);
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
@@ -70,7 +71,7 @@ public class DispenserBase extends SubsystemBase {
             () ->
                 io.runVolts(
                     state.get() == ElevatorState.L1_CORAL
-                        ? ejectVoltsSlow.get()
+                        ? ejectVoltsL1.get()
                         : ejectVolts.get()),
             io::stop)
         .withTimeout(ejectPeriod.get());
