@@ -20,12 +20,14 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
+import frc.robot.PoseEstimator.OdometryObservation;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
@@ -157,9 +159,11 @@ public class DriveBase extends SubsystemBase {
       }
       PoseEstimator.getInstance()
           .addOdometryObservation(
-              wheelPositions,
-              m_gyroInputs.connected ? m_gyroInputs.odometryYawPositions[i] : null,
-              timestamps[i]);
+              new OdometryObservation(
+                  wheelPositions,
+                  Optional.ofNullable(
+                      m_gyroInputs.connected ? m_gyroInputs.odometryYawPositions[i] : null),
+                  timestamps[i]));
     }
 
     // Disable brake mode a short duration after the robot is disabled
@@ -228,8 +232,6 @@ public class DriveBase extends SubsystemBase {
     }
   }
 
-  // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP
-
   /** Runs the drive in a straight(ish) line with the specified drive output. */
   public void runCharacterization(double output) {
     CLOSED_LOOP_MODE = false;
@@ -278,7 +280,7 @@ public class DriveBase extends SubsystemBase {
 
   /** Returns the measured chassis speeds of the robot. */
   @AutoLogOutput(key = "SwerveChassisSpeeds/Measured")
-  private ChassisSpeeds getChassisSpeeds() {
+  public ChassisSpeeds getChassisSpeeds() {
     return kinematics.toChassisSpeeds(getModuleStates());
   }
 
