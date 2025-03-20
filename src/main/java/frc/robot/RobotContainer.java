@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -100,18 +99,6 @@ public class RobotContainer {
           "Drive Wheel Radius Characterization", driveBase.wheelRadiusCharacterization());
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
-      autoChooser.addOption(
-          "Elevator Dynamic Forward",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kForward, 0.5));
-      autoChooser.addOption(
-          "Elevator Dynamic Reverse",
-          elevatorBase.sysIdDynamic(SysIdRoutine.Direction.kReverse, 0.25));
-      autoChooser.addOption(
-          "Elevator Quasi Forward",
-          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kForward, 25));
-      autoChooser.addOption(
-          "Elevator Quasi Reverse",
-          elevatorBase.sysIdQuasistatic(SysIdRoutine.Direction.kReverse, 3));
     }
 
     autoChooser.addDefaultOption("Noting", Commands.none());

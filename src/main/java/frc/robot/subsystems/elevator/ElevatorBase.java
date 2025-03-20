@@ -1,6 +1,5 @@
 package frc.robot.subsystems.elevator;
 
-import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 import edu.wpi.first.math.MathUtil;
@@ -12,7 +11,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.util.Debouncer;
 import frc.robot.util.EqualsUtil;
@@ -99,7 +97,6 @@ public class ElevatorBase extends SubsystemBase {
   @Getter
   private boolean atGoal = false;
 
-  private final SysIdRoutine sysId;
 
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
@@ -109,19 +106,6 @@ public class ElevatorBase extends SubsystemBase {
             new TrapezoidProfile.Constraints(
                 maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
 
-    sysId =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                Volts.of(.1).per(Second),
-                Volts.of(4),
-                Seconds.of(
-                    45), // Effectively disable the timeout and allow the Command factories to set
-                // them
-                (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> io.runOpenLoop(voltage.in(Volts)),
-                null, // No log consumer, since data is recorded by AdvantageKit
-                this));
   }
 
   @Override
@@ -227,30 +211,8 @@ public class ElevatorBase extends SubsystemBase {
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
-  }
 
-  /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction, double timeoutSecs) {
-    return runOnce(
-            () -> {
-              profileDisabled = true;
-              io.stop();
-            })
-        .andThen(Commands.waitSeconds(1))
-        .andThen(sysId.quasistatic(direction).withTimeout(timeoutSecs))
-        .finallyDo(() -> profileDisabled = false);
-  }
 
-  /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction, double timeoutSecs) {
-    return runOnce(
-            () -> {
-              profileDisabled = true;
-              io.stop();
-            })
-        .andThen(Commands.waitSeconds(1))
-        .andThen(sysId.dynamic(direction).withTimeout(timeoutSecs))
-        .finallyDo(() -> profileDisabled = false);
   }
 
   public Command homingSequence() {
@@ -268,11 +230,7 @@ public class ElevatorBase extends SubsystemBase {
                       Math.abs(inputs.velocityRadPerSec) <= homingVelocityThresh.get());
             })
         .until(() -> homed)
-        .andThen(
-            () -> {
-              io.resetOrigin();
-              homed = true;
-            })
+        .andThen(io::resetOrigin)
         .finallyDo(() -> profileDisabled = false);
   }
 
