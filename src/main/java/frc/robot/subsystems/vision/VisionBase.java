@@ -10,12 +10,12 @@ import frc.robot.PoseEstimator.VisionObservation;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-public class Vision extends SubsystemBase {
+public class VisionBase extends SubsystemBase {
 
   private final VisionIO[] cameras;
   private final VisionIOInputsAutoLogged[] cameraInputs;
 
-  public Vision(VisionIO... cameras) {
+  public VisionBase(VisionIO... cameras) {
     this.cameras = cameras;
     cameraInputs = new VisionIOInputsAutoLogged[this.cameras.length];
     for (int i = 0; i < this.cameras.length; i++) {
@@ -29,7 +29,7 @@ public class Vision extends SubsystemBase {
       var input = cameraInputs[i];
 
       cameras[i].updateInputs(input);
-      Logger.processInputs("Vision/Cam" + i, input);
+      Logger.processInputs("VisionBase/Cam" + i, input);
 
       // Don't report if there is no valid global pose estimate
       if (!input.hasResult) continue;
@@ -43,7 +43,7 @@ public class Vision extends SubsystemBase {
     }
   }
 
-  @AutoLogOutput(key = "Vision/NearestReefPose")
+  @AutoLogOutput(key = "VisionBase/NearestReefPose")
   public Pose2d getNearestReefFace() {
     for (int i = 0; i < cameras.length; i++) {
       var input = cameraInputs[i];
@@ -52,7 +52,7 @@ public class Vision extends SubsystemBase {
         for (int k = 0; k < VisionConstants.reefAprilTags.length; k++) {
           if (input.detectedTagsIds[j] == VisionConstants.reefAprilTags[k]
               && input.tagDistances[j] <= maxReefTagDistance) {
-            // Logger.recordOutput("Vision/ReefFacePose", FieldConstants.Reef.centerFaces[k]);
+            // Logger.recordOutput("VisionBase/ReefFacePose", FieldConstants.Reef.centerFaces[k]);
             return FieldConstants.Reef.centerFaces[k];
           }
         }
@@ -62,12 +62,12 @@ public class Vision extends SubsystemBase {
     return PoseEstimator.getInstance().getEstimatedPose();
   }
 
-  @AutoLogOutput(key = "Vision/NearestLeftBranch")
+  @AutoLogOutput(key = "VisionBase/NearestLeftBranch")
   public Pose2d getNearestLeftBranch() {
     return getNearestReefFace().plus(FieldConstants.Reef.centerToLeftBranch);
   }
 
-  @AutoLogOutput(key = "Vision/NearestRightBranch")
+  @AutoLogOutput(key = "VisionBase/NearestRightBranch")
   public Pose2d getNearestRightBranch() {
     return getNearestReefFace().plus(FieldConstants.Reef.centerToRightBranch);
   }

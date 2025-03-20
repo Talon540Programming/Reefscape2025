@@ -36,7 +36,7 @@ public class RobotContainer {
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
-  private final Vision visionBase;
+  private final VisionBase visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -66,7 +66,7 @@ public class RobotContainer {
         dispenserBase = new DispenserBase(new DispenserIOSpark());
 
         visionBase =
-            new Vision(
+            new VisionBase(
                 VisionConstants.cameras.stream()
                     .map(
                         v ->
@@ -86,7 +86,7 @@ public class RobotContainer {
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
         visionBase =
-            new Vision(
+            new VisionBase(
                 VisionConstants.cameras.stream()
                     .map(
                         v ->
@@ -108,7 +108,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
-        visionBase = new Vision(new VisionIO() {});
+        visionBase = new VisionBase(new VisionIO() {});
       }
     }
 
