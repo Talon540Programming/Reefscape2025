@@ -22,6 +22,7 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
@@ -32,6 +33,7 @@ public class RobotContainer {
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
+  private final VisionBase visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -59,6 +61,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
+        visionBase = new VisionBase(new VisionIOPhotonCamera(0), new VisionIOPhotonCamera(1));
       }
       case SIM -> {
         driveBase =
@@ -71,6 +74,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
+        visionBase = new VisionBase(new VisionIOSim(0), new VisionIOSim(1));
       }
       default -> {
         driveBase =
@@ -83,6 +87,7 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
+        visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
       }
     }
 
