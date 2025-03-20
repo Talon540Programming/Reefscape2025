@@ -27,7 +27,10 @@ public class GeomUtil {
   }
 
   public static Transform2d toTransform2d(Transform3d transform) {
-    return new Transform2d(transform.getTranslation().getX(), transform.getTranslation().getY(), transform.getRotation().toRotation2d());
+    return new Transform2d(
+        transform.getTranslation().getX(),
+        transform.getTranslation().getY(),
+        transform.getRotation().toRotation2d());
   }
 
   /**

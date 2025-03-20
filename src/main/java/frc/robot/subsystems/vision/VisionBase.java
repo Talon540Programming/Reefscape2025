@@ -17,9 +17,8 @@ import frc.robot.PoseEstimator;
 import frc.robot.PoseEstimator.VisionObservation;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
-import org.littletonrobotics.junction.Logger;
-
 import java.util.*;
+import org.littletonrobotics.junction.Logger;
 
 public class VisionBase extends SubsystemBase {
   private static final double disconnectedTimeout = 0.5;
@@ -74,8 +73,11 @@ public class VisionBase extends SubsystemBase {
       if (disconnected) {
         cameraDisconnectedAlerts[i].setText(
             inputs[i].ntConnected
-                ? String.format("Vision Inst%d (%s) connected to NT but not publishing frames", i, cameras[i].cameraName())
-                : String.format("Vision Inst%d (%s) disconnected from NT", i, cameras[i].cameraName()));
+                ? String.format(
+                    "Vision Inst%d (%s) connected to NT but not publishing frames",
+                    i, cameras[i].cameraName())
+                : String.format(
+                    "Vision Inst%d (%s) disconnected from NT", i, cameras[i].cameraName()));
       }
       cameraDisconnectedAlerts[i].set(disconnected);
     }
@@ -84,8 +86,8 @@ public class VisionBase extends SubsystemBase {
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<VisionObservation> allVisionObservations = new ArrayList<>();
     // Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
-    for(int i = 0; i < io.length; i++) {
-      for(var observation : inputs[i].observations) {
+    for (int i = 0; i < io.length; i++) {
+      for (var observation : inputs[i].observations) {
         var timestamp = observation.timestamp() + timestampOffset.get();
 
         // Switch based on detection technique
@@ -94,15 +96,18 @@ public class VisionBase extends SubsystemBase {
         boolean useVisionRotation = false;
         Matrix<N3, N1> baseStdevs = null;
 
-        if(observation.multitagTagToCamera() != null) {
+        if (observation.multitagTagToCamera() != null) {
           // Handle Multitag
           cameraPose = GeomUtil.toPose3d(observation.multitagTagToCamera());
-          robotPose = cameraPose.toPose2d().transformBy(GeomUtil.toTransform2d(cameras[i].robotToCamera()).inverse());
+          robotPose =
+              cameraPose
+                  .toPose2d()
+                  .transformBy(GeomUtil.toTransform2d(cameras[i].robotToCamera()).inverse());
           useVisionRotation = true;
           baseStdevs = multiTagStdevs;
         } else if (observation.bestTagToCamera() != null) {
           // Handle Singletag
-          if(observation.ambiguity() > ambiguityThreshold) {
+          if (observation.ambiguity() > ambiguityThreshold) {
             continue;
           }
 
@@ -118,7 +123,8 @@ public class VisionBase extends SubsystemBase {
           var bestRot = bestPose.getRotation();
           var altRot = altPose.getRotation();
 
-          if(Math.abs(currentRot.minus(bestRot).getRadians()) < Math.abs(currentRot.minus(altRot).getRadians())) {
+          if (Math.abs(currentRot.minus(bestRot).getRadians())
+              < Math.abs(currentRot.minus(altRot).getRadians())) {
             cameraPose = bestCamPose;
             robotPose = bestPose;
           } else {
@@ -145,7 +151,7 @@ public class VisionBase extends SubsystemBase {
 
         // Get tag poses and update last detection times
         List<Pose3d> tagPoses = new ArrayList<>();
-        for(int tagId : observation.detectedTagsIds()) {
+        for (int tagId : observation.detectedTagsIds()) {
           lastTagDetectionTimes.put(tagId, Timer.getTimestamp());
           FieldConstants.fieldLayout.getTagPose(tagId).ifPresent(tagPoses::add);
         }
@@ -159,8 +165,12 @@ public class VisionBase extends SubsystemBase {
 
         // Update observation trust matrix
         double xyStdev = Math.pow(avgDistance, 2) / tagPoses.size() * cameras[i].cameraBiasScalar();
-        double rotStdev = useVisionRotation ? Math.pow(avgDistance, 2) / tagPoses.size() * cameras[i].cameraBiasScalar() : Double.POSITIVE_INFINITY;
-        var observationStdevs = baseStdevs.elementTimes(VecBuilder.fill(xyStdev, xyStdev, rotStdev));
+        double rotStdev =
+            useVisionRotation
+                ? Math.pow(avgDistance, 2) / tagPoses.size() * cameras[i].cameraBiasScalar()
+                : Double.POSITIVE_INFINITY;
+        var observationStdevs =
+            baseStdevs.elementTimes(VecBuilder.fill(xyStdev, xyStdev, rotStdev));
 
         allVisionObservations.add(new VisionObservation(robotPose, timestamp, observationStdevs));
         allRobotPoses.add(robotPose);
@@ -168,8 +178,7 @@ public class VisionBase extends SubsystemBase {
         // Log data from instance
         if (enableInstanceLogging) {
           Logger.recordOutput(
-              "AprilTagVision/Inst" + i + "/LatencySecs",
-              Timer.getTimestamp() - timestamp);
+              "AprilTagVision/Inst" + i + "/LatencySecs", Timer.getTimestamp() - timestamp);
           Logger.recordOutput("AprilTagVision/Inst" + i + "/RobotPose", robotPose);
           Logger.recordOutput(
               "AprilTagVision/Inst" + i + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
@@ -203,9 +212,7 @@ public class VisionBase extends SubsystemBase {
     List<Pose3d> allTagPoses = new ArrayList<>();
     for (Map.Entry<Integer, Double> detectionEntry : lastTagDetectionTimes.entrySet()) {
       if (Timer.getTimestamp() - detectionEntry.getValue() < targetLogTimeSecs) {
-        FieldConstants.fieldLayout
-            .getTagPose(detectionEntry.getKey())
-            .ifPresent(allTagPoses::add);
+        FieldConstants.fieldLayout.getTagPose(detectionEntry.getKey()).ifPresent(allTagPoses::add);
       }
     }
     Logger.recordOutput("AprilTagVision/TagPoses", allTagPoses.toArray(Pose3d[]::new));
