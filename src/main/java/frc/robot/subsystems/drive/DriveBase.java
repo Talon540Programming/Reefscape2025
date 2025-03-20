@@ -226,23 +226,11 @@ public class DriveBase extends SubsystemBase {
     Logger.recordOutput(
         "SwerveChassisSpeeds/SetpointsUnoptimized", currentSetpoint.chassisSpeeds());
 
-    SwerveModuleState[] measuredStates = getModuleStates();
-    SwerveModuleState[] stateErrors = new SwerveModuleState[4];
-
     // Send setpoints to modules
     for (int i = 0; i < 4; i++) {
       modules[i].runSetpoint(setpointStates[i]);
-
-      stateErrors[i] =
-          new SwerveModuleState(
-              setpointStates[i].speedMetersPerSecond - measuredStates[i].speedMetersPerSecond,
-              setpointStates[i].angle.minus(measuredStates[i].angle));
     }
-
-    Logger.recordOutput("SwerveStates/Error", stateErrors);
   }
-
-  // CAN CONNECTOR ON CANID 6 MUST BE REPLACED BEFORE COMP
 
   /** Runs the drive in a straight(ish) line with the specified drive output. */
   public void runCharacterization(double output) {
@@ -280,16 +268,6 @@ public class DriveBase extends SubsystemBase {
     }
     return states;
   }
-
-  // @AutoLogOutput(key = "SwerveStates/Error")
-  // private SwerveModuleState[] getStateError() {
-  //   SwerveModuleState[] states = getModuleStates();
-
-  //   SwerveModuleState[] errors = new SwerveModuleState[4];
-  //   for (int i = 0; i < 4; i++) {
-  //     errors[i] = states[i] -
-  //   }
-  // }
 
   /** Returns the module positions (turn angles and drive positions) for all the modules. */
   private SwerveModulePosition[] getModulePositions() {
