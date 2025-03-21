@@ -70,9 +70,7 @@ public class DispenserBase extends SubsystemBase {
     return startEnd(
             () ->
                 io.runVolts(
-                    state.get() == ElevatorState.L1_CORAL
-                        ? ejectVoltsL1.get()
-                        : ejectVolts.get()),
+                    state.get() == ElevatorState.L1_CORAL ? ejectVoltsL1.get() : ejectVolts.get()),
             io::stop)
         .withTimeout(ejectPeriod.get());
   }

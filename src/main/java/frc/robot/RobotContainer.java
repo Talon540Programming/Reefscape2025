@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
 import frc.robot.subsystems.dispenser.DispenserIOSim;
@@ -123,9 +122,6 @@ public class RobotContainer {
   }
 
   private void configureButtonBindings() {
-    // Make slow mode toggleable
-    controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
-
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
@@ -138,13 +134,9 @@ public class RobotContainer {
 
     // Stow
     controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
-    // L1
-    controller
-        .povLeft()
-        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
     // L2
     controller
-        .povUp()
+        .povLeft()
         .onTrue(
             Commands.either(
                 Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
@@ -153,54 +145,56 @@ public class RobotContainer {
 
     // L3
     controller
-        .povRight()
+        .povUp()
         .onTrue(
             Commands.either(
                 Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
                 Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
                 controller.b().negate().debounce(0.25)));
 
-    // Intake
-    controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
-
+    // L4
     controller
-        .rightTrigger()
-        .onTrue(
-            Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
-                IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
-                controller.leftTrigger().negate().debounce(0.25)));
+        .povRight()
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)));
 
-    // Home Elevator
-    controller
-        .back()
-        .and(controller.start().negate())
-        .debounce(0.5)
-        .onTrue(elevatorBase.homingSequence());
-
-    // Auto Align (Left or Right)
-    // TODO
-
-    // Human Player Alert (Strobe LEDs)
-    // TODO
-
-    // Reset Gyro
-    controller
-        .start()
-        .and(controller.back())
-        .debounce(0.5)
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        PoseEstimator.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(new Rotation2d()))),
-                    driveBase)
-                .ignoringDisable(true));
+    // // Intake
+    // controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
+    //
+    // controller
+    //     .rightTrigger()
+    //     .onTrue(
+    //         Commands.either(
+    //             dispenserBase
+    //                 .eject(elevatorBase::getGoal)
+    //                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
+    //             IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
+    //             controller.leftTrigger().negate().debounce(0.25)));
+    //
+    // // Home Elevator
+    // controller.leftStick().onTrue(elevatorBase.homingSequence());
+    //
+    // // Auto Align (Left or Right)
+    // // TODO
+    //
+    // // Human Player Alert (Strobe LEDs)
+    // // TODO
+    //
+    // // Reset Gyro
+    // controller
+    //     .start()
+    //     .and(controller.back())
+    //     .debounce(0.5)
+    //     .onTrue(
+    //         Commands.runOnce(
+    //                 () ->
+    //                     PoseEstimator.getInstance()
+    //                         .resetPose(
+    //                             new Pose2d(
+    //
+    // PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
+    //                                 AllianceFlipUtil.apply(new Rotation2d()))),
+    //                 driveBase)
+    //             .ignoringDisable(true));
 
     // Endgame
     new Trigger(
