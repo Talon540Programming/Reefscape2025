@@ -1,9 +1,5 @@
 package frc.robot.subsystems.leds;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
-
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.util.VirtualSubsystem;
@@ -39,6 +35,7 @@ public class LEDBase extends VirtualSubsystem {
   private static final Color primaryColor = Color.kWhite;
   private static final Color secondaryColor = null; // TODO
   private static final Color disabledColor = null; // TODO
+  private static final Color secondaryDisabledColor = null; // TODO
   private static final Color stowColor = null; // TODO
   private static final Color l1Color = null; // TODO
   private static final Color l2Color = null; // TODO
@@ -60,6 +57,11 @@ public class LEDBase extends VirtualSubsystem {
   private final Section scoringStateIndicators = null; // TODO
   private final Section coralIndicator = null; // TODO
   private final Section humanPlayerIndicator = null; // TODO
+  // State Constants
+  private static final int minLoopCycleCount = 10;
+  public int loopCycleCount = 0;
+  public boolean humanPlayerAlert = false;
+  public boolean endgameAlert = false;
 
   private LEDBase() {
     // Initialize IO
@@ -87,13 +89,42 @@ public class LEDBase extends VirtualSubsystem {
     loadingNotifier.startPeriodic(0.02);
   }
 
-  private final LEDPattern m_rainbow = LEDPattern.rainbow(255, 255);
-  private final LEDPattern m_scrollingRainbow =
-      m_rainbow.scrollAtAbsoluteSpeed(MetersPerSecond.of(1), Meters.of(1.0 / 60));
-
   @Override
   public synchronized void periodic() {
-    m_scrollingRainbow.applyTo(buffer);
+    // Exit during initial cycles
+    loopCycleCount += 1;
+    if (loopCycleCount < minLoopCycleCount) {
+      return;
+    }
+
+    // Stop loading notifier if running
+    loadingNotifier.stop();
+
+    // Select LED mode
+    solid(fullSection, Color.kBlack); // Default to off
+    if (DriverStation.isEStopped()) {
+      solid(fullSection, Color.kRed);
+    } else if (DriverStation.isDisabled()) {
+      // Default pattern
+      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+    } else if (DriverStation.isAutonomous()) {
+      wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
+    } else {
+      // Default pattern
+      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+
+      // Human player alert
+      if (humanPlayerAlert) {
+        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+      }
+
+      // Endgame alert
+      if (endgameAlert) {
+        strobe(fullSection, Color.kRed, Color.kWhite, strobeDuration);
+      }
+    }
+
+    // Set buffer to LEDs
     leds.setData(buffer);
   }
 
@@ -113,7 +144,7 @@ public class LEDBase extends VirtualSubsystem {
   private void breath(Section section, Color c1, Color c2, double duration, double timestamp) {
     double x = ((timestamp % duration) / duration) * 2.0 * Math.PI;
     double ratio = (Math.sin(x) + 1.0) / 2.0;
-    var color = interpolateColor(c1, c2, ratio);
+    var color = Color.lerpRGB(c1, c2, ratio);
     solid(section, color);
   }
 
@@ -140,7 +171,7 @@ public class LEDBase extends VirtualSubsystem {
         ratio = 0.5;
       }
 
-      var color = interpolateColor(c1, c2, ratio);
+      var color = Color.lerpRGB(c1, c2, ratio);
       buffer.setLED(i, color);
     }
   }
@@ -153,13 +184,6 @@ public class LEDBase extends VirtualSubsystem {
       colorIndex = colors.size() - 1 - colorIndex;
       buffer.setLED(i, colors.get(colorIndex));
     }
-  }
-
-  private Color interpolateColor(Color c1, Color c2, double t) {
-    return new Color(
-        MathUtil.interpolate(c1.red, c2.red, t),
-        MathUtil.interpolate(c1.green, c2.green, t),
-        MathUtil.interpolate(c1.blue, c2.blue, t));
   }
 
   private record Section(int start, int end) {}

@@ -212,7 +212,10 @@ public class RobotContainer {
             Commands.startEnd(
                     () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 1.0),
                     () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 0.0))
-                .withTimeout(0.5));
+                .withTimeout(0.5)
+                .beforeStarting(() -> LEDBase.getInstance().endgameAlert = true)
+                .finallyDo(() -> LEDBase.getInstance().endgameAlert = false)
+                .withName("Controller Endgame Alert 1"));
 
     new Trigger(
             () ->
@@ -223,7 +226,13 @@ public class RobotContainer {
             Commands.startEnd(
                     () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 1.0),
                     () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 0.0))
-                .withTimeout(0.5));
+                .withTimeout(0.2)
+                .andThen(Commands.waitSeconds(0.1))
+                .repeatedly()
+                .withTimeout(0.9)
+                .beforeStarting(() -> LEDBase.getInstance().endgameAlert = true)
+                .finallyDo(() -> LEDBase.getInstance().endgameAlert = false)
+                .withName("Controller Endgame Alert 2")); // Rumble three times
   }
 
   public Command getAutonomousCommand() {
