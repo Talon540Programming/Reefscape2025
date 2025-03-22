@@ -40,10 +40,14 @@ public class VisionBase extends VirtualSubsystem {
     inputs = new VisionIOInputsAutoLogged[io.length];
     disconnectedTimers = new Timer[io.length];
     cameraDisconnectedAlerts = new Alert[io.length];
-
     for (int i = 0; i < io.length; i++) {
       inputs[i] = new VisionIOInputsAutoLogged();
       cameraDisconnectedAlerts[i] = new Alert("", Alert.AlertType.kError);
+    }
+
+    // Create map of last frame times for instances
+    for (int i = 0; i < io.length; i++) {
+      lastFrameTimes.put(i, 0.0);
     }
 
     for (int i = 0; i < io.length; i++) {
@@ -87,7 +91,13 @@ public class VisionBase extends VirtualSubsystem {
     List<VisionObservation> allVisionObservations = new ArrayList<>();
     // Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
     for (int i = 0; i < io.length; i++) {
-      for (var observation : inputs[i].observations) {
+      for (int j = 0; j < inputs[i].observations.length; j++) {
+        var observation = inputs[i].observations[j];
+
+        lastFrameTimes.put(i, Timer.getTimestamp());
+
+        if (!observation.hasResult()) continue;
+
         var timestamp = observation.timestamp() + timestampOffset.get();
 
         // Switch based on detection technique
@@ -96,7 +106,7 @@ public class VisionBase extends VirtualSubsystem {
         boolean useVisionRotation = false;
         Matrix<N3, N1> baseStdevs = null;
 
-        if (observation.multitagTagToCamera() != null) {
+        if (observation.isMultitag()) {
           // Handle Multitag
           cameraPose = GeomUtil.toPose3d(observation.multitagTagToCamera());
           robotPose =
@@ -105,7 +115,7 @@ public class VisionBase extends VirtualSubsystem {
                   .transformBy(GeomUtil.toTransform2d(cameras[i].robotToCamera()).inverse());
           useVisionRotation = true;
           baseStdevs = multiTagStdevs;
-        } else if (observation.bestTagToCamera() != null) {
+        } else {
           // Handle Singletag
           if (observation.ambiguity() > ambiguityThreshold) {
             continue;
@@ -151,7 +161,7 @@ public class VisionBase extends VirtualSubsystem {
 
         // Get tag poses and update last detection times
         List<Pose3d> tagPoses = new ArrayList<>();
-        for (int tagId : observation.detectedTagsIds()) {
+        for (int tagId : inputs[i].detectedTagIds[j]) {
           lastTagDetectionTimes.put(tagId, Timer.getTimestamp());
           FieldConstants.fieldLayout.getTagPose(tagId).ifPresent(tagPoses::add);
         }

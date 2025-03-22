@@ -2,8 +2,7 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import edu.wpi.first.math.geometry.Transform3d;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
@@ -18,38 +17,46 @@ public class VisionIOPhotonCamera implements VisionIO {
   public void updateInputs(VisionIOInputs inputs) {
     inputs.ntConnected = camera.isConnected();
 
-    // Read new camera observations
-    List<PoseObservation> poseObservations = new LinkedList<>();
-
     // Process camera results
-    for (var result : camera.getAllUnreadResults()) {
-      var observationBuilder = PoseObservation.builder().timestamp(result.getTimestampSeconds());
+    var resultQueue = camera.getAllUnreadResults();
+    // Read new camera observations
+    inputs.observations = new PoseObservation[resultQueue.size()];
+    inputs.detectedTagIds = new int[resultQueue.size()][];
+    for (int i = 0; i < resultQueue.size(); i++) {
+      var result = resultQueue.get(i);
+
+      var observationBuilder =
+          PoseObservation.builder()
+              .timestamp(result.getTimestampSeconds())
+              .multitagTagToCamera(new Transform3d())
+              .bestTagToCamera(new Transform3d())
+              .altTagToCamera(new Transform3d());
 
       var multitagResOpt = result.getMultiTagResult();
       if (multitagResOpt.isPresent()) {
         var multitagRes = multitagResOpt.get();
 
         observationBuilder
+            .hasResult(true)
+            .isMultitag(true)
             .multitagTagToCamera(multitagRes.estimatedPose.best)
-            .ambiguity(multitagRes.estimatedPose.ambiguity)
-            .detectedTagsIds(
-                multitagRes.fiducialIDsUsed.stream().mapToInt(Short::shortValue).toArray());
+            .ambiguity(multitagRes.estimatedPose.ambiguity);
+
+        inputs.detectedTagIds[i] =
+            multitagRes.fiducialIDsUsed.stream().mapToInt(Short::shortValue).toArray();
       } else if (result.hasTargets()) {
         var singletagDetection = result.getBestTarget();
 
         observationBuilder
+            .hasResult(true)
             .bestTagToCamera(singletagDetection.bestCameraToTarget)
             .altTagToCamera(singletagDetection.altCameraToTarget)
-            .ambiguity(singletagDetection.poseAmbiguity)
-            .detectedTagsIds(
-                result.getTargets().stream()
-                    .mapToInt(PhotonTrackedTarget::getFiducialId)
-                    .toArray());
+            .ambiguity(singletagDetection.poseAmbiguity);
+        inputs.detectedTagIds[i] =
+            result.getTargets().stream().mapToInt(PhotonTrackedTarget::getFiducialId).toArray();
       }
 
-      poseObservations.add(observationBuilder.build());
+      inputs.observations[i] = observationBuilder.build();
     }
-
-    inputs.observations = poseObservations.toArray(new PoseObservation[0]);
   }
 }
