@@ -45,7 +45,9 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
-  private boolean slowModeEnabled;
+  private boolean slowModeEnabled = false;
+  private boolean robotRelativeDisabled = false;
+  private boolean robotRelativeEnabled = false;
 
   public RobotContainer() {
     switch (Constants.getMode()) {
@@ -136,7 +138,6 @@ public class RobotContainer {
 
   private void configureButtonBindings() {
     // Make slow mode toggleable
-    controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
 
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
@@ -146,35 +147,56 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
             () -> slowModeEnabled,
-            () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
+            () -> robotRelativeEnabled));
 
     // Stow
-    controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
+    controller
+        .povDown()
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      slowModeEnabled = false;
+                      robotRelativeEnabled = false;
+                    })
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))));
     // L1
+    // controller
+    //     .povLeft()
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
     controller
         .povLeft()
-        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
-    // L2
+        .onTrue(
+            Commands.runOnce(
+                    () -> {
+                      slowModeEnabled = true;
+                      robotRelativeEnabled = true;
+                    })
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL))));
+
     controller
         .povUp()
         .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+            Commands.runOnce(
+                    () -> {
+                      slowModeEnabled = true;
+                      robotRelativeEnabled = true;
+                    })
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL))));
 
-    // L3
     controller
         .povRight()
         .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)),
-                controller.b().negate().debounce(0.25)));
+            Commands.runOnce(
+                    () -> {
+                      slowModeEnabled = true;
+                      robotRelativeEnabled = true;
+                    })
+                .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL))));
 
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
 
+    // Dispense
     controller
         .rightTrigger()
         .onTrue(
@@ -212,6 +234,32 @@ public class RobotContainer {
                                     AllianceFlipUtil.apply(new Rotation2d()))),
                     driveBase)
                 .ignoringDisable(true));
+
+    new Trigger(
+            () ->
+                (elevatorBase.getGoal() != ElevatorState.STOW
+                    || elevatorBase.getGoal() != ElevatorState.INTAKE
+                    || !robotRelativeDisabled))
+        .onTrue(
+            Commands.runOnce(
+                () -> {
+                  slowModeEnabled = true;
+                  robotRelativeEnabled = true;
+                }))
+        .onFalse(
+            Commands.runOnce(
+                () -> {
+                  slowModeEnabled = false;
+                  robotRelativeEnabled = false;
+                }));
+
+    controller
+        .a()
+        .onTrue(
+            Commands.run(
+                () -> {
+                  robotRelativeDisabled = true;
+                }));
 
     // Endgame
     new Trigger(
