@@ -12,19 +12,20 @@ import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 public class DispenserBase extends SubsystemBase {
-  private static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
-
-  private static final LoggedTunableNumber ejectVoltsL1 =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
-  private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 3.0);
-
+  private static final LoggedTunableNumber coralIntakeVolts =
+      new LoggedTunableNumber("Dispenser/CoralIntakeVolts", 6.0);
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
 
+  private static final LoggedTunableNumber coralL1EjectVolts =
+      new LoggedTunableNumber("Dispenser/CoralL1EjectVolts", 1.3);
+  private static final LoggedTunableNumber coralEjectVolts =
+      new LoggedTunableNumber("Dispenser/CoralEjectVolts", 3.0);
+  private static final LoggedTunableNumber coralL4EjectVolts =
+      new LoggedTunableNumber("Dispenser/CoralL4EjectVolts", 6.0); // TODO
+
   private static final LoggedTunableNumber ejectPeriod =
-      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.75);
+      new LoggedTunableNumber("Dispenser/CoralEjectPeriodSecs", 0.5);
 
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();
@@ -60,18 +61,19 @@ public class DispenserBase extends SubsystemBase {
   }
 
   public Command intakeTillHolding() {
-    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop)
+    return startEnd(() -> io.runVolts(coralIntakeVolts.get()), io::stop)
         .raceWith(
             Commands.sequence(
                 Commands.waitSeconds(0.25), Commands.waitUntil(this::isHoldingCoral)));
   }
 
   public Command eject(Supplier<ElevatorState> state) {
-    return startEnd(
-            () ->
-                io.runVolts(
-                    state.get() == ElevatorState.L1_CORAL ? ejectVoltsL1.get() : ejectVolts.get()),
-            io::stop)
+    return runRollers(
+            switch (state.get()) {
+              case L1_CORAL -> coralL1EjectVolts.get();
+              case L4_CORAL -> coralL4EjectVolts.get();
+              default -> coralEjectVolts.get();
+            })
         .withTimeout(ejectPeriod.get());
   }
 }
