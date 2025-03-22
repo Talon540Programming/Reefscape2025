@@ -15,17 +15,16 @@ package frc.robot;
 
 import edu.wpi.first.hal.AllianceStationID;
 import edu.wpi.first.wpilibj.*;
-import edu.wpi.first.wpilibj.simulation.DriverStationSim;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.util.AlertsUtil;
-import frc.robot.subsystems.leds.LEDBase;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.Threads;
+import edu.wpi.first.wpilibj.simulation.DriverStationSim;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.LoggerUtil;
-import frc.robot.util.rlog.RLOGServer;
 import frc.robot.util.VirtualSubsystem;
+import frc.robot.util.rlog.RLOGServer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -135,8 +134,6 @@ public class Robot extends LoggedRobot {
 
     // Run command scheduler
     CommandScheduler.getInstance().run();
-
-    AlertsUtil.getInstance().periodic();
 
     // Print auto duration
     if (autonomousCommand != null) {
