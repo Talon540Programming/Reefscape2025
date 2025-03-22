@@ -11,6 +11,8 @@ import frc.robot.util.LoggedTunableNumber;
 public class IntakeCommands {
   public static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Intake/HopperIntakeVolts", 5.5);
+  public static final LoggedTunableNumber reserializeVolts =
+      new LoggedTunableNumber("Intake/ReserializeVolts", -3);
 
   public static Command intake(ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
     return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
@@ -22,12 +24,23 @@ public class IntakeCommands {
         .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
   }
 
+  public static Command unintake(
+      ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
+    return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
+        .andThen(
+            Commands.waitUntil(elevator::isAtGoal)
+                .andThen(
+                    Commands.deadline(
+                        dispenser.intakeTillHolding(), intake.runRoller(reserializeVolts.get()))))
+        .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
+  }
+
   public static Command reserialize(
       ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
     return Commands.runOnce(() -> elevator.setGoal(ElevatorState.INTAKE))
         .andThen(
             Commands.waitUntil(elevator::isAtGoal)
-                .andThen(dispenser.runRollers(-2.0).until(() -> !dispenser.isHoldingCoral()))
+                .andThen(IntakeCommands.unintake(elevator, intake, dispenser))
                 .andThen(IntakeCommands.intake(elevator, intake, dispenser)));
   }
 }

@@ -45,19 +45,20 @@ class VisionConstants {
                   .cameraBiasScalar(1.0)
                   .calibrationPath(
                       Path.of("camera_calibrations/frontleft_calibration@1280x800.json"))
-                  .build(),
-              CameraConfig.builder()
-                  .cameraName("frontright")
-                  .robotToCamera(
-                      new Transform3d(
-                          0.206,
-                          -0.272,
-                          0.221,
-                          new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
-                  .cameraBiasScalar(1.0)
-                  .calibrationPath(
-                      Path.of("camera_calibrations/frontright_calibration@1280x800.json"))
                   .build()
+              //       ,
+              //   CameraConfig.builder()
+              //       .cameraName("frontright")
+              //       .robotToCamera(
+              //           new Transform3d(
+              //               0.206,
+              //               -0.272,
+              //               0.221,
+              //               new Rotation3d(0, Math.toRadians(-20), Math.toRadians(35))))
+              //       .cameraBiasScalar(1.0)
+              //       .calibrationPath(
+              //           Path.of("camera_calibrations/frontright_calibration@1280x800.json"))
+              //       .build()
             };
         default -> new CameraConfig[] {};
       };

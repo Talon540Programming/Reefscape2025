@@ -29,9 +29,9 @@ public class ElevatorBase extends SubsystemBase {
   private static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA");
 
   private static final LoggedTunableNumber maxVelocityMetersPerSec =
-      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 3.25);
+      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 2);
   private static final LoggedTunableNumber maxAccelerationMetersPerSec2 =
-      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 8.0);
+      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 4.5);
 
   private static final LoggedTunableNumber homingVolts =
       new LoggedTunableNumber("Elevator/HomingVolts", -2.0);
@@ -49,7 +49,7 @@ public class ElevatorBase extends SubsystemBase {
         kS.initDefault(0.0);
         kG.initDefault(0.0);
         kA.initDefault(0.0);
-        kP.initDefault(0.0);
+        kP.initDefault(0.15);
         kD.initDefault(0.0);
       }
       case SIMBOT -> {

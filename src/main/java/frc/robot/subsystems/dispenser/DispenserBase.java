@@ -18,7 +18,7 @@ public class DispenserBase extends SubsystemBase {
   private static final LoggedTunableNumber ejectVoltsL1 =
       new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
   private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 3.0);
+      new LoggedTunableNumber("Dispenser/EjectVolts", 4.0); // 3.0
 
   private static final LoggedTunableNumber holdingCoralPeriod =
       new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
@@ -70,9 +70,7 @@ public class DispenserBase extends SubsystemBase {
     return startEnd(
             () ->
                 io.runVolts(
-                    state.get() == ElevatorState.L1_CORAL
-                        ? ejectVoltsL1.get()
-                        : ejectVolts.get()),
+                    state.get() == ElevatorState.L1_CORAL ? ejectVoltsL1.get() : ejectVolts.get()),
             io::stop)
         .withTimeout(ejectPeriod.get());
   }

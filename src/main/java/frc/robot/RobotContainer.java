@@ -32,7 +32,7 @@ public class RobotContainer {
   private final IntakeBase intakeBase;
   private final ElevatorBase elevatorBase;
   private final DispenserBase dispenserBase;
-  private final VisionBase visionBase;
+  //   private final VisionBase visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -60,7 +60,11 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSpark());
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
-        visionBase = new VisionBase(new VisionIOPhotonCamera(0), new VisionIOPhotonCamera(1));
+        // visionBase =
+        //     new VisionBase(
+        //         new VisionIOPhotonCamera(0)
+        //         // , new VisionIOPhotonCamera(1)
+        //         );
       }
       case SIM -> {
         driveBase =
@@ -73,7 +77,11 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIOSim());
         elevatorBase = new ElevatorBase(new ElevatorIOSim());
         dispenserBase = new DispenserBase(new DispenserIOSim());
-        visionBase = new VisionBase(new VisionIOSim(0), new VisionIOSim(1));
+        // visionBase =
+        //     new VisionBase(
+        //         new VisionIOSim(0)
+        //         // , new VisionIOSim(1)
+        //         );
       }
       default -> {
         driveBase =
@@ -86,7 +94,11 @@ public class RobotContainer {
         intakeBase = new IntakeBase(new IntakeIO() {});
         elevatorBase = new ElevatorBase(new ElevatorIO() {});
         dispenserBase = new DispenserBase(new DispenserIO() {});
-        visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
+        // visionBase =
+        //     new VisionBase(
+        //         new VisionIO() {}
+        //         // , new VisionIO() {}
+        //         );
       }
     }
 
@@ -141,14 +153,14 @@ public class RobotContainer {
     // L1
     controller
         .povLeft()
-        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
     // L2
     controller
         .povUp()
         .onTrue(
             Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
+                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
+                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
                 controller.b().negate().debounce(0.25)));
 
     // L3
@@ -156,8 +168,8 @@ public class RobotContainer {
         .povRight()
         .onTrue(
             Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
+                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)),
+                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)),
                 controller.b().negate().debounce(0.25)));
 
     // Intake
@@ -167,9 +179,8 @@ public class RobotContainer {
         .rightTrigger()
         .onTrue(
             Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
+                dispenserBase.eject(elevatorBase::getGoal),
+                // .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
                 IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
                 controller.leftTrigger().negate().debounce(0.25)));
 
