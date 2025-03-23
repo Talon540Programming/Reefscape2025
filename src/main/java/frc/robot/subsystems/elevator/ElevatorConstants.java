@@ -14,7 +14,7 @@ public class ElevatorConstants {
   public static final double drumRadius = Units.inchesToMeters(1.0);
   public static final double gearing = 4.0;
 
-  public static final double maxTravel = Units.inchesToMeters(72); // TODO
+  public static final double maxTravel = 1.631;
 
   public static final double carriageMassKg = Units.lbsToKilograms(6.0);
   public static final double stagesMassKg = Units.lbsToKilograms(12.0);
