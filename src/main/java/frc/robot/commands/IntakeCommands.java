@@ -6,6 +6,7 @@ import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.elevator.ElevatorBase;
 import frc.robot.subsystems.elevator.ElevatorState;
 import frc.robot.subsystems.intake.IntakeBase;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.LoggedTunableNumber;
 
 public class IntakeCommands {
@@ -19,7 +20,12 @@ public class IntakeCommands {
                 .andThen(
                     Commands.deadline(
                         dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))))
-        .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
+        .beforeStarting(() -> LEDBase.getInstance().humanPlayerAlert = true)
+        .finallyDo(
+            () -> {
+              elevator.setGoal(ElevatorState.STOW);
+              LEDBase.getInstance().humanPlayerAlert = false;
+            });
   }
 
   public static Command reserialize(

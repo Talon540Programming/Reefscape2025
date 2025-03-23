@@ -42,4 +42,13 @@ public enum ElevatorState {
             (reefLevel.height + offsetTunable.get() - originToBaseHeightMeters)
                 / elevatorPitch.getSin();
   }
+
+  public static ElevatorState getCoralScoringState(ReefLevel reefLevel) {
+    return switch (reefLevel) {
+      case L1 -> L1_CORAL;
+      case L2 -> L2_CORAL;
+      case L3 -> L3_CORAL;
+      case L4 -> L4_CORAL;
+    };
+  }
 }

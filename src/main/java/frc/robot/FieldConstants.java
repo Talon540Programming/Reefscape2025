@@ -113,12 +113,24 @@ public class FieldConstants {
     static {
       // Initialize faces
       var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+      // centerFaces[0] = aprilTagLayout.getTagPose(18).orElseThrow().toPose2d();
+      // centerFaces[1] = aprilTagLayout.getTagPose(19).orElseThrow().toPose2d();
+      // centerFaces[2] = aprilTagLayout.getTagPose(20).orElseThrow().toPose2d();
+      // centerFaces[3] = aprilTagLayout.getTagPose(21).orElseThrow().toPose2d();
+      // centerFaces[4] = aprilTagLayout.getTagPose(22).orElseThrow().toPose2d();
+      // centerFaces[5] = aprilTagLayout.getTagPose(17).orElseThrow().toPose2d();
       centerFaces[0] = aprilTagLayout.getTagPose(18).orElseThrow().toPose2d();
       centerFaces[1] = aprilTagLayout.getTagPose(19).orElseThrow().toPose2d();
       centerFaces[2] = aprilTagLayout.getTagPose(20).orElseThrow().toPose2d();
       centerFaces[3] = aprilTagLayout.getTagPose(21).orElseThrow().toPose2d();
       centerFaces[4] = aprilTagLayout.getTagPose(22).orElseThrow().toPose2d();
       centerFaces[5] = aprilTagLayout.getTagPose(17).orElseThrow().toPose2d();
+      centerFaces[6] = aprilTagLayout.getTagPose(7).orElseThrow().toPose2d();
+      centerFaces[7] = aprilTagLayout.getTagPose(6).orElseThrow().toPose2d();
+      centerFaces[8] = aprilTagLayout.getTagPose(11).orElseThrow().toPose2d();
+      centerFaces[9] = aprilTagLayout.getTagPose(10).orElseThrow().toPose2d();
+      centerFaces[10] = aprilTagLayout.getTagPose(9).orElseThrow().toPose2d();
+      centerFaces[11] = aprilTagLayout.getTagPose(8).orElseThrow().toPose2d();
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {

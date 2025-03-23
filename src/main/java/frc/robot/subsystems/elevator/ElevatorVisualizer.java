@@ -1,11 +1,10 @@
-package frc.robot.subsystems.elevator;
-
-public class ElevatorVisualizer {
-  private final String name;
-
-  public ElevatorVisualizer(String name) {
-    this.name = name;
-  }
-
-  public void update(double elevatorPositionMeters) {}
-}
+// package frc.robot.subsystems.elevator;
+//
+// import lombok.RequiredArgsConstructor;
+//
+// @RequiredArgsConstructor
+// public class ElevatorVisualizer {
+//   private final String key;
+//
+//   public void update(double elevatorPositionMeters) {}
+// }

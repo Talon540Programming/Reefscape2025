@@ -31,7 +31,7 @@ public class ElevatorBase extends SubsystemBase {
   private static final LoggedTunableNumber maxVelocityMetersPerSec =
       new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 2.0);
   private static final LoggedTunableNumber maxAccelerationMetersPerSec2 =
-      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 10);
+      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 3.0);
 
   private static final LoggedTunableNumber homingVolts =
       new LoggedTunableNumber("Elevator/HomingVolts", -2.0);
@@ -41,23 +41,23 @@ public class ElevatorBase extends SubsystemBase {
       new LoggedTunableNumber("Elevator/HomingVelocityThresh", 5.0);
 
   private static final LoggedTunableNumber toleranceMeters =
-      new LoggedTunableNumber("Elevator/ToleranceMeters", 0.2);
+      new LoggedTunableNumber("Elevator/ToleranceMeters", 0.5);
 
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        kP.initDefault(0.3);
-        kD.initDefault(0.25);
-        kS.initDefault(0);
-        kG.initDefault(1.05);
+        kS.initDefault(0.0);
+        kG.initDefault(0.0);
         kA.initDefault(0.0);
+        kP.initDefault(0.15);
+        kD.initDefault(0.0);
       }
       case SIMBOT -> {
-        kP.initDefault(0); // TODO
-        kD.initDefault(0); // TODO
         kS.initDefault(0); // TODO
         kG.initDefault(0); // TODO
         kA.initDefault(0); // TODO
+        kP.initDefault(0); // TODO
+        kD.initDefault(0); // TODO
       }
     }
   }
@@ -97,15 +97,11 @@ public class ElevatorBase extends SubsystemBase {
   @Getter
   private boolean atGoal = false;
 
+  // private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
+  // private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
 
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
-
-    profile =
-        new TrapezoidProfile(
-            new TrapezoidProfile.Constraints(
-                maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
-
   }
 
   @Override
@@ -144,18 +140,18 @@ public class ElevatorBase extends SubsystemBase {
         !profileDisabled && homed && !eStopped && DriverStation.isEnabled();
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
 
-    // // Check if out of tolerance
-    // boolean outOfTolerance =
-    //     Math.abs(getPositionMeters() - setpoint.position) > toleranceMeters.get();
-    // boolean shouldEStop = toleranceDebouncer.calculate(outOfTolerance && shouldRunProfile);
-    //
-    // outOfTolleranceAlert.set(shouldEStop);
-    // if (shouldEStop) {
-    //   eStopped = true;
-    // }
+    // Check if out of tolerance
+    boolean outOfTolerance =
+        Math.abs(getPositionMeters() - setpoint.position) > toleranceMeters.get();
+    boolean shouldEStop = toleranceDebouncer.calculate(outOfTolerance && shouldRunProfile);
+
+    outOfTolleranceAlert.set(shouldEStop);
+    if (shouldEStop) {
+      eStopped = true;
+    }
 
     if (shouldRunProfile) {
-      //   Clamp goal
+      // Clamp goal
       var goalState =
           new State(
               MathUtil.clamp(goal.getElevatorHeightMeters().getAsDouble(), 0.0, maxTravel), 0);
@@ -204,15 +200,17 @@ public class ElevatorBase extends SubsystemBase {
       io.stop();
     }
 
-    Logger.recordOutput(
-        "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
-
     // If not homed, schedule that command
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
 
+    Logger.recordOutput(
+        "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
+    Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
 
+    // measuredVisualizer.update(getPositionMeters());
+    // setpointVisualizer.update(setpoint.position);
   }
 
   public Command homingSequence() {

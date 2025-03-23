@@ -18,7 +18,7 @@ public class LEDBase extends VirtualSubsystem {
   // LED Constants
   private static final int numLEDs = 62;
   private static final int ledDriverPort = 0;
-  private static final double strobeDuration = 0.1;
+  private static final double strobeDuration = 0.2;
   private static final double breathFastDuration = 0.5;
   private static final double breathSlowDuration = 1.0;
   private static final double rainbowCycleLength = 25.0;
@@ -37,10 +37,10 @@ public class LEDBase extends VirtualSubsystem {
   private static final Color disabledColor = null; // TODO
   private static final Color secondaryDisabledColor = null; // TODO
   private static final Color stowColor = null; // TODO
-  private static final Color l1Color = null; // TODO
-  private static final Color l2Color = null; // TODO
-  private static final Color l3Color = null; // TODO
-  private static final Color l4Color = null; // TODO
+  private static final Color l1Color = Color.kHotPink;
+  private static final Color l2Color = Color.kOrange;
+  private static final Color l3Color = Color.kYellow;
+  private static final Color l4Color = Color.kGreen;
 
   // LED IO
   private final AddressableLED leds;
@@ -54,12 +54,14 @@ public class LEDBase extends VirtualSubsystem {
   private final Section firstTopBarSection = null; // TODO
   private final Section secondTopBarSection = null; // TODO
 
-  private final Section scoringStateIndicators = null; // TODO
-  private final Section coralIndicator = null; // TODO
-  private final Section humanPlayerIndicator = null; // TODO
+  // private final Section scoringStateIndicators = null; // TODO
+  // private final Section coralIndicator = null; // TODO
+  // private final Section humanPlayerIndicator = null; // TODO
+
   // State Constants
   private static final int minLoopCycleCount = 10;
   public int loopCycleCount = 0;
+  public boolean autoScoringReef = false;
   public boolean humanPlayerAlert = false;
   public boolean endgameAlert = false;
 
@@ -112,6 +114,10 @@ public class LEDBase extends VirtualSubsystem {
     } else {
       // Default pattern
       rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+
+      if (autoScoringReef) {
+        wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
+      }
 
       // Human player alert
       if (humanPlayerAlert) {

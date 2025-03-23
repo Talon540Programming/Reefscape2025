@@ -2,15 +2,16 @@ package frc.robot;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.commands.AutoScoreCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.auto.AutoBuilder;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
 import frc.robot.subsystems.dispenser.DispenserIOSim;
@@ -21,11 +22,17 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.DoublePressTracker;
+import java.util.Arrays;
+import java.util.List;
+import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+@ExtensionMethod({DoublePressTracker.class})
 public class RobotContainer {
   // Subsystems
   private final DriveBase driveBase;
@@ -45,7 +52,8 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
-  private boolean slowModeEnabled;
+  // @AutoLogOutput(key = "AutoScore/Pending")
+  // private boolean autoScorePending = false;
 
   public RobotContainer() {
     switch (Constants.getMode()) {
@@ -61,6 +69,7 @@ public class RobotContainer {
         elevatorBase = new ElevatorBase(new ElevatorIOSpark());
         dispenserBase = new DispenserBase(new DispenserIOSpark());
         visionBase = new VisionBase(new VisionIOPhotonCamera(0), new VisionIOPhotonCamera(1));
+        // visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
       }
       case SIM -> {
         driveBase =
@@ -101,31 +110,19 @@ public class RobotContainer {
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
 
+    var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
+
     autoChooser.addDefaultOption("Noting", Commands.none());
-    autoChooser.addOption(
-        "Taxi",
-        Commands.runEnd(
-                () -> driveBase.runVelocity(new ChassisSpeeds(1.0, 0.0, 0.0)),
-                driveBase::stop,
-                driveBase)
-            .withTimeout(2.0)
-            .beforeStarting(
-                Commands.runOnce(
-                    () ->
-                        PoseEstimator.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kPi))),
-                    driveBase)));
+    autoChooser.addOption("Taxi", autoBuilder.taxi());
+    autoChooser.addOption("Deadreckoned L2", autoBuilder.deadreckonedL2());
+    autoChooser.addOption("Deadreckoned L2 Center Start", autoBuilder.deadreckonedL2Center());
+    autoChooser.addOption("Deadreckoned L4", autoBuilder.deadreckonedL4());
+    autoChooser.addOption("Deadreckoned L4 Center Start", autoBuilder.deadreckonedL4Center());
 
     configureButtonBindings();
   }
 
   private void configureButtonBindings() {
-    // Make slow mode toggleable
-    controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
-
     // Default command, normal field-relative drive
     driveBase.setDefaultCommand(
         DriveCommands.joystickDrive(
@@ -133,58 +130,77 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX(),
-            () -> slowModeEnabled,
+            () ->
+                !List.of(ElevatorState.INTAKE, ElevatorState.STOW, ElevatorState.START)
+                    .contains(elevatorBase.getGoal()),
             () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
 
+    // Driver Controls
     // Stow
-    controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
+    controller.a().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
+
     // L1
     controller
-        .povLeft()
+        .povDown()
         .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
+
     // L2
     controller
-        .povUp()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+        .povLeft()
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
 
     // L3
+    controller.povUp().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)));
+
+    // L4
     controller
         .povRight()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)));
 
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
 
+    // Dispense
     controller
         .rightTrigger()
         .onTrue(
             Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
+                dispenserBase.eject(elevatorBase::getGoal),
+                // .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
                 IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
                 controller.leftTrigger().negate().debounce(0.25)));
 
-    // Home Elevator
+    // // // Auto Align
+
     controller
-        .back()
-        .and(controller.start().negate())
-        .debounce(0.5)
-        .onTrue(elevatorBase.homingSequence());
+        .leftBumper()
+        .whileTrue(
+            AutoScoreCommands.autoAlign(
+                driveBase,
+                () ->
+                    PoseEstimator.getInstance()
+                        .getEstimatedPose()
+                        .nearest(Arrays.asList(FieldConstants.Reef.centerFaces)),
+                () -> 0));
+    controller
+        .rightBumper()
+        .whileTrue(
+            AutoScoreCommands.autoAlign(
+                driveBase,
+                () ->
+                    PoseEstimator.getInstance()
+                        .getEstimatedPose()
+                        .nearest(Arrays.asList(FieldConstants.Reef.centerFaces)),
+                () -> 1));
 
-    // Auto Align (Left or Right)
-    // TODO
-
-    // Human Player Alert (Strobe LEDs)
-    // TODO
+    // Human Player Alert
+    controller
+        .y()
+        .whileTrue(
+            Commands.startEnd(
+                    () -> LEDBase.getInstance().humanPlayerAlert = true,
+                    () -> LEDBase.getInstance().humanPlayerAlert = false)
+                .withName("Strobe LEDs at HP"));
 
     // Reset Gyro
     controller
