@@ -45,13 +45,15 @@ public class VisionIOPhotonCamera implements VisionIO {
         inputs.detectedTagIds[i] =
             multitagRes.fiducialIDsUsed.stream().mapToInt(Short::shortValue).toArray();
       } else if (result.hasTargets()) {
-        var singletagDetection = result.getBestTarget();
+        var singleTagDetection = result.getBestTarget();
 
         observationBuilder
             .hasResult(true)
-            .bestTagToCamera(singletagDetection.bestCameraToTarget)
-            .altTagToCamera(singletagDetection.altCameraToTarget)
-            .ambiguity(singletagDetection.poseAmbiguity);
+            .singleTagId(singleTagDetection.fiducialId)
+            .bestTagToCamera(new Transform3d())
+            .bestTagToCamera(singleTagDetection.bestCameraToTarget)
+            .altTagToCamera(singleTagDetection.altCameraToTarget)
+            .ambiguity(singleTagDetection.poseAmbiguity);
         inputs.detectedTagIds[i] =
             result.getTargets().stream().mapToInt(PhotonTrackedTarget::getFiducialId).toArray();
       }

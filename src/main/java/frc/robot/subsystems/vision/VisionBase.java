@@ -6,7 +6,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
@@ -116,29 +116,44 @@ public class VisionBase extends VirtualSubsystem {
           useVisionRotation = true;
           baseStdevs = multiTagStdevs;
         } else {
-          // Handle Singletag
+          // Handle Single-tag
           if (observation.ambiguity() > ambiguityThreshold) {
             continue;
           }
 
-          var bestCamPose = GeomUtil.toPose3d(observation.bestTagToCamera());
-          var altCamPose = GeomUtil.toPose3d(observation.altTagToCamera());
+          var tagPoseOpt = FieldConstants.fieldLayout.getTagPose(observation.singleTagId());
+          if (tagPoseOpt.isEmpty()) break;
+          var tagPose = tagPoseOpt.get();
 
-          Transform2d cameraToRobot = GeomUtil.toTransform2d(cameras[i].robotToCamera()).inverse();
-          var bestPose = bestCamPose.toPose2d().transformBy(cameraToRobot);
-          var altPose = altCamPose.toPose2d().transformBy(cameraToRobot);
+          var fieldToTarget = new Transform3d(tagPose.getTranslation(), tagPose.getRotation());
 
-          // TODO latency compensate this to get rotation at this timestamp
+          var bestCamToTarget = observation.bestTagToCamera();
+          var altCamToTarget = observation.altTagToCamera();
+
+          var bestFieldToCamera = fieldToTarget.plus(bestCamToTarget.inverse());
+          var altFieldToCamera = fieldToTarget.plus(altCamToTarget.inverse());
+
+          var bestFieldToRobot = bestFieldToCamera.plus(cameras[i].robotToCamera().inverse());
+          var altFieldToRobot = altFieldToCamera.plus(cameras[i].robotToCamera().inverse());
+
+          var bestPose =
+              new Pose3d(bestFieldToRobot.getTranslation(), bestFieldToRobot.getRotation())
+                  .toPose2d();
+          var altPose =
+              new Pose3d(altFieldToRobot.getTranslation(), altFieldToRobot.getRotation())
+                  .toPose2d();
+
+          // TODO latency compensate this to get rotation at this timestamp for better accuracy
           var currentRot = PoseEstimator.getInstance().getRotation();
           var bestRot = bestPose.getRotation();
           var altRot = altPose.getRotation();
 
           if (Math.abs(currentRot.minus(bestRot).getRadians())
               < Math.abs(currentRot.minus(altRot).getRadians())) {
-            cameraPose = bestCamPose;
+            cameraPose = GeomUtil.toPose3d(bestFieldToCamera);
             robotPose = bestPose;
           } else {
-            cameraPose = altCamPose;
+            cameraPose = GeomUtil.toPose3d(altFieldToCamera);
             robotPose = altPose;
           }
 

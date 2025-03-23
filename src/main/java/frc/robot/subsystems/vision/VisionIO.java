@@ -18,6 +18,7 @@ public interface VisionIO {
       boolean hasResult,
       Transform3d multitagTagToCamera,
       boolean isMultitag,
+      int singleTagId,
       Transform3d bestTagToCamera,
       Transform3d altTagToCamera,
       double ambiguity) {}
