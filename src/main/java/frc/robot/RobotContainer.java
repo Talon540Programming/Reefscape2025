@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.AutoScoreCommands;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.DriveToPose;
 import frc.robot.commands.IntakeCommands;
 import frc.robot.commands.auto.AutoBuilder;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -26,7 +27,6 @@ import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.DoublePressTracker;
-import java.util.Arrays;
 import java.util.List;
 import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -174,24 +174,11 @@ public class RobotContainer {
 
     controller
         .leftBumper()
-        .whileTrue(
-            AutoScoreCommands.autoAlign(
-                driveBase,
-                () ->
-                    PoseEstimator.getInstance()
-                        .getEstimatedPose()
-                        .nearest(Arrays.asList(FieldConstants.Reef.centerFaces)),
-                () -> 0));
+        .whileTrue(new DriveToPose(driveBase, () -> AutoScoreCommands.getNearestLeftBranch()));
+
     controller
         .rightBumper()
-        .whileTrue(
-            AutoScoreCommands.autoAlign(
-                driveBase,
-                () ->
-                    PoseEstimator.getInstance()
-                        .getEstimatedPose()
-                        .nearest(Arrays.asList(FieldConstants.Reef.centerFaces)),
-                () -> 1));
+        .whileTrue(new DriveToPose(driveBase, () -> AutoScoreCommands.getNearestRightBranch()));
 
     // Human Player Alert
     controller
