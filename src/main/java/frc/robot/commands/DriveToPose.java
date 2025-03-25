@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
@@ -216,11 +217,11 @@ public class DriveToPose extends Command {
     final double thetaS = Math.abs(omegaFF.getAsDouble()) * 3.0;
     driveVelocity =
         driveVelocity.interpolate(
-            linearFF.get().times(DriveBase.getMaxLinearVelocityMetersPerSecond()), linearS);
+            linearFF.get().times(DriveConstants.maxLinearVelocityMetersPerSec), linearS);
     thetaVelocity =
         MathUtil.interpolate(
             thetaVelocity,
-            omegaFF.getAsDouble() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
+            omegaFF.getAsDouble() * DriveConstants.maxLinearVelocityMetersPerSec,
             thetaS);
 
     // Command speeds

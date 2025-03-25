@@ -9,7 +9,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import frc.robot.subsystems.drive.DriveBase;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.GeomUtil;
 import java.util.*;
 import lombok.Getter;
@@ -60,7 +60,7 @@ public class PoseEstimator {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
 
-    kinematics = new SwerveDriveKinematics(DriveBase.getModuleTranslations());
+    kinematics = new SwerveDriveKinematics(DriveConstants.moduleTranslations);
   }
 
   public void resetPose(Pose2d pose) {

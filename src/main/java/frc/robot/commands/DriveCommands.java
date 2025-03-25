@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.PoseEstimator;
 import frc.robot.subsystems.drive.DriveBase;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.BooleanSupplier;
@@ -62,9 +63,9 @@ public class DriveCommands {
 
           var speeds =
               new ChassisSpeeds(
-                  x * DriveBase.getMaxLinearVelocityMetersPerSecond() * linearVelocityScalar,
-                  y * DriveBase.getMaxLinearVelocityMetersPerSecond() * linearVelocityScalar,
-                  omega * DriveBase.getMaxAngularVelocityRadPerSec() * angularVelocityScalar);
+                  x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                  y * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                  omega * DriveConstants.maxAngularVelocityRadPerSec * angularVelocityScalar);
 
           // Convert to field relative
           if (!robotRelativeSupplier.getAsBoolean()) {
@@ -123,8 +124,8 @@ public class DriveCommands {
                       : teleopLinearScalar.get();
               var speeds =
                   new ChassisSpeeds(
-                      x * DriveBase.getMaxLinearVelocityMetersPerSecond() * linearVelocityScalar,
-                      y * DriveBase.getMaxLinearVelocityMetersPerSecond() * linearVelocityScalar,
+                      x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
+                      y * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,
                       omega);
 
               // Convert to field relative

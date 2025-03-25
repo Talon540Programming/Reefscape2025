@@ -1,7 +1,7 @@
 package frc.robot.subsystems.dispenser;
 
-class DispenserConstants {
-  public static final boolean inverted = true;
-  public static final double moi = 0.025; // TODO
-  public static final double gearing = 32.0 / 18.0;
+public class DispenserConstants {
+  static final boolean inverted = true;
+  static final double moi = 0.025; // TODO
+  static final double gearing = 32.0 / 18.0;
 }

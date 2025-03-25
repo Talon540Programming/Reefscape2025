@@ -2,7 +2,6 @@ package frc.robot.subsystems.drive;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -429,17 +428,5 @@ public class DriveBase extends SubsystemBase {
     double[] positions = new double[4];
     Rotation2d lastAngle = new Rotation2d();
     double gyroDelta = 0.0;
-  }
-
-  public static double getMaxLinearVelocityMetersPerSecond() {
-    return DriveConstants.maxLinearVelocityMetersPerSec;
-  }
-
-  public static double getMaxAngularVelocityRadPerSec() {
-    return DriveConstants.maxAngularVelocityRadPerSec;
-  }
-
-  public static Translation2d[] getModuleTranslations() {
-    return DriveConstants.moduleTranslations;
   }
 }
