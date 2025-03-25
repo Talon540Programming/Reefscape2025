@@ -6,7 +6,6 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
@@ -18,8 +17,10 @@ import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.VirtualSubsystem;
 import java.util.*;
+import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.Logger;
 
+@ExtensionMethod(GeomUtil.class)
 public class VisionBase extends VirtualSubsystem {
   private static final double disconnectedTimeout = 0.5;
   public static final LoggedTunableNumber timestampOffset =
@@ -112,7 +113,7 @@ public class VisionBase extends VirtualSubsystem {
           robotPose =
               cameraPose
                   .toPose2d()
-                  .transformBy(GeomUtil.toTransform2d(cameras[i].robotToCamera()).inverse());
+                  .transformBy(cameras[i].robotToCamera().toTransform2d().inverse());
           useVisionRotation = true;
           baseStdevs = multiTagStdevs;
         } else {
@@ -125,7 +126,7 @@ public class VisionBase extends VirtualSubsystem {
           if (tagPoseOpt.isEmpty()) break;
           var tagPose = tagPoseOpt.get();
 
-          var fieldToTarget = new Transform3d(tagPose.getTranslation(), tagPose.getRotation());
+          var fieldToTarget = tagPose.toTransform3d();
 
           var bestCamToTarget = observation.bestTagToCamera();
           var altCamToTarget = observation.altTagToCamera();
@@ -136,12 +137,8 @@ public class VisionBase extends VirtualSubsystem {
           var bestFieldToRobot = bestFieldToCamera.plus(cameras[i].robotToCamera().inverse());
           var altFieldToRobot = altFieldToCamera.plus(cameras[i].robotToCamera().inverse());
 
-          var bestPose =
-              new Pose3d(bestFieldToRobot.getTranslation(), bestFieldToRobot.getRotation())
-                  .toPose2d();
-          var altPose =
-              new Pose3d(altFieldToRobot.getTranslation(), altFieldToRobot.getRotation())
-                  .toPose2d();
+          var bestPose = bestFieldToRobot.toPose3d().toPose2d();
+          var altPose = altFieldToRobot.toPose3d().toPose2d();
 
           // TODO latency compensate this to get rotation at this timestamp for better accuracy
           var currentRot = PoseEstimator.getInstance().getRotation();
@@ -150,10 +147,10 @@ public class VisionBase extends VirtualSubsystem {
 
           if (Math.abs(currentRot.minus(bestRot).getRadians())
               < Math.abs(currentRot.minus(altRot).getRadians())) {
-            cameraPose = GeomUtil.toPose3d(bestFieldToCamera);
+            cameraPose = bestFieldToCamera.toPose3d();
             robotPose = bestPose;
           } else {
-            cameraPose = GeomUtil.toPose3d(altFieldToCamera);
+            cameraPose = altFieldToCamera.toPose3d();
             robotPose = altPose;
           }
 
