@@ -29,9 +29,9 @@ public class ElevatorBase extends SubsystemBase {
   private static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA");
 
   private static final LoggedTunableNumber maxVelocityMetersPerSec =
-      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 2.0);
+      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 5.0);
   private static final LoggedTunableNumber maxAccelerationMetersPerSec2 =
-      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 3.0);
+      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 6.5);
 
   private static final LoggedTunableNumber homingVolts =
       new LoggedTunableNumber("Elevator/HomingVolts", -2.0);
