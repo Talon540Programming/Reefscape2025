@@ -28,11 +28,11 @@ import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
 public class RobotContainer {
   // Subsystems
-  private final DriveBase driveBase;
-  private final IntakeBase intakeBase;
-  private final ElevatorBase elevatorBase;
-  private final DispenserBase dispenserBase;
-  private final VisionBase visionBase;
+  private DriveBase driveBase;
+  private IntakeBase intakeBase;
+  private ElevatorBase elevatorBase;
+  private DispenserBase dispenserBase;
+  private VisionBase visionBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -75,19 +75,33 @@ public class RobotContainer {
         dispenserBase = new DispenserBase(new DispenserIOSim());
         visionBase = new VisionBase(new VisionIOSim(0), new VisionIOSim(1));
       }
-      default -> {
-        driveBase =
-            new DriveBase(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        intakeBase = new IntakeBase(new IntakeIO() {});
-        elevatorBase = new ElevatorBase(new ElevatorIO() {});
-        dispenserBase = new DispenserBase(new DispenserIO() {});
-        visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
-      }
+    }
+
+    // Initialize no-op implementations
+    if (driveBase == null) {
+      driveBase =
+          new DriveBase(
+              new GyroIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {},
+              new ModuleIO() {});
+    }
+
+    if (intakeBase == null) {
+      intakeBase = new IntakeBase(new IntakeIO() {});
+    }
+
+    if (elevatorBase == null) {
+      elevatorBase = new ElevatorBase(new ElevatorIO() {});
+    }
+
+    if (dispenserBase == null) {
+      dispenserBase = new DispenserBase(new DispenserIO() {});
+    }
+
+    if (visionBase == null) {
+      visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
     }
 
     // Set up auto routines
