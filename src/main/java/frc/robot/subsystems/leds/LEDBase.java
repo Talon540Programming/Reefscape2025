@@ -135,19 +135,23 @@ public class LEDBase extends VirtualSubsystem {
   }
 
   private void solid(Section section, Color color) {
-    if (color != null) {
-      for (int i = section.start(); i < section.end(); i++) {
-        buffer.setLED(i, color);
-      }
+    if (section == null || color == null) return;
+
+    for (int i = section.start(); i < section.end(); i++) {
+      buffer.setLED(i, color);
     }
   }
 
   private void strobe(Section section, Color c1, Color c2, double duration) {
+    if (section == null) return;
+
     boolean c1On = ((Timer.getTimestamp() % duration) / duration) > 0.5;
     solid(section, c1On ? c1 : c2);
   }
 
   private void breath(Section section, Color c1, Color c2, double duration, double timestamp) {
+    if (section == null) return;
+
     double x = ((timestamp % duration) / duration) * 2.0 * Math.PI;
     double ratio = (Math.sin(x) + 1.0) / 2.0;
     var color = Color.lerpRGB(c1, c2, ratio);
@@ -155,6 +159,8 @@ public class LEDBase extends VirtualSubsystem {
   }
 
   private void rainbow(Section section, double cycleLength, double duration) {
+    if (section == null) return;
+
     double base = (1 - ((Timer.getTimestamp() / duration) % 1.0)) * 180.0;
     double xDiffPerLed = 180.0 / cycleLength;
     for (int i = section.end() - 1; i >= section.start(); i--) {
@@ -164,6 +170,8 @@ public class LEDBase extends VirtualSubsystem {
   }
 
   private void wave(Section section, Color c1, Color c2, double cycleLength, double duration) {
+    if (section == null) return;
+
     double base = (1 - ((Timer.getTimestamp() % duration) / duration)) * 2.0 * Math.PI;
     double xDiffPerLed = (2.0 * Math.PI) / cycleLength;
     for (int i = section.end() - 1; i >= section.start(); i--) {
@@ -183,6 +191,8 @@ public class LEDBase extends VirtualSubsystem {
   }
 
   private void stripes(Section section, List<Color> colors, int stripeLength, double duration) {
+    if (section == null) return;
+
     int offset = (int) (Timer.getTimestamp() % duration / duration * stripeLength * colors.size());
     for (int i = section.end() - 1; i >= section.start(); i--) {
       int colorIndex =
