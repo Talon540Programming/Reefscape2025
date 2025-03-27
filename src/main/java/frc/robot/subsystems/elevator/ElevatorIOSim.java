@@ -13,10 +13,11 @@ public class ElevatorIOSim implements ElevatorIO {
       new ElevatorSim(
           elevatorMotorModel,
           gearing,
-          carriageMassKg + stagesMassKg,
+          // carriageMassKg + stagesMassKg,
+          0, // TODO
           drumRadius,
           0,
-          maxTravel,
+          elevatorMaxTravel,
           true,
           0,
           0.01,

@@ -1,16 +1,14 @@
 package frc.robot;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.auto.AutoBuilder;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
 import frc.robot.subsystems.dispenser.DispenserIOSim;
@@ -21,11 +19,20 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.leds.LEDBase;
+import frc.robot.subsystems.reef_selector.ReefSelectorBase;
 import frc.robot.subsystems.vision.*;
-import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.DoublePressTracker;
+import frc.robot.util.MirrorUtil;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
+import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+@ExtensionMethod({DoublePressTracker.class, LEDBase.class})
 public class RobotContainer {
   // Subsystems
   private DriveBase driveBase;
@@ -33,9 +40,11 @@ public class RobotContainer {
   private ElevatorBase elevatorBase;
   private DispenserBase dispenserBase;
   private VisionBase visionBase;
+  private ReefSelectorBase reefSelectorBase;
 
   // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController driver = new CommandXboxController(0);
+  private final CommandXboxController operator = new CommandXboxController(1);
 
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
@@ -45,7 +54,10 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
-  private boolean slowModeEnabled;
+  private final LoggedNetworkBoolean disableReefAutoAlign =
+      new LoggedNetworkBoolean("/SmartDashboard/ReefAutoAlignDisabled", false);
+  private final LoggedNetworkBoolean disableCoralStationAutoAlign =
+      new LoggedNetworkBoolean("/SmartDashboard/CoralStationAutoAlignDisabled", false);
 
   public RobotContainer() {
     switch (Constants.getMode()) {
@@ -104,8 +116,24 @@ public class RobotContainer {
       visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
     }
 
+    reefSelectorBase = new ReefSelectorBase();
+
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+
+    LoggedDashboardChooser<Boolean> mirror =
+        new LoggedDashboardChooser<>("Processor Side?"); // TODO more descriptive name
+    mirror.addDefaultOption("Yes", false);
+    mirror.addOption("No", true);
+    MirrorUtil.setMirror(mirror::get);
+
+    var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
+    autoChooser.addDefaultOption("Noting", Commands.none());
+    autoChooser.addOption("Taxi", autoBuilder.taxi());
+    // autoChooser.addOption("Deadreckoned L2", autoBuilder.deadreckonedL2());
+    // autoChooser.addOption("Deadreckoned L2 Center Start", autoBuilder.deadreckonedL2Center());
+    // autoChooser.addOption("Deadreckoned L4", autoBuilder.deadreckonedL4());
+    // autoChooser.addOption("Deadreckoned L4 Center Start", autoBuilder.deadreckonedL4Center());
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -115,106 +143,104 @@ public class RobotContainer {
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
 
-    autoChooser.addDefaultOption("Noting", Commands.none());
-    autoChooser.addOption(
-        "Taxi",
-        Commands.runEnd(
-                () -> driveBase.runVelocity(new ChassisSpeeds(1.0, 0.0, 0.0)),
-                driveBase::stop,
-                driveBase)
-            .withTimeout(2.0)
-            .beforeStarting(
-                Commands.runOnce(
-                    () ->
-                        PoseEstimator.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(Rotation2d.kPi))),
-                    driveBase)));
-
     configureButtonBindings();
   }
 
   private void configureButtonBindings() {
-    // Make slow mode toggleable
-    controller.y().toggleOnTrue(Commands.runOnce(() -> slowModeEnabled = !slowModeEnabled));
+    // Drive suppliers. Allows both driver and operator to have control over bot.
+    DoubleSupplier driverX = () -> -driver.getLeftY() - operator.getLeftY();
+    DoubleSupplier driverY = () -> -driver.getLeftX() - operator.getLeftX();
+    DoubleSupplier driverOmega = () -> -driver.getRightX() - operator.getRightX();
+    BooleanSupplier robotRelative =
+        () -> {
+          var hid = driver.getHID();
+          return hid.getLeftBumperButtonPressed() && hid.getRightBumperButtonPressed();
+        };
 
-    // Default command, normal field-relative drive
-    driveBase.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            driveBase,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX(),
-            () -> slowModeEnabled,
-            () -> controller.leftBumper().and(controller.rightBumper()).getAsBoolean()));
+    // Joystick drive command (driver and operator)
+    Supplier<Command> joystickDriveCommandFactory =
+        () -> DriveCommands.joystickDrive(driveBase, driverX, driverY, driverOmega, robotRelative);
+    driveBase.setDefaultCommand(joystickDriveCommandFactory.get());
 
-    // Stow
-    controller.povDown().onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
-    // L1
-    controller
-        .povLeft()
-        .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
-    // L2
-    controller
-        .povUp()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+    // DRIVER CONTROLLER
 
-    // L3
-    controller
-        .povRight()
-        .onTrue(
-            Commands.either(
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_CORAL)),
-                Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L3_ALGAE_REMOVAL)),
-                controller.b().negate().debounce(0.25)));
+    // OPERATOR CONTROLLER
 
-    // Intake
-    controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
-
-    controller
-        .rightTrigger()
-        .onTrue(
-            Commands.either(
-                dispenserBase
-                    .eject(elevatorBase::getGoal)
-                    .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW))),
-                IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
-                controller.leftTrigger().negate().debounce(0.25)));
-
-    // Home Elevator
-    controller
-        .back()
-        .and(controller.start().negate())
-        .debounce(0.5)
-        .onTrue(elevatorBase.homingSequence());
-
-    // Auto Align (Left or Right)
-    // TODO
-
-    // Human Player Alert (Strobe LEDs)
-    // TODO
-
-    // Reset Gyro
-    controller
-        .start()
-        .and(controller.back())
-        .debounce(0.5)
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        PoseEstimator.getInstance()
-                            .resetPose(
-                                new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(new Rotation2d()))),
-                    driveBase)
-                .ignoringDisable(true));
+    // // Stow
+    // controller
+    //     .a()
+    //     .debounce(0.25)
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STOW)));
+    //
+    // // Stuck Coral
+    // controller
+    //     .a()
+    //     .doublePress()
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.STUCK_CORAL)));
+    //
+    // // L1
+    // controller
+    //     .povDown()
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L1_CORAL)));
+    //
+    // // L2
+    // controller
+    //     .povLeft()
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL)));
+    //
+    // // L3
+    // controller.povUp().onTrue(Commands.runOnce(() ->
+    // elevatorBase.setGoal(ElevatorState.L3_CORAL)));
+    //
+    // // L4
+    // controller
+    //     .povRight()
+    //     .onTrue(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL)));
+    //
+    // // Intake
+    // controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
+    //
+    // // Dispense
+    // controller
+    //     .rightTrigger()
+    //     .onTrue(
+    //         Commands.either(
+    //             dispenserBase.eject(elevatorBase::getGoal),
+    //             IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
+    //             controller.leftTrigger().negate().debounce(0.25)));
+    //
+    // // // Auto Align
+    // // controller
+    // //     .leftBumper()
+    // //     .whileTrue(AutoScoreCommands.autoAlign(driveBase, AutoScoreCommands.ReefSide.Left));
+    // // controller
+    // //     .rightBumper()
+    // //     .whileTrue(AutoScoreCommands.autoAlign(driveBase, AutoScoreCommands.ReefSide.Right));
+    //
+    // controller
+    //     .y()
+    //     .whileTrue(
+    //         Commands.startEnd(
+    //                 () -> LEDBase.getInstance().humanPlayerAlert = true,
+    //                 () -> LEDBase.getInstance().humanPlayerAlert = false)
+    //             .withName("Strobe LEDBase at HP"));
+    //
+    // // Reset Gyro
+    // controller
+    //     .start()
+    //     .and(controller.back())
+    //     .debounce(0.5)
+    //     .onTrue(
+    //         Commands.runOnce(
+    //                 () ->
+    //                     PoseEstimator.getInstance()
+    //                         .resetPose(
+    //                             new Pose2d(
+    //
+    // PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
+    //                                 AllianceFlipUtil.apply(new Rotation2d()))),
+    //                 driveBase)
+    //             .ignoringDisable(true));
 
     // Endgame
     new Trigger(
@@ -224,11 +250,16 @@ public class RobotContainer {
                     && DriverStation.getMatchTime() <= Math.round(endgameAlert1.get()))
         .onTrue(
             Commands.startEnd(
-                    () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 1.0),
-                    () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 0.0))
+                    () -> {
+                      driver.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
+                      operator.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
+                    },
+                    () -> {
+                      driver.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
+                      operator.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
+                    })
                 .withTimeout(0.5)
-                .beforeStarting(() -> LEDBase.getInstance().endgameAlert = true)
-                .finallyDo(() -> LEDBase.getInstance().endgameAlert = false)
+                .setLEDState((visionBase, state) -> visionBase.endgameAlert = state)
                 .withName("Controller Endgame Alert 1"));
 
     new Trigger(
@@ -238,16 +269,28 @@ public class RobotContainer {
                     && DriverStation.getMatchTime() <= Math.round(endgameAlert2.get()))
         .onTrue(
             Commands.startEnd(
-                    () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 1.0),
-                    () -> controller.setRumble(GenericHID.RumbleType.kBothRumble, 0.0))
+                    () -> {
+                      driver.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
+                      operator.setRumble(GenericHID.RumbleType.kBothRumble, 1.0);
+                    },
+                    () -> {
+                      driver.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
+                      operator.setRumble(GenericHID.RumbleType.kBothRumble, 0.0);
+                    })
                 .withTimeout(0.2)
                 .andThen(Commands.waitSeconds(0.1))
                 .repeatedly()
                 .withTimeout(0.9)
-                .beforeStarting(() -> LEDBase.getInstance().endgameAlert = true)
-                .finallyDo(() -> LEDBase.getInstance().endgameAlert = false)
+                .setLEDState((visionBase, state) -> visionBase.endgameAlert = state)
                 .withName("Controller Endgame Alert 2")); // Rumble three times
   }
+
+  // Update dashboard data
+  public void updateDashboardOutputs() {
+    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
+  }
+
+  public void updateAlerts() {}
 
   public Command getAutonomousCommand() {
     return autoChooser.get();

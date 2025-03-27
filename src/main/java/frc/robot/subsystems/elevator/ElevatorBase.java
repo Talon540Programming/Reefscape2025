@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.subsystems.elevator.ElevatorPose.Preset;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
@@ -73,7 +74,7 @@ public class ElevatorBase extends SubsystemBase {
   @AutoLogOutput(key = "Elevator/Goal")
   @Getter
   @Setter
-  private ElevatorState goal = ElevatorState.START;
+  private Preset goal = Preset.START;
 
   private TrapezoidProfile profile;
   private State setpoint = new State();
@@ -97,6 +98,8 @@ public class ElevatorBase extends SubsystemBase {
   @Getter
   private boolean atGoal = false;
 
+  private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
+  private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
 
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
@@ -151,13 +154,12 @@ public class ElevatorBase extends SubsystemBase {
     if (shouldRunProfile) {
       // Clamp goal
       var goalState =
-          new State(
-              MathUtil.clamp(goal.getElevatorHeightMeters().getAsDouble(), 0.0, maxTravel), 0);
+          new State(MathUtil.clamp(goal.getElevatorHeight(), 0.0, elevatorMaxTravel), 0);
 
       double previousVelocity = setpoint.velocity;
       setpoint = profile.calculate(Constants.kLoopPeriodSecs, setpoint, goalState);
-      if (setpoint.position < 0.0 || setpoint.position > maxTravel) {
-        setpoint = new State(MathUtil.clamp(setpoint.position, 0.0, maxTravel), 0.0);
+      if (setpoint.position < 0.0 || setpoint.position > elevatorMaxTravel) {
+        setpoint = new State(MathUtil.clamp(setpoint.position, 0.0, elevatorMaxTravel), 0.0);
       }
 
       io.runPosition(
@@ -181,7 +183,7 @@ public class ElevatorBase extends SubsystemBase {
       Logger.recordOutput("Elevator/Profile/GoalVelocityMetersPerSec", goalState.velocity);
     } else {
       if (DriverStation.isDisabled()) {
-        goal = ElevatorState.STOW;
+        goal = Preset.STOW;
       }
 
       // Reset setpoint
@@ -207,6 +209,8 @@ public class ElevatorBase extends SubsystemBase {
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
 
+    measuredVisualizer.update(getPositionMeters());
+    setpointVisualizer.update(setpoint.position);
   }
 
   public Command homingSequence() {
@@ -234,6 +238,6 @@ public class ElevatorBase extends SubsystemBase {
   }
 
   public double getGoalMeters() {
-    return goal.getElevatorHeightMeters().getAsDouble();
+    return goal.getElevatorHeight();
   }
 }

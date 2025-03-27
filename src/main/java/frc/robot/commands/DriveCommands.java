@@ -22,8 +22,6 @@ public class DriveCommands {
 
   private static final LoggedTunableNumber teleopLinearScalar =
       new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 1.0);
-  private static final LoggedTunableNumber teleopLinearScalarSlowMode =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalarSprint", 0.5);
   private static final LoggedTunableNumber teleopAngularScalar =
       new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 1.0);
 
@@ -40,7 +38,6 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
-      BooleanSupplier slowSupplier,
       BooleanSupplier robotRelativeSupplier) {
     return Commands.run(
         () -> {
@@ -55,10 +52,7 @@ public class DriveCommands {
           omega = Math.copySign(Math.pow(omega, 2), omega);
 
           // Generate robot relative speeds
-          double linearVelocityScalar =
-              slowSupplier.getAsBoolean()
-                  ? teleopLinearScalarSlowMode.get()
-                  : teleopLinearScalar.get();
+          double linearVelocityScalar = teleopLinearScalar.get();
           double angularVelocityScalar = teleopAngularScalar.get();
 
           var speeds =
@@ -91,8 +85,7 @@ public class DriveCommands {
       DriveBase driveBase,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier,
-      BooleanSupplier slowSupplier) {
+      Supplier<Rotation2d> rotationSupplier) {
     ProfiledPIDController angleController =
         new ProfiledPIDController(
             ANGLE_KP,
@@ -118,10 +111,7 @@ public class DriveCommands {
                       rotation.getRadians(), rotationSupplier.get().getRadians());
 
               // Generate robot relative speeds
-              double linearVelocityScalar =
-                  slowSupplier.getAsBoolean()
-                      ? teleopLinearScalarSlowMode.get()
-                      : teleopLinearScalar.get();
+              double linearVelocityScalar = teleopLinearScalar.get();
               var speeds =
                   new ChassisSpeeds(
                       x * DriveConstants.maxLinearVelocityMetersPerSec * linearVelocityScalar,

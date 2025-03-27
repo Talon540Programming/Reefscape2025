@@ -8,7 +8,9 @@ import frc.robot.subsystems.elevator.ElevatorState;
 import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.LoggedTunableNumber;
+import lombok.experimental.ExtensionMethod;
 
+@ExtensionMethod({LEDBase.class})
 public class IntakeCommands {
   public static final LoggedTunableNumber intakeVolts =
       new LoggedTunableNumber("Intake/HopperIntakeVolts", 5.5);
@@ -20,12 +22,8 @@ public class IntakeCommands {
                 .andThen(
                     Commands.deadline(
                         dispenser.intakeTillHolding(), intake.runRoller(intakeVolts.get()))))
-        .beforeStarting(() -> LEDBase.getInstance().humanPlayerAlert = true)
-        .finallyDo(
-            () -> {
-              elevator.setGoal(ElevatorState.STOW);
-              LEDBase.getInstance().humanPlayerAlert = false;
-            });
+        .setLEDState((visionBase, state) -> visionBase.intaking = state)
+        .finallyDo(() -> elevator.setGoal(ElevatorState.STOW));
   }
 
   public static Command reserialize(

@@ -148,6 +148,10 @@ public class Robot extends LoggedRobot {
         autoMessagePrinted = true;
       }
     }
+
+    // Robot container periodic methods
+    robotContainer.updateAlerts();
+    robotContainer.updateDashboardOutputs();
   }
 
   @Override

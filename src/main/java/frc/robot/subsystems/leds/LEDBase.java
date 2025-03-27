@@ -2,8 +2,11 @@ package frc.robot.subsystems.leds;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.util.VirtualSubsystem;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class LEDBase extends VirtualSubsystem {
   private static LEDBase instance;
@@ -54,16 +57,16 @@ public class LEDBase extends VirtualSubsystem {
   private final Section firstTopBarSection = null; // TODO
   private final Section secondTopBarSection = null; // TODO
 
-  // private final Section scoringStateIndicators = null; // TODO
-  // private final Section coralIndicator = null; // TODO
-  // private final Section humanPlayerIndicator = null; // TODO
-
   // State Constants
   private static final int minLoopCycleCount = 10;
   public int loopCycleCount = 0;
-  public boolean autoScoringReef = false;
   public boolean humanPlayerAlert = false;
+  public boolean autoScoringReef = false;
+  public boolean intaking = false;
   public boolean endgameAlert = false;
+  public boolean reserializing = false;
+  public boolean coralStuck = false;
+  public boolean visionDisconnected = false;
 
   private LEDBase() {
     // Initialize IO
@@ -90,6 +93,12 @@ public class LEDBase extends VirtualSubsystem {
             });
     loadingNotifier.startPeriodic(0.02);
   }
+
+  // TODO make elevator charge up sequence
+  // TODO auto score indicator sequences
+  // TODO elevator goal indicators
+  // TODO reserialize error
+  // TODO vision state (error?)
 
   @Override
   public synchronized void periodic() {
@@ -119,9 +128,13 @@ public class LEDBase extends VirtualSubsystem {
         wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
       }
 
+      if (intaking) {
+        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+      }
+
       // Human player alert
       if (humanPlayerAlert) {
-        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+        strobe(fullSection, Color.kWhite, Color.kBlack, strobeDuration);
       }
 
       // Endgame alert
@@ -132,6 +145,13 @@ public class LEDBase extends VirtualSubsystem {
 
     // Set buffer to LEDs
     leds.setData(buffer);
+  }
+
+  public static Command setLEDState(Command base, BiConsumer<LEDBase, Boolean> stateSetter) {
+    return base.deadlineFor(
+        Commands.startEnd(
+            () -> stateSetter.accept(LEDBase.getInstance(), true),
+            () -> stateSetter.accept(LEDBase.getInstance(), false)));
   }
 
   private void solid(Section section, Color color) {

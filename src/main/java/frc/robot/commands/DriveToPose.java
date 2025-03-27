@@ -44,18 +44,18 @@ public class DriveToPose extends Command {
       new LoggedTunableNumber("DriveToPose/FFMaxRadius");
 
   static {
-    drivekP.initDefault(0.8); // TODO
-    drivekD.initDefault(0.0); // TODO
-    thetakP.initDefault(4.0); // TODO
-    thetakD.initDefault(0.0); // TODO
-    driveMaxVelocity.initDefault(3.8); // TODO
-    driveMaxAcceleration.initDefault(3.0); // TODO
+    drivekP.initDefault(1.0);
+    drivekD.initDefault(0.0);
+    thetakP.initDefault(4.0);
+    thetakD.initDefault(0.0);
+    driveMaxVelocity.initDefault(3.8);
+    driveMaxAcceleration.initDefault(3.0);
     thetaMaxVelocity.initDefault(Units.degreesToRadians(360.0));
     thetaMaxAcceleration.initDefault(8.0);
     driveTolerance.initDefault(0.01);
     thetaTolerance.initDefault(Units.degreesToRadians(1.0));
-    ffMinRadius.initDefault(0.05);
-    ffMaxRadius.initDefault(0.1);
+    ffMinRadius.initDefault(0.01);
+    ffMaxRadius.initDefault(0.05);
   }
 
   private final DriveBase drive;
@@ -265,5 +265,12 @@ public class DriveToPose extends Command {
     return running
         && Math.abs(driveErrorAbs) < driveTolerance
         && Math.abs(thetaErrorAbs) < thetaTolerance.getRadians();
+  }
+
+  public static Command untilWithinTolerance(
+      DriveBase drive, Supplier<Pose2d> target, double driveTolerance, Rotation2d thetaTolerance) {
+    var autoAlignCommand = new DriveToPose(drive, target);
+    return autoAlignCommand.until(
+        () -> autoAlignCommand.withinTolerance(driveTolerance, thetaTolerance));
   }
 }

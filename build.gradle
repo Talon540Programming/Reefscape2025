@@ -12,6 +12,7 @@ java {
 }
 
 def ROBOT_MAIN_CLASS = "frc.robot.Main"
+def deployDir = "src/main/deploy"
 
 // Define my targets (RoboRIO) and artifacts (deployable files)
 // This is added by GradleRIO's backing project DeployUtils.
@@ -50,7 +51,7 @@ deploy {
 
                 // Static files artifact
                 frcStaticFileDeploy(getArtifactTypeClass('FileTreeArtifact')) {
-                    files = project.fileTree('src/main/deploy')
+                    files = project.fileTree(deployDir)
                     directory = '/home/lvuser/deploy'
                     // Change to true to delete files on roboRIO that no
                     // longer exist in deploy directory on roboRIO
@@ -146,13 +147,34 @@ gversion {
     indent       = "  "
 }
 
+// Handle Reef Selector
+def noteSelectorDir = "${projectDir}/reef_selector"
+def noteSelectorBuildDir = "${noteSelectorDir}/dist"
+
+task buildNoteSelector(type: Exec) {
+    workingDir noteSelectorDir
+    commandLine "pnpm", "build"
+}
+task copyNoteSelector(type: Copy) {
+    dependsOn buildNoteSelector
+
+    doFirst {
+        delete "${deployDir}/reef_selector"
+    }
+
+    from noteSelectorBuildDir
+    into "${deployDir}/reef_selector"
+}
+
+build.dependsOn copyNoteSelector
+
 // Spotless formatting
 project.compileJava.dependsOn(spotlessApply)
 spotless {
     java {
         target fileTree(".") {
             include "**/*.java"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", deployDir
         }
         toggleOffOn()
         googleJavaFormat()
@@ -163,7 +185,7 @@ spotless {
     groovyGradle {
         target fileTree(".") {
             include "**/*.gradle"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", deployDir
         }
         greclipse()
         leadingTabsToSpaces(4)
@@ -173,14 +195,14 @@ spotless {
     json {
         target fileTree(".") {
             include "**/*.json"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", deployDir
         }
         gson().indentWithSpaces(2)
     }
     format "misc", {
         target fileTree(".") {
             include "**/*.md", "**/.gitignore"
-            exclude "**/build/**", "**/build-*/**"
+            exclude "**/build/**", "**/build-*/**", deployDir
         }
         trimTrailingWhitespace()
         leadingTabsToSpaces(2)

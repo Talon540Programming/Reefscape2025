@@ -91,18 +91,6 @@ public class FieldConstants {
     public static final double faceToZoneLine =
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
-    public static final Transform2d centerToRightBranch =
-        new Transform2d(
-            Units.inchesToMeters(20),
-            Units.inchesToMeters(6.469),
-            Rotation2d.fromDegrees(180)); // TODO
-
-    public static final Transform2d centerToLeftBranch =
-        new Transform2d(
-            Units.inchesToMeters(20),
-            Units.inchesToMeters(-6.469),
-            Rotation2d.fromDegrees(180)); // TODO
-
     public static final Pose2d[] centerFaces =
         new Pose2d[12]; // Starting facing the driver station in clockwise order
 
@@ -119,6 +107,12 @@ public class FieldConstants {
       centerFaces[3] = aprilTagLayout.getTagPose(21).orElseThrow().toPose2d();
       centerFaces[4] = aprilTagLayout.getTagPose(22).orElseThrow().toPose2d();
       centerFaces[5] = aprilTagLayout.getTagPose(17).orElseThrow().toPose2d();
+      // centerFaces[6] = aprilTagLayout.getTagPose(7).orElseThrow().toPose2d();
+      // centerFaces[7] = aprilTagLayout.getTagPose(6).orElseThrow().toPose2d();
+      // centerFaces[8] = aprilTagLayout.getTagPose(11).orElseThrow().toPose2d();
+      // centerFaces[9] = aprilTagLayout.getTagPose(10).orElseThrow().toPose2d();
+      // centerFaces[10] = aprilTagLayout.getTagPose(9).orElseThrow().toPose2d();
+      // centerFaces[11] = aprilTagLayout.getTagPose(8).orElseThrow().toPose2d();
 
       // Initialize branch positions
       for (int face = 0; face < 6; face++) {
