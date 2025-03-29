@@ -16,7 +16,7 @@ public class ElevatorIOSim implements ElevatorIO {
           carriageMassKg + stagesMassKg,
           drumRadius,
           0,
-          maxTravel,
+          elevatorMaxTravel,
           true,
           0,
           0.01,

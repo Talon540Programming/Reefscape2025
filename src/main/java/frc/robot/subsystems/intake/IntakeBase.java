@@ -3,6 +3,7 @@ package frc.robot.subsystems.intake;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class IntakeBase extends SubsystemBase {
@@ -22,6 +23,10 @@ public class IntakeBase extends SubsystemBase {
     Logger.processInputs("Intake", inputs);
 
     disconnected.set(!inputs.connected);
+  }
+
+  public Command runRoller(DoubleSupplier inputVolts) {
+    return runEnd(() -> io.runVolts(inputVolts.getAsDouble()), io::stop);
   }
 
   public Command runRoller(double inputVolts) {
