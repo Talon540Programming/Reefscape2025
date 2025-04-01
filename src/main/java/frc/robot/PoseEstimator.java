@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
@@ -9,8 +10,13 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.vision.VisionConstants;
+import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.GeomUtil;
+import frc.robot.util.LoggedTunableNumber;
 import java.util.*;
 import lombok.Getter;
 import lombok.experimental.ExtensionMethod;
@@ -18,6 +24,27 @@ import org.littletonrobotics.junction.AutoLogOutput;
 
 @ExtensionMethod({GeomUtil.class})
 public class PoseEstimator {
+  private static final LoggedTunableNumber txTyObservationStaleSecs =
+      new LoggedTunableNumber("RobotState/TxTyObservationStaleSeconds", 0.5);
+  private static final LoggedTunableNumber minDistanceTagPoseBlend =
+      new LoggedTunableNumber("RobotState/MinDistanceTagPoseBlend", Units.inchesToMeters(24.0));
+  private static final LoggedTunableNumber maxDistanceTagPoseBlend =
+      new LoggedTunableNumber("RobotState/MaxDistanceTagPoseBlend", Units.inchesToMeters(36.0));
+
+  // Standard deviations of the pose estimate (x position in meters, y position in meters, and
+  // heading in radians).
+  // Increase these numbers to trust your state estimate less.
+  private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
+  private static final double poseBufferSizeSec = 2.0;
+  private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
+
+  static {
+    for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
+      tagPoses2d.put(
+          i, FieldConstants.fieldLayout.getTagPose(i).map(Pose3d::toPose2d).orElse(Pose2d.kZero));
+    }
+  }
+
   private static PoseEstimator instance;
 
   public static PoseEstimator getInstance() {
@@ -25,19 +52,13 @@ public class PoseEstimator {
     return instance;
   }
 
-  // Standard deviations of the pose estimate (x position in meters, y position in meters, and
-  // heading in radians).
-  // Increase these numbers to trust your state estimate less.
-  private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
-  private static final double poseBufferSizeSec = 2.0;
-
   @Getter
   @AutoLogOutput(key = "PoseEstimator/OdometryPose")
-  private Pose2d odometryPose = new Pose2d();
+  private Pose2d odometryPose = Pose2d.kZero;
 
   @Getter
   @AutoLogOutput(key = "PoseEstimator/EstimatedPose")
-  private Pose2d estimatedPose = new Pose2d();
+  private Pose2d estimatedPose = Pose2d.kZero;
 
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
       TimeInterpolatableBuffer.createBuffer(poseBufferSizeSec);
@@ -53,7 +74,9 @@ public class PoseEstimator {
         new SwerveModulePosition()
       };
   // Assume gyro starts at zero
-  private Rotation2d gyroOffset = new Rotation2d();
+  private Rotation2d gyroOffset = Rotation2d.kZero;
+
+  private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
 
   private PoseEstimator() {
     for (int i = 0; i < 3; ++i) {
@@ -148,7 +171,110 @@ public class PoseEstimator {
     estimatedPose = estimateAtTime.plus(scaledTransform).plus(sampleToOdometryTransform);
   }
 
-  // public void addTxTyObservation(TxTyObservation observation) {}
+  public void addTxTyObservation(TxTyObservation observation) {
+    // Skip if current data for tag is newer
+    if (txTyPoses.containsKey(observation.tagId())
+        && txTyPoses.get(observation.tagId()).timestamp() >= observation.timestamp()) {
+      return;
+    }
+
+    // Get rotation at timestamp
+    var sample = poseBuffer.getSample(observation.timestamp());
+    if (sample.isEmpty()) {
+      // exit if not there
+      return;
+    }
+
+    Rotation2d robotRotation =
+        estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
+    var robotToCamera = VisionConstants.cameras[observation.camera].robotToCamera();
+    var cameraPose = robotToCamera.toPose3d();
+
+    // Use 3D distance and tag angles to find robot pose
+    Translation2d camToTagTranslation =
+        new Pose3d(
+                Translation3d.kZero,
+                new Rotation3d(0, observation.pitch().getRadians(), observation.yaw().getRadians()))
+            .transformBy(
+                new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
+            .getTranslation()
+            .rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
+            .toTranslation2d();
+    Rotation2d camToTagRotation =
+        robotRotation.plus(
+            cameraPose.toPose2d().getRotation().plus(camToTagTranslation.getAngle()));
+    var tagPose2d = tagPoses2d.get(observation.tagId());
+    if (tagPose2d == null) return;
+    Translation2d fieldToCameraTranslation =
+        new Pose2d(tagPose2d.getTranslation(), camToTagRotation.plus(Rotation2d.kPi))
+            .transformBy(GeomUtil.toTransform2d(camToTagTranslation.getNorm(), 0.0))
+            .getTranslation();
+    Pose2d robotPose =
+        new Pose2d(
+                fieldToCameraTranslation, robotRotation.plus(cameraPose.toPose2d().getRotation()))
+            .transformBy(new Transform2d(cameraPose.toPose2d(), Pose2d.kZero));
+    // Use gyro angle at time for robot rotation
+    robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
+
+    // Add transform to current odometry based pose for latency correction
+    txTyPoses.put(
+        observation.tagId(),
+        new TxTyPoseRecord(robotPose, camToTagTranslation.getNorm(), observation.timestamp()));
+  }
+
+  /** Get 2d pose estimate of robot if not stale. */
+  private Optional<Pose2d> getTxTyPose(int tagId) {
+    if (!txTyPoses.containsKey(tagId)) {
+      return Optional.empty();
+    }
+    var data = txTyPoses.get(tagId);
+    // Check if stale
+    if (Timer.getTimestamp() - data.timestamp() >= txTyObservationStaleSecs.get()) {
+      return Optional.empty();
+    }
+    // Get odometry based pose at timestamp
+    var sample = poseBuffer.getSample(data.timestamp());
+    // Latency compensate
+    return sample.map(pose2d -> data.pose().plus(new Transform2d(pose2d, odometryPose)));
+  }
+
+  /** Get estimated pose using TxTy data given tagId on reef and aligned pose on reef. */
+  public Pose2d getReefPose(int face, Pose2d finalPose) {
+    final boolean isRed = AllianceFlipUtil.shouldFlip();
+    final int tagId =
+        switch (face) {
+          case 1 -> isRed ? 6 : 19;
+          case 2 -> isRed ? 11 : 20;
+          case 3 -> isRed ? 10 : 21;
+          case 4 -> isRed ? 9 : 22;
+          case 5 -> isRed ? 8 : 17;
+          // 0
+          default -> isRed ? 7 : 18;
+        };
+
+    var tagPose = getTxTyPose(tagId);
+    // Use estimated pose if tag pose is not present
+    if (tagPose.isEmpty()) return getEstimatedPose();
+
+    // Use distance from estimated pose to final pose to get t value
+    final double t =
+        MathUtil.clamp(
+            (getEstimatedPose().getTranslation().getDistance(finalPose.getTranslation())
+                    - minDistanceTagPoseBlend.get())
+                / (maxDistanceTagPoseBlend.get() - minDistanceTagPoseBlend.get()),
+            0.0,
+            1.0);
+    return getEstimatedPose().interpolate(tagPose.get(), 1.0 - t);
+  }
+
+  @AutoLogOutput(key = "PoseEstimator/TxTyPoses")
+  public Pose2d[] getTxTyPoses() {
+    Pose2d[] tagPoses = new Pose2d[FieldConstants.aprilTagCount + 1];
+    for (int i = 0; i < FieldConstants.aprilTagCount + 1; i++) {
+      tagPoses[i] = getTxTyPose(i).orElse(Pose2d.kZero);
+    }
+    return tagPoses;
+  }
 
   public Rotation2d getRotation() {
     return estimatedPose.getRotation();
@@ -159,8 +285,8 @@ public class PoseEstimator {
 
   public record VisionObservation(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {}
 
-  // public record TxTyObservation(
-  //     int tagId, int camera, double[] tx, double[] ty, double distance, double timestamp) {}
-  //
-  // public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
+  public record TxTyObservation(
+      int tagId, int camera, Rotation2d pitch, Rotation2d yaw, double distance, double timestamp) {}
+
+  public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
 }

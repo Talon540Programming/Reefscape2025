@@ -25,11 +25,10 @@ public class VisionConstants {
   static final double targetLogTimeSecs = 0.1;
   static final double fieldBorderMargin = 0.5;
 
-  static final Vector<N3> singleTagStdevs = VecBuilder.fill(0.1, 0.1, Math.toRadians(5.0)); // TODO
-  static final Vector<N3> multiTagStdevs =
-      VecBuilder.fill(0.015, 0.015, Math.toRadians(2.0)); // TODO
+  static final Vector<N3> singleTagStdevs = VecBuilder.fill(0.1, 0.1, Math.toRadians(5.0));
+  static final Vector<N3> multiTagStdevs = VecBuilder.fill(0.015, 0.015, Math.toRadians(2.0));
 
-  static CameraConfig[] cameras =
+  public static CameraConfig[] cameras =
       switch (Constants.getRobot()) {
         case COMPBOT, SIMBOT ->
             new CameraConfig[] {
@@ -62,7 +61,7 @@ public class VisionConstants {
       };
 
   @Builder
-  record CameraConfig(
+  public record CameraConfig(
       String cameraName,
       Transform3d robotToCamera,
       double cameraBiasScalar,
