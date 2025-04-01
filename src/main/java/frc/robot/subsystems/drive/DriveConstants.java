@@ -20,9 +20,9 @@ public class DriveConstants {
       maxLinearVelocityMetersPerSec / driveBaseRadius;
   public static final double maxAngularAccelerationRadPerSecSquared = 2.0 * Math.PI;
 
-  public static final double driveWidthX = Units.inchesToMeters(26.5);
-  public static final double driveWidthY = Units.inchesToMeters(26.5);
-  public static final double bumperThickness = Units.inchesToMeters(3.625);
+  public static final double driveWidth = Units.inchesToMeters(26.5);
+  public static final double bumperThickness = Units.inchesToMeters(3.0);
+  public static final double robotWidth = driveWidth + (2 * bumperThickness);
 
   public static final Translation2d[] moduleTranslations = {
     new Translation2d(trackWidthX / 2, trackWidthY / 2),
