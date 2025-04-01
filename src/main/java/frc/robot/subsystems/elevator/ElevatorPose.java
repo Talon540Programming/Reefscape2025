@@ -40,16 +40,15 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
   }
 
   static {
-    // Coral eject distance
-    addInitialValue(ejectDistance, ReefLevel.L2, 0.15, "EjectDistance"); // TODO
-    addInitialValue(ejectDistance, ReefLevel.L3, 0.10, "EjectDistance"); // TODO
-    addInitialValue(
-        ejectDistance, ReefLevel.L4, Units.inchesToMeters(1.0), "EjectDistance"); // TODO
+    // Coral eject distance. Currently, assumes flush to reef.
+    addInitialValue(ejectDistance, ReefLevel.L2, 0.21, "EjectDistance");
+    addInitialValue(ejectDistance, ReefLevel.L3, 0.185, "EjectDistance");
+    addInitialValue(ejectDistance, ReefLevel.L4, 0.135, "EjectDistance");
 
     // Height Fudge Factors
-    addInitialValue(heightFudges, ReefLevel.L2, Units.inchesToMeters(2.5), "HeightFudges"); // TODO
-    addInitialValue(heightFudges, ReefLevel.L3, Units.inchesToMeters(1.25), "HeightFudges"); // TODO
-    addInitialValue(heightFudges, ReefLevel.L4, Units.inchesToMeters(1.0), "HeightFudges"); // TODO
+    addInitialValue(heightFudges, ReefLevel.L2, -0.0275, "HeightFudges");
+    addInitialValue(heightFudges, ReefLevel.L3, -0.05, "HeightFudges");
+    addInitialValue(heightFudges, ReefLevel.L4, Units.inchesToMeters(1.0), "HeightFudges");
   }
 
   @RequiredArgsConstructor
