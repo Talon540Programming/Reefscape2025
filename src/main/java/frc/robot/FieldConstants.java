@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class FieldConstants {
   public static AprilTagFieldLayout fieldLayout =
       AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+  public static final int aprilTagCount = 22;
 
   public static final double fieldLength = fieldLayout.getFieldLength();
   public static final double fieldWidth = fieldLayout.getFieldWidth();
@@ -91,20 +92,8 @@ public class FieldConstants {
     public static final double faceToZoneLine =
         Units.inchesToMeters(12); // Side of the reef to the inside of the reef zone line
 
-    public static final Transform2d centerToRightBranch =
-        new Transform2d(
-            Units.inchesToMeters(20),
-            Units.inchesToMeters(6.469),
-            Rotation2d.fromDegrees(180)); // TODO
-
-    public static final Transform2d centerToLeftBranch =
-        new Transform2d(
-            Units.inchesToMeters(20),
-            Units.inchesToMeters(-6.469),
-            Rotation2d.fromDegrees(180)); // TODO
-
     public static final Pose2d[] centerFaces =
-        new Pose2d[12]; // Starting facing the driver station in clockwise order
+        new Pose2d[6]; // Starting facing the driver station in clockwise order
 
     public static final List<Map<ReefLevel, Pose3d>> branchPositions =
         new ArrayList<>(); // Starting at the right branch facing the driver station in clockwise
