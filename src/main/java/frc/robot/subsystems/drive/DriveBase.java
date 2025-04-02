@@ -136,6 +136,7 @@ public class DriveBase extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsUnoptimized", new SwerveModuleState[] {});
     }
 
+    // Send odometry updates to robot state
     var timestamps = m_timestampInputs.timestamps;
     var sampleCount = timestamps.length;
     for (int i = 0; i < sampleCount; i++) {
@@ -152,7 +153,11 @@ public class DriveBase extends SubsystemBase {
                   timestamps[i]));
     }
 
+    RobotState.getInstance().setPitch(m_gyroInputs.pitchPosition);
+    RobotState.getInstance().setRoll(m_gyroInputs.rollPosition);
+
     // Disable brake mode a short duration after the robot is disabled
+    // Reset movement timer if velocity above threshold
     for (var module : modules) {
       if (Math.abs(module.getVelocityMetersPerSec()) > coastMetersPerSecondThreshold.get()) {
         lastMovementTimer.reset();

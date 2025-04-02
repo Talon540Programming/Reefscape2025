@@ -217,8 +217,8 @@ public class ElevatorBase extends SubsystemBase {
     return runOnce(() -> setGoal(preset));
   }
 
-  public Command runGoal(Supplier<Preset> command) {
-    return run(() -> setGoal(command.get()));
+  public Command runGoal(Supplier<Preset> preset) {
+    return run(() -> setGoal(preset.get()));
   }
 
   public Command homingSequence() {

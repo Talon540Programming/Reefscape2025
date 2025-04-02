@@ -17,15 +17,20 @@ import frc.robot.subsystems.dispenser.DispenserIOSim;
 import frc.robot.subsystems.dispenser.DispenserIOSpark;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.elevator.*;
+import frc.robot.subsystems.elevator.ElevatorPose.Preset;
 import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
+import frc.robot.util.DoublePressTracker;
+import frc.robot.util.TriggerUtil;
+import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.LoggedNetworkNumber;
 
+@ExtensionMethod({DoublePressTracker.class, TriggerUtil.class, LEDBase.class})
 public class RobotContainer {
   // Subsystems
   private DriveBase driveBase;
@@ -133,7 +138,18 @@ public class RobotContainer {
                                     AllianceFlipUtil.apply(Rotation2d.kPi))),
                     driveBase)));
 
+    registerStateTriggers();
     configureButtonBindings();
+  }
+
+  private void registerStateTriggers() {
+    // Put the elevator down if the robot is starting to tip
+    double tipThresholdDeg = 10;
+    new Trigger(
+            () ->
+                Math.abs(RobotState.getInstance().getPitch().getDegrees()) > tipThresholdDeg
+                    || Math.abs(RobotState.getInstance().getRoll().getDegrees()) > tipThresholdDeg)
+        .whileTrueRepeatedly(elevatorBase.runGoal(Preset.STOW));
   }
 
   private void configureButtonBindings() {

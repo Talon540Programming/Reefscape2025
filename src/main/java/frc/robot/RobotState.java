@@ -84,6 +84,9 @@ public class RobotState {
   @AutoLogOutput(key = "RobotState/ElevatorExtensionPercent")
   private double elevatorExtensionPercent;
 
+  @Getter @Setter private Rotation2d pitch = Rotation2d.kZero;
+  @Getter @Setter private Rotation2d roll = Rotation2d.kZero;
+
   private RobotState() {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
