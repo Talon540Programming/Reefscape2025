@@ -1,11 +1,13 @@
 package frc.robot.util;
 
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.FieldConstants;
+import java.util.Arrays;
 import java.util.function.Function;
 
 public class AllianceFlipUtil {
@@ -43,6 +45,22 @@ public class AllianceFlipUtil {
         applyTranslation(pose3d.getTranslation()), applyRotation(pose3d.getRotation()));
   }
 
+  private static SwerveSample applySwerveSample(SwerveSample sample) {
+    return new SwerveSample(
+        sample.t,
+        applyX(sample.x),
+        applyY(sample.y),
+        apply(Rotation2d.fromRadians(sample.heading)).getRadians(),
+        -sample.vx,
+        -sample.vy,
+        sample.omega,
+        -sample.ax,
+        -sample.ay,
+        sample.alpha,
+        Arrays.stream(sample.moduleForcesX()).map(x -> -x).toArray(),
+        Arrays.stream(sample.moduleForcesY()).map(y -> -y).toArray());
+  }
+
   public static boolean shouldFlip() {
     var currentAllianceOpt = DriverStation.getAlliance();
     return currentAllianceOpt.isPresent() && currentAllianceOpt.get() == DriverStation.Alliance.Red;
@@ -74,6 +92,10 @@ public class AllianceFlipUtil {
 
   public static Pose3d apply(Pose3d pose3d) {
     return shouldFlip() ? applyPose(pose3d) : pose3d;
+  }
+
+  public static SwerveSample apply(SwerveSample swerveSample) {
+    return shouldFlip() ? applySwerveSample(swerveSample) : swerveSample;
   }
 
   public static class AllianceRelative<T> {

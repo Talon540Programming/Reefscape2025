@@ -1,9 +1,11 @@
 package frc.robot.util;
 
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.FieldConstants;
 import frc.robot.commands.AutoScoreCommands.CoralObjective;
+import java.util.Arrays;
 import java.util.function.BooleanSupplier;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,5 +27,23 @@ public class MirrorUtil {
         pose.getX(),
         FieldConstants.fieldWidth - pose.getY(),
         new Rotation2d(pose.getRotation().getCos(), -pose.getRotation().getSin()));
+  }
+
+  public static SwerveSample apply(SwerveSample sample) {
+    if (!mirror.getAsBoolean()) return sample;
+    Pose2d pose = apply(sample.getPose());
+    return new SwerveSample(
+        sample.t,
+        pose.getX(),
+        pose.getY(),
+        pose.getRotation().getRadians(),
+        sample.vx,
+        -sample.vy,
+        -sample.omega,
+        sample.ax,
+        -sample.ay,
+        -sample.alpha,
+        sample.moduleForcesX(),
+        Arrays.stream(sample.moduleForcesY()).map(y -> -y).toArray());
   }
 }
