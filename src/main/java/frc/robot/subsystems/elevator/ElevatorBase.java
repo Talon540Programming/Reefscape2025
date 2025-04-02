@@ -97,7 +97,6 @@ public class ElevatorBase extends SubsystemBase {
           Alert.AlertType.kWarning);
 
   @AutoLogOutput(key = "Elevator/Profile/AtGoal")
-  @Getter
   private boolean atGoal = false;
 
 
@@ -212,6 +211,9 @@ public class ElevatorBase extends SubsystemBase {
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
 
+  public boolean atGoal() {
+    return atGoal;
+  }
 
   public Command runGoal(Preset preset) {
     return runOnce(() -> setGoal(preset));

@@ -21,7 +21,7 @@ public class IntakeCommands {
     return elevator
         .runGoal(Preset.CORAL_INTAKE)
         .alongWith(
-            Commands.waitUntil(elevator::isAtGoal)
+            Commands.waitUntil(elevator::atGoal)
                 .andThen(dispenser.intakeTillHolding())
                 .deadlineFor(intake.runRoller(intakeVolts)))
         .setLEDState((visionBase, state) -> visionBase.intaking = state)

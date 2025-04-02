@@ -8,7 +8,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
-import lombok.Getter;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -27,7 +26,7 @@ public class DispenserBase extends SubsystemBase {
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();
 
-  @AutoLogOutput @Getter private boolean holdingCoral;
+  @AutoLogOutput private boolean holdingCoral;
 
   private static final double coralDebounceTime = 0.1;
   private final Debouncer holdingCoralDebouncer =
@@ -51,6 +50,10 @@ public class DispenserBase extends SubsystemBase {
     holdingCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
   }
 
+  public boolean holdingCoral() {
+    return holdingCoral;
+  }
+
   public Command runDispenser(double inputVolts) {
     return startEnd(() -> io.runVolts(inputVolts), io::stop);
   }
@@ -62,7 +65,7 @@ public class DispenserBase extends SubsystemBase {
   public Command intakeTillHolding() {
     return runDispenser(coralIntakeVolts.get())
         .withDeadline(
-            Commands.waitUntil(this::isHoldingCoral)
+            Commands.waitUntil(this::holdingCoral)
                 .andThen(Commands.waitSeconds(coralIntakeWaitPeriod.get())));
   }
 }
