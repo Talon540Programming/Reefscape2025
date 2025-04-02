@@ -1,7 +1,7 @@
 package frc.robot.util.rlog;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -115,109 +115,101 @@ class RLOGEncoder {
   }
 
   private static ByteBuffer encodeKey(short keyID, String key, String type) {
-    try {
-      byte[] keyBytes = key.getBytes("UTF-8");
-      byte[] typeBytes = type.getBytes("UTF-8");
-      ByteBuffer buffer =
-          ByteBuffer.allocate(
-              1 + Short.BYTES + Short.BYTES + keyBytes.length + Short.BYTES + typeBytes.length);
-      buffer.put((byte) 1);
-      buffer.putShort(keyID);
-      buffer.putShort((short) keyBytes.length);
-      buffer.put(keyBytes);
-      buffer.putShort((short) typeBytes.length);
-      buffer.put(typeBytes);
-      return buffer;
-    } catch (UnsupportedEncodingException e) {
-      return ByteBuffer.allocate(0);
-    }
+    byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+    byte[] typeBytes = type.getBytes(StandardCharsets.UTF_8);
+    ByteBuffer buffer =
+        ByteBuffer.allocate(
+            1 + Short.BYTES + Short.BYTES + keyBytes.length + Short.BYTES + typeBytes.length);
+    buffer.put((byte) 1);
+    buffer.putShort(keyID);
+    buffer.putShort((short) keyBytes.length);
+    buffer.put(keyBytes);
+    buffer.putShort((short) typeBytes.length);
+    buffer.put(typeBytes);
+    return buffer;
   }
 
   private static ByteBuffer encodeValue(short keyID, LogValue value) {
-    try {
-      // Generate key and length buffer
-      ByteBuffer keyBuffer = ByteBuffer.allocate(1 + Short.BYTES + Short.BYTES);
-      keyBuffer.put((byte) 2);
-      keyBuffer.putShort(keyID);
+    // Generate key and length buffer
+    ByteBuffer keyBuffer = ByteBuffer.allocate(1 + Short.BYTES + Short.BYTES);
+    keyBuffer.put((byte) 2);
+    keyBuffer.putShort(keyID);
 
-      // Generate value buffer (and type for key)
-      ByteBuffer valueBuffer;
-      switch (value.type) {
-        case Raw:
-          byte[] byteArray = value.getRaw();
-          valueBuffer = ByteBuffer.allocate(byteArray.length);
-          valueBuffer.put(byteArray);
-          break;
-        case Boolean:
-          valueBuffer = ByteBuffer.allocate(1).put(value.getBoolean() ? (byte) 1 : (byte) 0);
-          break;
-        case Integer:
-          valueBuffer = ByteBuffer.allocate(Long.BYTES).putLong(value.getInteger());
-          break;
-        case Float:
-          valueBuffer = ByteBuffer.allocate(Float.BYTES).putFloat(value.getFloat());
-          break;
-        case Double:
-          valueBuffer = ByteBuffer.allocate(Double.BYTES).putDouble(value.getDouble());
-          break;
-        case String:
-          String stringValue = value.getString();
-          byte[] stringBytes = stringValue.getBytes("UTF-8");
-          valueBuffer = ByteBuffer.allocate(stringBytes.length);
-          valueBuffer.put(stringBytes);
-          break;
-        case BooleanArray:
-          boolean[] booleanArray = value.getBooleanArray();
-          valueBuffer = ByteBuffer.allocate(booleanArray.length);
-          for (boolean i : booleanArray) {
-            valueBuffer.put(i ? (byte) 1 : (byte) 0);
-          }
-          break;
-        case IntegerArray:
-          long[] intArray = value.getIntegerArray();
-          valueBuffer = ByteBuffer.allocate(intArray.length * Long.BYTES);
-          for (long i : intArray) {
-            valueBuffer.putLong(i);
-          }
-          break;
-        case FloatArray:
-          float[] floatArray = value.getFloatArray();
-          valueBuffer = ByteBuffer.allocate(floatArray.length * Float.BYTES);
-          for (float i : floatArray) {
-            valueBuffer.putFloat(i);
-          }
-          break;
-        case DoubleArray:
-          double[] doubleArray = value.getDoubleArray();
-          valueBuffer = ByteBuffer.allocate(doubleArray.length * Double.BYTES);
-          for (double i : doubleArray) {
-            valueBuffer.putDouble(i);
-          }
-          break;
-        case StringArray:
-          String[] stringArray = value.getStringArray();
-          int capacity = Integer.BYTES;
-          for (String i : stringArray) {
-            capacity += Integer.BYTES + i.getBytes("UTF-8").length;
-          }
-          valueBuffer = ByteBuffer.allocate(capacity);
-          valueBuffer.putInt(stringArray.length);
-          for (String i : stringArray) {
-            byte[] bytes = i.getBytes("UTF-8");
-            valueBuffer.putInt(bytes.length);
-            valueBuffer.put(bytes);
-          }
-          break;
-        default:
-          valueBuffer = ByteBuffer.allocate(0);
-      }
-
-      keyBuffer.putShort((short) valueBuffer.capacity());
-      return ByteBuffer.allocate(keyBuffer.capacity() + valueBuffer.capacity())
-          .put(keyBuffer.array())
-          .put(valueBuffer.array());
-    } catch (UnsupportedEncodingException e) {
-      return ByteBuffer.allocate(0);
+    // Generate value buffer (and type for key)
+    ByteBuffer valueBuffer;
+    switch (value.type) {
+      case Raw:
+        byte[] byteArray = value.getRaw();
+        valueBuffer = ByteBuffer.allocate(byteArray.length);
+        valueBuffer.put(byteArray);
+        break;
+      case Boolean:
+        valueBuffer = ByteBuffer.allocate(1).put(value.getBoolean() ? (byte) 1 : (byte) 0);
+        break;
+      case Integer:
+        valueBuffer = ByteBuffer.allocate(Long.BYTES).putLong(value.getInteger());
+        break;
+      case Float:
+        valueBuffer = ByteBuffer.allocate(Float.BYTES).putFloat(value.getFloat());
+        break;
+      case Double:
+        valueBuffer = ByteBuffer.allocate(Double.BYTES).putDouble(value.getDouble());
+        break;
+      case String:
+        String stringValue = value.getString();
+        byte[] stringBytes = stringValue.getBytes(StandardCharsets.UTF_8);
+        valueBuffer = ByteBuffer.allocate(stringBytes.length);
+        valueBuffer.put(stringBytes);
+        break;
+      case BooleanArray:
+        boolean[] booleanArray = value.getBooleanArray();
+        valueBuffer = ByteBuffer.allocate(booleanArray.length);
+        for (boolean i : booleanArray) {
+          valueBuffer.put(i ? (byte) 1 : (byte) 0);
+        }
+        break;
+      case IntegerArray:
+        long[] intArray = value.getIntegerArray();
+        valueBuffer = ByteBuffer.allocate(intArray.length * Long.BYTES);
+        for (long i : intArray) {
+          valueBuffer.putLong(i);
+        }
+        break;
+      case FloatArray:
+        float[] floatArray = value.getFloatArray();
+        valueBuffer = ByteBuffer.allocate(floatArray.length * Float.BYTES);
+        for (float i : floatArray) {
+          valueBuffer.putFloat(i);
+        }
+        break;
+      case DoubleArray:
+        double[] doubleArray = value.getDoubleArray();
+        valueBuffer = ByteBuffer.allocate(doubleArray.length * Double.BYTES);
+        for (double i : doubleArray) {
+          valueBuffer.putDouble(i);
+        }
+        break;
+      case StringArray:
+        String[] stringArray = value.getStringArray();
+        int capacity = Integer.BYTES;
+        for (String i : stringArray) {
+          capacity += Integer.BYTES + i.getBytes(StandardCharsets.UTF_8).length;
+        }
+        valueBuffer = ByteBuffer.allocate(capacity);
+        valueBuffer.putInt(stringArray.length);
+        for (String i : stringArray) {
+          byte[] bytes = i.getBytes(StandardCharsets.UTF_8);
+          valueBuffer.putInt(bytes.length);
+          valueBuffer.put(bytes);
+        }
+        break;
+      default:
+        valueBuffer = ByteBuffer.allocate(0);
     }
+
+    keyBuffer.putShort((short) valueBuffer.capacity());
+    return ByteBuffer.allocate(keyBuffer.capacity() + valueBuffer.capacity())
+        .put(keyBuffer.array())
+        .put(valueBuffer.array());
   }
 }

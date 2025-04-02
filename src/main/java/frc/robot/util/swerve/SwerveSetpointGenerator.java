@@ -307,7 +307,6 @@ public class SwerveSetpointGenerator {
           // Steer directly to goal angle.
           overrideSteering.set(i, Optional.of(desiredModuleState[i].angle));
           // Don't limit the global min_s;
-          continue;
         } else {
           // Adjust steering by max_theta_step.
           overrideSteering.set(
@@ -317,8 +316,8 @@ public class SwerveSetpointGenerator {
                       Rotation2d.fromRadians(
                           Math.signum(necessaryRotation.getRadians()) * max_theta_step))));
           min_s = 0.0;
-          continue;
         }
+        continue;
       }
       if (min_s == 0.0) {
         // s can't get any lower. Save some CPU.

@@ -5,7 +5,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
-import lombok.RequiredArgsConstructor;
 import org.littletonrobotics.junction.LogTable;
 import org.littletonrobotics.junction.inputs.LoggableInputs;
 import org.photonvision.common.dataflow.structures.Packet;
@@ -14,7 +13,7 @@ import org.photonvision.utils.PacketUtils;
 public interface VisionIO {
   public static class VisionIOInputs implements LoggableInputs {
     public boolean ntConnected = false;
-    public PoseObservation[] observations;
+    public PoseObservation[] observations = new PoseObservation[0];
 
     @Override
     public void toLog(LogTable table) {
@@ -92,20 +91,15 @@ public interface VisionIO {
     @Builder.Default public final List<Short> detectedTagIds = List.of();
   }
 
-  @RequiredArgsConstructor
-  public static class MultitagPoseObservation {
-    public final Transform3d multitagTagToCamera;
-  }
+  public record MultitagPoseObservation(Transform3d multitagTagToCamera) {}
 
-  @RequiredArgsConstructor
-  public static class SingletagPoseObservation {
-    public final int tagId;
-    public final Transform3d bestTagToCamera;
-    public final Transform3d altTagToCamera;
-    public final double ambiguity;
-    public final Rotation2d pitch;
-    public final Rotation2d yaw;
-  }
+  public record SingletagPoseObservation(
+      int tagId,
+      Transform3d bestTagToCamera,
+      Transform3d altTagToCamera,
+      double ambiguity,
+      Rotation2d pitch,
+      Rotation2d yaw) {}
 
   public default void updateInputs(VisionIOInputs inputs) {}
 }

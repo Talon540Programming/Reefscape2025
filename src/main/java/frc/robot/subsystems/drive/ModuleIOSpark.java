@@ -47,9 +47,7 @@ public class ModuleIOSpark implements ModuleIO {
 
   public ModuleIOSpark(int index) {
     switch (Constants.getRobot()) {
-      case COMPBOT -> {
-        config = moduleConfigs[index];
-      }
+      case COMPBOT -> config = moduleConfigs[index];
       default ->
           throw new IllegalStateException(
               "Unexpected RobotType for Spark Module: " + Constants.getRobot());
