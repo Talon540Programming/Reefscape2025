@@ -85,8 +85,8 @@ public class Robot extends LoggedRobot {
       }
     }
 
-    // Set up auto logging for PoseEstimator
-    AutoLogOutputManager.addObject(PoseEstimator.getInstance());
+    // Set up auto logging for RobotState
+    AutoLogOutputManager.addObject(RobotState.getInstance());
 
     // Initialize URCL
     Logger.registerURCL(URCL.startExternal());

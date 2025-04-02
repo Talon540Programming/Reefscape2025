@@ -200,20 +200,19 @@ public class RobotContainer {
     // Human Player Alert (Strobe LEDs)
     // TODO
 
-    // Reset Gyro
-    controller
-        .start()
-        .and(controller.back())
+    // Reset gyro
+    var driverStartAndBack = driver.start().and(driver.back());
+    driverStartAndBack
         .debounce(0.5)
         .onTrue(
             Commands.runOnce(
                     () ->
-                        PoseEstimator.getInstance()
+                        RobotState.getInstance()
                             .resetPose(
                                 new Pose2d(
-                                    PoseEstimator.getInstance().getEstimatedPose().getTranslation(),
-                                    AllianceFlipUtil.apply(new Rotation2d()))),
-                    driveBase)
+                                    RobotState.getInstance().getEstimatedPose().getTranslation(),
+                                    AllianceFlipUtil.apply(Rotation2d.kZero))))
+                .withName("Reset Gyro")
                 .ignoringDisable(true));
 
     // Endgame

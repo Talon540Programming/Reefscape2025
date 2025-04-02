@@ -15,8 +15,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.PoseEstimator;
-import frc.robot.PoseEstimator.OdometryObservation;
+import frc.robot.RobotState;
+import frc.robot.RobotState.OdometryObservation;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
@@ -143,7 +143,7 @@ public class DriveBase extends SubsystemBase {
       for (int j = 0; j < 4; j++) {
         wheelPositions[j] = modules[j].getOdometryPositions()[i];
       }
-      PoseEstimator.getInstance()
+      RobotState.getInstance()
           .addOdometryObservation(
               new OdometryObservation(
                   wheelPositions,

@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotState;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
@@ -203,6 +204,9 @@ public class ElevatorBase extends SubsystemBase {
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
+
+    // Set extension in robot state
+    RobotState.getInstance().setElevatorExtensionPercent(getPositionMeters() / elevatorMaxTravel);
 
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);

@@ -11,9 +11,9 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.FieldConstants;
-import frc.robot.PoseEstimator;
-import frc.robot.PoseEstimator.TxTyObservation;
-import frc.robot.PoseEstimator.VisionObservation;
+import frc.robot.RobotState;
+import frc.robot.RobotState.TxTyObservation;
+import frc.robot.RobotState.VisionObservation;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
@@ -154,7 +154,7 @@ public class VisionBase extends VirtualSubsystem {
             var altPose = altFieldToRobot.toPose3d().toPose2d();
 
             // TODO latency compensate this to get rotation at this timestamp for better accuracy
-            var sampledPose = PoseEstimator.getInstance().getEstimatedPose();
+            var sampledPose = RobotState.getInstance().getEstimatedPose();
             var sampledRot = sampledPose.getRotation();
             var bestRot = bestPose.getRotation();
             var altRot = altPose.getRotation();
@@ -277,7 +277,7 @@ public class VisionBase extends VirtualSubsystem {
     // Send results to robot state
     allVisionObservations.stream()
         .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
-        .forEach(PoseEstimator.getInstance()::addVisionObservation);
-    allTxTyObservations.values().forEach(PoseEstimator.getInstance()::addTxTyObservation);
+        .forEach(RobotState.getInstance()::addVisionObservation);
+    allTxTyObservations.values().forEach(RobotState.getInstance()::addTxTyObservation);
   }
 }

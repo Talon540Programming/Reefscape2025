@@ -19,11 +19,12 @@ import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.*;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.AutoLogOutput;
 
 @ExtensionMethod({GeomUtil.class})
-public class PoseEstimator {
+public class RobotState {
   private static final LoggedTunableNumber txTyObservationStaleSecs =
       new LoggedTunableNumber("RobotState/TxTyObservationStaleSeconds", 0.5);
   private static final LoggedTunableNumber minDistanceTagPoseBlend =
@@ -45,19 +46,19 @@ public class PoseEstimator {
     }
   }
 
-  private static PoseEstimator instance;
+  private static RobotState instance;
 
-  public static PoseEstimator getInstance() {
-    if (instance == null) instance = new PoseEstimator();
+  public static RobotState getInstance() {
+    if (instance == null) instance = new RobotState();
     return instance;
   }
 
   @Getter
-  @AutoLogOutput(key = "PoseEstimator/OdometryPose")
+  @AutoLogOutput(key = "RobotState/OdometryPose")
   private Pose2d odometryPose = Pose2d.kZero;
 
   @Getter
-  @AutoLogOutput(key = "PoseEstimator/EstimatedPose")
+  @AutoLogOutput(key = "RobotState/EstimatedPose")
   private Pose2d estimatedPose = Pose2d.kZero;
 
   private final TimeInterpolatableBuffer<Pose2d> poseBuffer =
@@ -78,7 +79,12 @@ public class PoseEstimator {
 
   private final Map<Integer, TxTyPoseRecord> txTyPoses = new HashMap<>();
 
-  private PoseEstimator() {
+  @Getter
+  @Setter
+  @AutoLogOutput(key = "RobotState/ElevatorExtensionPercent")
+  private double elevatorExtensionPercent;
+
+  private RobotState() {
     for (int i = 0; i < 3; ++i) {
       qStdDevs.set(i, 0, Math.pow(odometryStateStdDevs.get(i, 0), 2));
     }
@@ -267,7 +273,7 @@ public class PoseEstimator {
     return getEstimatedPose().interpolate(tagPose.get(), 1.0 - t);
   }
 
-  @AutoLogOutput(key = "PoseEstimator/TxTyPoses")
+  @AutoLogOutput(key = "RobotState/TxTyPoses")
   public Pose2d[] getTxTyPoses() {
     Pose2d[] tagPoses = new Pose2d[FieldConstants.aprilTagCount + 1];
     for (int i = 0; i < FieldConstants.aprilTagCount + 1; i++) {
