@@ -9,8 +9,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
+import frc.robot.commands.*;
+import frc.robot.commands.AutoBuilder;
 import frc.robot.subsystems.dispenser.DispenserBase;
 import frc.robot.subsystems.dispenser.DispenserIO;
 import frc.robot.subsystems.dispenser.DispenserIOSim;
@@ -25,6 +25,7 @@ import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.DoublePressTracker;
+import frc.robot.util.MirrorUtil;
 import frc.robot.util.TriggerUtil;
 import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -111,6 +112,16 @@ public class RobotContainer {
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
+
+    LoggedDashboardChooser<Boolean> mirror =
+        new LoggedDashboardChooser<>("Starting on Processor Side?");
+    mirror.addDefaultOption("Yes", false);
+    mirror.addOption("No", true);
+    MirrorUtil.setMirror(mirror::get);
+
+    var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
+    autoChooser.addDefaultOption("Noting", Commands.none());
+    autoChooser.addOption("Taxi", autoBuilder.taxi());
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
