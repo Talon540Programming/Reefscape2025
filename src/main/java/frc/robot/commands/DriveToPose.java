@@ -274,7 +274,6 @@ public class DriveToPose extends Command {
             0.0,
             1.0);
 
-    // Calculate drive velocity
     // Calculate setpoint velocity towards target pose
     var direction = targetPose.getTranslation().minus(lastSetpointTranslation).toVector();
     double setpointVelocity =
