@@ -28,16 +28,17 @@ public class IntakeCommands {
         .finallyDo(() -> elevator.setGoal(Preset.STOW));
   }
 
-  public static Command reserialize(
-      ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
-    return elevator
-        .runGoal(Preset.CORAL_INTAKE)
-        .alongWith(
-            Commands.waitUntil(elevator::isAtGoal)
-                .andThen(
-                    dispenser
-                        .runDispenser(intakeReserializeVolts)
-                        .until(() -> !dispenser.isHoldingCoral())))
-        .andThen(intake(elevator, intake, dispenser));
-  }
+  // public static Command reserialize(
+  //     ElevatorBase elevator, IntakeBase intake, DispenserBase dispenser) {
+  //   return elevator
+  //       .runGoal(Preset.CORAL_INTAKE)
+  //       .alongWith(
+  //           Commands.waitUntil(elevator::atGoal)
+  //               .andThen(
+  //                   dispenser
+  //                       .runDispenser(intakeReserializeVolts)
+  //                       .until(() -> !dispenser.holdingCoral())).setLEDState((visionBase,
+  // state) -> visionBase.reserializing = state))
+  //       .andThen(intake(elevator, intake, dispenser));
+  // }
 }
