@@ -21,6 +21,7 @@ import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.reef_selector.ReefSelectorBase;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.AllianceFlipUtil;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -33,6 +34,7 @@ public class RobotContainer {
   private ElevatorBase elevatorBase;
   private DispenserBase dispenserBase;
   private VisionBase visionBase;
+  private ReefSelectorBase reefSelectorBase;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -103,6 +105,8 @@ public class RobotContainer {
     if (visionBase == null) {
       visionBase = new VisionBase(new VisionIO() {}, new VisionIO() {});
     }
+
+    reefSelectorBase = new ReefSelectorBase();
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
