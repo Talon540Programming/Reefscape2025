@@ -18,12 +18,12 @@ public class AllianceFlipUtil {
   }
 
   private static Translation2d applyTranslation(Translation2d translation2d) {
-    return new Translation2d(applyX(translation2d.getX()), translation2d.getY());
+    return new Translation2d(applyX(translation2d.getX()), applyY(translation2d.getY()));
   }
 
   private static Translation3d applyTranslation(Translation3d translation3d) {
     return new Translation3d(
-        applyX(translation3d.getX()), translation3d.getY(), translation3d.getZ());
+        applyX(translation3d.getX()), applyY(translation3d.getY()), translation3d.getZ());
   }
 
   private static Rotation2d applyRotation(Rotation2d rotation2d) {
