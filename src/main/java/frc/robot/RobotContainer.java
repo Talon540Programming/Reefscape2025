@@ -43,6 +43,9 @@ public class RobotContainer {
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
+  private final Alert controllerDisconnected =
+      new Alert("Main controller disconnected (port 0).", Alert.AlertType.kWarning);
+
   // Dashboard inputs
   private final LoggedDashboardChooser<Command> autoChooser;
 
@@ -273,6 +276,17 @@ public class RobotContainer {
                 .beforeStarting(() -> LEDBase.getInstance().endgameAlert = true)
                 .finallyDo(() -> LEDBase.getInstance().endgameAlert = false)
                 .withName("Controller Endgame Alert 2")); // Rumble three times
+  }
+
+  // Update dashboard data
+  public void updateDashboardOutputs() {
+    SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
+  }
+
+  public void updateAlerts() {
+    // Controller disconnected alerts
+    controllerDisconnected.set(!DriverStation.isJoystickConnected(controller.getHID().getPort()));
+    // operatorDisconnected.set(!DriverStation.isJoystickConnected(operator.getHID().getPort()));
   }
 
   public Command getAutonomousCommand() {

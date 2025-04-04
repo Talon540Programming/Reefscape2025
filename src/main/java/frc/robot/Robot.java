@@ -180,6 +180,10 @@ public class Robot extends LoggedRobot {
 
     // Log NT client list
     NTClientLogger.log();
+
+    // Robot container periodic methods
+    robotContainer.updateAlerts();
+    robotContainer.updateDashboardOutputs();
   }
 
   @Override
