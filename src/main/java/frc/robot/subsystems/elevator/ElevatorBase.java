@@ -250,4 +250,8 @@ public class ElevatorBase extends SubsystemBase {
   public double getGoalMeters() {
     return goal.getElevatorHeight();
   }
+
+  public boolean readyForL4() {
+    return getPositionMeters() >= elevatorL4ClearHeight.get();
+  }
 }

@@ -36,6 +36,10 @@ public class DriveToStation extends DriveToPose {
           "DriveToStation/AutoOffset",
           FieldConstants.CoralStation.stationLength / 2 - Units.inchesToMeters(24));
 
+  public DriveToStation(DriveBase driveBase, boolean isAuto) {
+    this(driveBase, () -> 0, () -> 0, () -> 0, isAuto);
+  }
+
   public DriveToStation(
       DriveBase driveBase,
       DoubleSupplier driverX,

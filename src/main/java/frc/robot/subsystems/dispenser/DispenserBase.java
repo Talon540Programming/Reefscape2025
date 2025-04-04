@@ -6,6 +6,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.FieldConstants;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -67,5 +68,9 @@ public class DispenserBase extends SubsystemBase {
         .withDeadline(
             Commands.waitUntil(this::holdingCoral)
                 .andThen(Commands.waitSeconds(coralIntakeWaitPeriod.get())));
+  }
+
+  public double getDispenserVoltageFromLevel(FieldConstants.ReefLevel level) {
+    return coralDispenseVolts[level.ordinal()].get();
   }
 }

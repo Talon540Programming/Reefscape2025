@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 public record ElevatorPose(DoubleSupplier elevatorHeight) {
@@ -51,6 +52,7 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
     addInitialValue(heightFudges, ReefLevel.L4, Units.inchesToMeters(1.0), "HeightFudges");
   }
 
+  @Getter
   @RequiredArgsConstructor
   public enum CoralDispenserPose {
     L2_CORAL(ReefLevel.L2),
@@ -58,9 +60,11 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
     L4_CORAL(ReefLevel.L4);
 
     private final Supplier<Pose2d> pose;
+    private final ReefLevel reefLevel;
 
     CoralDispenserPose(ReefLevel reefLevel) {
       pose = () -> calculatePose(reefLevel);
+      this.reefLevel = reefLevel;
     }
 
     public double getElevatorHeight() {
@@ -128,6 +132,15 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
 
     public double getElevatorHeight() {
       return pose.elevatorHeight.getAsDouble();
+    }
+
+    public static Preset fromLevel(ReefLevel level) {
+      return switch (level) {
+        case L1 -> L1_CORAL;
+        case L2 -> L2_CORAL;
+        case L3 -> L3_CORAL;
+        case L4 -> L4_CORAL;
+      };
     }
   }
 }
