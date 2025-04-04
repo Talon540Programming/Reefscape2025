@@ -1,10 +1,13 @@
 package frc.robot;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Filesystem;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +17,13 @@ import lombok.RequiredArgsConstructor;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  public static AprilTagFieldLayout fieldLayout =
-      AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
-  public static final int aprilTagCount = 22;
+  public static final FieldType fieldType = FieldType.ANDYMARK;
 
-  public static final double fieldLength = fieldLayout.getFieldLength();
-  public static final double fieldWidth = fieldLayout.getFieldWidth();
+  public static final double fieldLength = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
+  public static final double fieldWidth = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
+
+  public static final int aprilTagCount = 22;
+  public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.NO_BARGE;
 
   public static final double startingLineX =
       Units.inchesToMeters(299.438); // Measured from the inside of starting line
@@ -27,12 +31,12 @@ public class FieldConstants {
   public static class Processor {
     public static final Pose2d centerFace =
         new Pose2d(
-            AprilTagLayoutType.OFFICIAL.getFieldLayout().getTagPose(16).get().getX(),
+            AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(16).get().getX(),
             0,
             Rotation2d.fromDegrees(90));
     public static final Pose2d opposingCenterFace =
         new Pose2d(
-            AprilTagLayoutType.OFFICIAL.getFieldLayout().getTagPose(3).get().getX(),
+            AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(3).get().getX(),
             fieldWidth,
             Rotation2d.fromDegrees(-90));
   }
@@ -101,7 +105,7 @@ public class FieldConstants {
 
     static {
       // Initialize faces
-      var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getFieldLayout();
+      var aprilTagLayout = AprilTagLayoutType.OFFICIAL.getLayout();
       centerFaces[0] = aprilTagLayout.getTagPose(18).orElseThrow().toPose2d();
       centerFaces[1] = aprilTagLayout.getTagPose(19).orElseThrow().toPose2d();
       centerFaces[2] = aprilTagLayout.getTagPose(20).orElseThrow().toPose2d();
@@ -175,17 +179,42 @@ public class FieldConstants {
 
   @Getter
   public enum AprilTagLayoutType {
-    OFFICIAL("2025-reefscape-welded.json");
-    // TODO make regency field layout?
+    OFFICIAL("2025-official"),
+    NO_BARGE("2025-no-barge"),
+    BLUE_REEF("2025-blue-reef"),
+    RED_REEF("2025-red-reef"),
+    FIELD_BORDER("2025-field-border");
 
-    private final AprilTagFieldLayout fieldLayout;
+    private final AprilTagFieldLayout layout;
+    private final String layoutString;
 
-    private AprilTagLayoutType(String file) {
+    private AprilTagLayoutType(String fileName) {
       try {
-        fieldLayout = AprilTagFieldLayout.loadFromResource(file);
+        layout =
+            new AprilTagFieldLayout(
+                Path.of(
+                    Filesystem.getDeployDirectory().getPath(),
+                    "apriltags",
+                    fieldType.getJsonFolder(),
+                    fileName + ".json"));
       } catch (IOException exception) {
-        throw new RuntimeException("Failed to load AprilTagLayoutType: " + file, exception);
+        throw new RuntimeException("Failed to load AprilTagLayoutType: " + fileName, exception);
+      }
+
+      try {
+        layoutString = new ObjectMapper().writeValueAsString(layout);
+      } catch (JsonProcessingException e) {
+        throw new RuntimeException("Failed to serialize AprilTag layout JSON: " + this);
       }
     }
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  public enum FieldType {
+    ANDYMARK("andymark"),
+    WELDED("welded");
+
+    private final String jsonFolder;
   }
 }

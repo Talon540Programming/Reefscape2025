@@ -9,11 +9,14 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.TxTyObservation;
 import frc.robot.RobotState.VisionObservation;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
@@ -21,12 +24,20 @@ import frc.robot.util.VirtualSubsystem;
 import java.util.*;
 import lombok.experimental.ExtensionMethod;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 @ExtensionMethod(GeomUtil.class)
 public class VisionBase extends VirtualSubsystem {
   private static final double disconnectedTimeout = 0.5;
   public static final LoggedTunableNumber timestampOffset =
       new LoggedTunableNumber("AprilTagVision/TimestampOffset", 0.0);
+
+  private final Alert aprilTagLayoutAlert = new Alert("", Alert.AlertType.kInfo);
+  private final LoggedNetworkBoolean aprilTagsReef =
+      new LoggedNetworkBoolean("/SmartDashboard/AprilTagVision/OnlyUseReefAprilTags", false);
+  private final LoggedNetworkBoolean aprilTagFieldBorder =
+      new LoggedNetworkBoolean("/SmartDashboard/AprilTagVision/OnlyUseBorderAprilTags", false);
+  private FieldConstants.AprilTagLayoutType lastAprilTagLayout = null;
 
   private final VisionIO[] io;
   private final VisionIOInputs[] inputs;
@@ -68,8 +79,8 @@ public class VisionBase extends VirtualSubsystem {
           String.format("Vision/Inst%d (%s)", i, cameras[i].cameraName()), inputs[i]);
     }
 
-    // TODO Update LEDs based on vision state
     // Update disconnected alerts
+    boolean anyNTDisconnected = false;
     for (int i = 0; i < io.length; i++) {
       if (inputs[i].observations.length > 0) {
         disconnectedTimers[i].reset();
@@ -87,6 +98,16 @@ public class VisionBase extends VirtualSubsystem {
                     "Vision Inst%d (%s) disconnected from NT", i, cameras[i].cameraName()));
       }
       cameraDisconnectedAlerts[i].set(disconnected);
+      anyNTDisconnected = anyNTDisconnected || !inputs[i].ntConnected;
+    }
+    LEDBase.getInstance().visionDisconnected = anyNTDisconnected;
+
+    var aprilTagType = getSelectedAprilTagLayout();
+    boolean atflAlertActive = aprilTagType != FieldConstants.defaultAprilTagType;
+    aprilTagLayoutAlert.set(atflAlertActive);
+    if (atflAlertActive) {
+      aprilTagLayoutAlert.setText(
+          "Non-default AprilTag layout in use (" + aprilTagType.toString() + ").");
     }
 
     // Loop over instances
@@ -118,7 +139,7 @@ public class VisionBase extends VirtualSubsystem {
         if (observation.multitagResult.isPresent()) {
           var multitagRes = observation.multitagResult.get();
           // Handle Multitag
-          cameraPose = GeomUtil.toPose3d(multitagRes.multitagTagToCamera);
+          cameraPose = GeomUtil.toPose3d(multitagRes.multitagTagToCamera());
           robotPose =
               cameraPose
                   .toPose2d()
@@ -131,16 +152,16 @@ public class VisionBase extends VirtualSubsystem {
           double camToTagDistance;
 
           // Handle Single-tag
-          if (singleTagRes.ambiguity <= ambiguityThreshold) {
+          if (singleTagRes.ambiguity() <= ambiguityThreshold) {
             // Ambiguity is good enough to disambiguate and use for global pose.
-            var tagPoseOpt = FieldConstants.fieldLayout.getTagPose(singleTagRes.tagId);
+            var tagPoseOpt = aprilTagType.getLayout().getTagPose(singleTagRes.tagId());
             if (tagPoseOpt.isEmpty()) break;
             var tagPose = tagPoseOpt.get();
 
             var fieldToTarget = tagPose.toTransform3d();
 
-            var bestCamToTarget = singleTagRes.bestTagToCamera;
-            var altCamToTarget = singleTagRes.altTagToCamera;
+            var bestCamToTarget = singleTagRes.bestTagToCamera();
+            var altCamToTarget = singleTagRes.altTagToCamera();
 
             var bestFieldToCamera = fieldToTarget.plus(bestCamToTarget.inverse());
             var altFieldToCamera = fieldToTarget.plus(altCamToTarget.inverse());
@@ -174,17 +195,17 @@ public class VisionBase extends VirtualSubsystem {
             baseStdevs = singleTagStdevs;
           } else {
             // This estimation is shit, we can still use it for alignment though
-            camToTagDistance = singleTagRes.bestTagToCamera.getTranslation().getNorm();
+            camToTagDistance = singleTagRes.bestTagToCamera().getTranslation().getNorm();
           }
 
           // Handle TxTy Observation
           txTyObservations.put(
-              singleTagRes.tagId,
+              singleTagRes.tagId(),
               new TxTyObservation(
-                  singleTagRes.tagId,
+                  singleTagRes.tagId(),
                   cameraIndex,
-                  singleTagRes.pitch,
-                  singleTagRes.yaw,
+                  singleTagRes.pitch(),
+                  singleTagRes.yaw(),
                   camToTagDistance,
                   timestamp));
         }
@@ -206,7 +227,7 @@ public class VisionBase extends VirtualSubsystem {
         List<Pose3d> tagPoses = new ArrayList<>();
         for (int tagId : observation.detectedTagIds) {
           lastTagDetectionTimes.put(tagId, Timer.getTimestamp());
-          FieldConstants.fieldLayout.getTagPose(tagId).ifPresent(tagPoses::add);
+          aprilTagType.getLayout().getTagPose(tagId).ifPresent(tagPoses::add);
         }
 
         // Calculate average distance to tag
@@ -269,7 +290,7 @@ public class VisionBase extends VirtualSubsystem {
     List<Pose3d> allTagPoses = new ArrayList<>();
     for (Map.Entry<Integer, Double> detectionEntry : lastTagDetectionTimes.entrySet()) {
       if (Timer.getTimestamp() - detectionEntry.getValue() < targetLogTimeSecs) {
-        FieldConstants.fieldLayout.getTagPose(detectionEntry.getKey()).ifPresent(allTagPoses::add);
+        aprilTagType.getLayout().getTagPose(detectionEntry.getKey()).ifPresent(allTagPoses::add);
       }
     }
     Logger.recordOutput("AprilTagVision/TagPoses", allTagPoses.toArray(Pose3d[]::new));
@@ -279,5 +300,20 @@ public class VisionBase extends VirtualSubsystem {
         .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
         .forEach(RobotState.getInstance()::addVisionObservation);
     allTxTyObservations.values().forEach(RobotState.getInstance()::addTxTyObservation);
+  }
+
+  /** Returns the current AprilTag layout type. */
+  public FieldConstants.AprilTagLayoutType getSelectedAprilTagLayout() {
+    if (aprilTagsReef.get()) {
+      if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
+        return FieldConstants.AprilTagLayoutType.BLUE_REEF;
+      } else {
+        return FieldConstants.AprilTagLayoutType.RED_REEF;
+      }
+    } else if (aprilTagFieldBorder.get()) {
+      return FieldConstants.AprilTagLayoutType.FIELD_BORDER;
+    } else {
+      return FieldConstants.defaultAprilTagType;
+    }
   }
 }

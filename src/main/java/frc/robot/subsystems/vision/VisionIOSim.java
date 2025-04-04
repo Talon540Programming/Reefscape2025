@@ -20,7 +20,7 @@ public class VisionIOSim extends VisionIOPhotonCamera {
   static {
     if (Constants.getRobot() == Constants.RobotType.SIMBOT) {
       m_visionSystemSim = new VisionSystemSim("main");
-      m_visionSystemSim.addAprilTags(FieldConstants.fieldLayout);
+      m_visionSystemSim.addAprilTags(FieldConstants.defaultAprilTagType.getLayout());
     }
   }
 

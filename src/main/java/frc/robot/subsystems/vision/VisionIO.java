@@ -2,6 +2,7 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.FieldConstants.AprilTagLayoutType;
 import java.util.List;
 import java.util.Optional;
 import lombok.Builder;
@@ -68,7 +69,7 @@ public interface VisionIO {
             .singleTagResult(
                 packet.decodeBoolean()
                     ? Optional.of(
-                        new SingletagPoseObservation(
+                        new SingleTagPoseObservation(
                             packet.decodeInt(),
                             PacketUtils.unpackTransform3d(packet),
                             PacketUtils.unpackTransform3d(packet),
@@ -87,13 +88,13 @@ public interface VisionIO {
     public final boolean hasResult;
     public final double timestampSeconds;
     @Builder.Default public Optional<MultitagPoseObservation> multitagResult = Optional.empty();
-    @Builder.Default public Optional<SingletagPoseObservation> singleTagResult = Optional.empty();
+    @Builder.Default public Optional<SingleTagPoseObservation> singleTagResult = Optional.empty();
     @Builder.Default public final List<Short> detectedTagIds = List.of();
   }
 
   public record MultitagPoseObservation(Transform3d multitagTagToCamera) {}
 
-  public record SingletagPoseObservation(
+  public record SingleTagPoseObservation(
       int tagId,
       Transform3d bestTagToCamera,
       Transform3d altTagToCamera,

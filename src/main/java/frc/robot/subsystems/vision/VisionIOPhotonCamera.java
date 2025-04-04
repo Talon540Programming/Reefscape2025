@@ -43,7 +43,7 @@ public class VisionIOPhotonCamera implements VisionIO {
             .hasResult(true)
             .singleTagResult(
                 Optional.of(
-                    new SingletagPoseObservation(
+                    new SingleTagPoseObservation(
                         singleTagDetection.fiducialId,
                         singleTagDetection.bestCameraToTarget,
                         singleTagDetection.altCameraToTarget,
