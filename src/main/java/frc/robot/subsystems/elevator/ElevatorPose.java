@@ -42,9 +42,9 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
 
   static {
     // Coral eject distance. Currently, assumes flush to reef.
-    addInitialValue(ejectDistance, ReefLevel.L2, 0.21, "EjectDistance");
-    addInitialValue(ejectDistance, ReefLevel.L3, 0.185, "EjectDistance");
-    addInitialValue(ejectDistance, ReefLevel.L4, 0.135, "EjectDistance");
+    addInitialValue(ejectDistance, ReefLevel.L2, 0.25, "EjectDistance");
+    addInitialValue(ejectDistance, ReefLevel.L3, 0.2125, "EjectDistance");
+    addInitialValue(ejectDistance, ReefLevel.L4, 0.1675, "EjectDistance");
 
     // Height Fudge Factors
     addInitialValue(heightFudges, ReefLevel.L2, -0.0275, "HeightFudges");
