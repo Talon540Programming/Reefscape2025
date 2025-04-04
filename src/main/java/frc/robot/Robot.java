@@ -78,9 +78,7 @@ public class Robot extends LoggedRobot {
           LoggedPowerDistribution.getInstance(1, PowerDistribution.ModuleType.kRev);
         }
       }
-      case SIM -> {
-        Logger.addDataReceiver(new RLOGServer());
-      }
+      case SIM -> Logger.addDataReceiver(new RLOGServer());
       case REPLAY -> {
         setUseTiming(false); // Run as fast as possible
         String logPath = LogFileUtil.findReplayLog();
