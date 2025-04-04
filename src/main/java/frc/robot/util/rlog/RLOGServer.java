@@ -14,7 +14,7 @@ import org.littletonrobotics.junction.LogDataReceiver;
 import org.littletonrobotics.junction.LogTable;
 
 /** Sends log data over a socket connection using the RLOG format. */
-public class RLOGServer implements LogDataReceiver {
+public class RLOGServer implements LogDataReceiver, AutoCloseable {
   private final int port;
   private ServerThread thread;
   private final RLOGEncoder encoder = new RLOGEncoder();
@@ -64,7 +64,15 @@ public class RLOGServer implements LogDataReceiver {
     return fullData;
   }
 
-  private class ServerThread extends Thread {
+  @Override
+  public void close() throws Exception {
+    if (thread != null) {
+      thread.close();
+      thread = null;
+    }
+  }
+
+  private class ServerThread extends Thread implements AutoCloseable {
     private static final double heartbeatTimeoutSecs =
         3.0; // Close connection if heartbeat not received for this
     // length
@@ -184,6 +192,7 @@ public class RLOGServer implements LogDataReceiver {
               + socket.getInetAddress().getHostAddress());
     }
 
+    @Override
     public void close() {
       if (server != null) {
         try {
