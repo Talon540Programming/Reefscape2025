@@ -4,7 +4,7 @@ import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.FieldConstants;
-import frc.robot.commands.AutoScoreCommands.CoralObjective;
+import frc.robot.FieldConstants.CoralObjective;
 import java.util.Arrays;
 import java.util.function.BooleanSupplier;
 import lombok.Getter;

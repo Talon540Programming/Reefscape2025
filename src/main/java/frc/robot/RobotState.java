@@ -42,7 +42,12 @@ public class RobotState {
   static {
     for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
       tagPoses2d.put(
-          i, FieldConstants.fieldLayout.getTagPose(i).map(Pose3d::toPose2d).orElse(Pose2d.kZero));
+          i,
+          FieldConstants.defaultAprilTagType
+              .getLayout()
+              .getTagPose(i)
+              .map(Pose3d::toPose2d)
+              .orElse(Pose2d.kZero));
     }
   }
 

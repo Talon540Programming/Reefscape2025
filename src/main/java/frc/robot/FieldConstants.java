@@ -217,4 +217,6 @@ public class FieldConstants {
 
     private final String jsonFolder;
   }
+
+  public record CoralObjective(int branchId, ReefLevel reefLevel) {}
 }
