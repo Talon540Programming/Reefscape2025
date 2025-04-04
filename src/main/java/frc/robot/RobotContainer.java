@@ -155,7 +155,7 @@ public class RobotContainer {
 
   private void registerStateTriggers() {
     // Put the elevator down if the robot is starting to tip
-    double tipThresholdDeg = 25.0;
+    double tipThresholdDeg = 10.0;
     new Trigger(
             () ->
                 Math.abs(RobotState.getInstance().getPitch().getDegrees()) > tipThresholdDeg
