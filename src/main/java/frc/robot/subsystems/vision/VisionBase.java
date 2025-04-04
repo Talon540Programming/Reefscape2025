@@ -102,7 +102,14 @@ public class VisionBase extends VirtualSubsystem {
     }
     LEDBase.getInstance().visionDisconnected = anyNTDisconnected;
 
+    // Update FieldLayout
     var aprilTagType = getSelectedAprilTagLayout();
+    if (aprilTagType != lastAprilTagLayout) {
+      lastAprilTagLayout = aprilTagType;
+      for (VisionIO visionIO : io) {
+        visionIO.setAprilTagFieldLayout(aprilTagType);
+      }
+    }
     boolean atflAlertActive = aprilTagType != FieldConstants.defaultAprilTagType;
     aprilTagLayoutAlert.set(atflAlertActive);
     if (atflAlertActive) {

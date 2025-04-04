@@ -103,4 +103,6 @@ public interface VisionIO {
       Rotation2d yaw) {}
 
   public default void updateInputs(VisionIOInputs inputs) {}
+
+  public default void setAprilTagFieldLayout(AprilTagLayoutType layoutType) {}
 }

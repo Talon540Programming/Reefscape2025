@@ -55,6 +55,11 @@ public class VisionIOSim extends VisionIOPhotonCamera {
     super.updateInputs(inputs);
   }
 
+  @Override
+  public void setAprilTagFieldLayout(FieldConstants.AprilTagLayoutType layoutType) {
+    m_visionSystemSim.addAprilTags(layoutType.getLayout());
+  }
+
   private void setCalibrationFromConfig(
       Path path, int resWidth, int resHeight, SimCameraProperties properties)
       throws IOException, IllegalStateException {

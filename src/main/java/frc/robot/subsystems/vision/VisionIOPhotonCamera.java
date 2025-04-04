@@ -3,15 +3,24 @@ package frc.robot.subsystems.vision;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
+import frc.robot.FieldConstants;
 import java.util.ArrayList;
 import java.util.Optional;
 import org.photonvision.PhotonCamera;
 
 public class VisionIOPhotonCamera implements VisionIO {
   protected final PhotonCamera camera;
+  private final StringPublisher atflPublisher;
 
   public VisionIOPhotonCamera(int index) {
     camera = new PhotonCamera(cameras[index].cameraName());
+    atflPublisher =
+        NetworkTableInstance.getDefault()
+            .getTable(PhotonCamera.kTableName)
+            .getStringTopic("apriltag_field_layout")
+            .publish();
   }
 
   @Override
@@ -60,5 +69,10 @@ public class VisionIOPhotonCamera implements VisionIO {
 
       inputs.observations[i] = observationBuilder.build();
     }
+  }
+
+  @Override
+  public void setAprilTagFieldLayout(FieldConstants.AprilTagLayoutType layoutType) {
+    atflPublisher.set(layoutType.getLayoutString());
   }
 }
