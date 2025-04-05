@@ -266,7 +266,7 @@ public class RobotContainer {
         (faceButton, level) -> {
           faceButton.whileTrueRepeatedly(
               elevatorBase
-                  .runGoal(() -> Preset.fromLevel(level))
+                  .runGoal(() -> ElevatorBase.getScoringState(level))
                   .withName("Operator Score on " + level));
         };
 

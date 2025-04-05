@@ -133,14 +133,5 @@ public record ElevatorPose(DoubleSupplier elevatorHeight) {
     public double getElevatorHeight() {
       return pose.elevatorHeight.getAsDouble();
     }
-
-    public static Preset fromLevel(ReefLevel level) {
-      return switch (level) {
-        case L1 -> L1_CORAL;
-        case L2 -> L2_CORAL;
-        case L3 -> L3_CORAL;
-        case L4 -> L4_CORAL;
-      };
-    }
   }
 }
