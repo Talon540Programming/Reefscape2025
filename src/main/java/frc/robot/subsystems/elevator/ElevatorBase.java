@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.EqualsUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.Supplier;
@@ -99,6 +100,8 @@ public class ElevatorBase extends SubsystemBase {
   @AutoLogOutput(key = "Elevator/Profile/AtGoal")
   private boolean atGoal = false;
 
+  private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
+  private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
 
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
@@ -210,6 +213,12 @@ public class ElevatorBase extends SubsystemBase {
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
+
+    LEDBase.getInstance().elevatorGoal = goal;
+
+    measuredVisualizer.update(getPositionMeters());
+    setpointVisualizer.update(setpoint.position);
+  }
 
   public boolean atGoal() {
     return atGoal;

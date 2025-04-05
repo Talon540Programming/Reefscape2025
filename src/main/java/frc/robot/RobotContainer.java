@@ -136,10 +136,13 @@ public class RobotContainer {
 
     var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
     autoChooser.addDefaultOption("Noting", Commands.none());
-    autoChooser.addOption("Chungus", autoBuilder.chungusAuto(false));
-    autoChooser.addOption("DeadreckonedChungus", autoBuilder.chungusAuto(true));
+    // autoChooser.addOption("Chungus", autoBuilder.chungusAuto(false));
+    // autoChooser.addOption("DeadreckonedChungus", autoBuilder.chungusAuto(true));
     autoChooser.addOption("SuperSafeSkibidiL4", autoBuilder.superSafeSkibidiL4());
+    autoChooser.addOption("SuperSafeSideStartL4", autoBuilder.superSafeSideStartL4());
     autoChooser.addOption("Taxi", autoBuilder.taxi());
+    autoChooser.addOption("ALL MIGHTY PUSHHHH", autoBuilder.painAuto());
+    // autoChooser.addOption("PracticeFieldAuto", autoBuilder.practiceFieldAuto());
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -282,7 +285,7 @@ public class RobotContainer {
                               case L2_CORAL -> ReefLevel.L2;
                               case L3_CORAL -> ReefLevel.L3;
                               case L4_CORAL -> ReefLevel.L4;
-                              default -> ReefLevel.L3;
+                              default -> ReefLevel.L2;
                             }))
                 .withTimeout(0.75));
 

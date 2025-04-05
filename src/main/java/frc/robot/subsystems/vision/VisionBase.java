@@ -118,6 +118,7 @@ public class VisionBase extends VirtualSubsystem {
     }
 
     // Loop over instances
+    List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<VisionObservation> allVisionObservations = new ArrayList<>();
     Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
@@ -142,11 +143,10 @@ public class VisionBase extends VirtualSubsystem {
         Pose2d robotPose = null;
         boolean useVisionRotation = false;
         Matrix<N3, N1> baseStdevs = null;
-
         if (observation.multitagResult.isPresent()) {
           var multitagRes = observation.multitagResult.get();
           // Handle Multitag
-          cameraPose = GeomUtil.toPose3d(multitagRes.multitagTagToCamera());
+          cameraPose = multitagRes.multitagCamPose().toPose3d();
           robotPose =
               cameraPose
                   .toPose2d()
@@ -165,44 +165,41 @@ public class VisionBase extends VirtualSubsystem {
             if (tagPoseOpt.isEmpty()) break;
             var tagPose = tagPoseOpt.get();
 
-            var fieldToTarget = tagPose.toTransform3d();
+            var bestCamPose = tagPose.transformBy(singleTagRes.bestCamToTag().inverse());
+            var altCamPose = tagPose.transformBy(singleTagRes.altCamToTag().inverse());
 
-            var bestCamToTarget = singleTagRes.bestTagToCamera();
-            var altCamToTarget = singleTagRes.altTagToCamera();
-
-            var bestFieldToCamera = fieldToTarget.plus(bestCamToTarget.inverse());
-            var altFieldToCamera = fieldToTarget.plus(altCamToTarget.inverse());
-
-            var bestFieldToRobot =
-                bestFieldToCamera.plus(cameras[cameraIndex].robotToCamera().inverse());
-            var altFieldToRobot =
-                altFieldToCamera.plus(cameras[cameraIndex].robotToCamera().inverse());
-
-            var bestPose = bestFieldToRobot.toPose3d().toPose2d();
-            var altPose = altFieldToRobot.toPose3d().toPose2d();
+            var bestRobotPose =
+                bestCamPose
+                    .toPose2d()
+                    .transformBy(cameras[cameraIndex].robotToCamera().toTransform2d().inverse());
+            var altRobotPose =
+                altCamPose
+                    .toPose2d()
+                    .transformBy(cameras[cameraIndex].robotToCamera().toTransform2d().inverse());
 
             // TODO latency compensate this to get rotation at this timestamp for better accuracy
             var sampledPose = RobotState.getInstance().getEstimatedPose();
             var sampledRot = sampledPose.getRotation();
-            var bestRot = bestPose.getRotation();
-            var altRot = altPose.getRotation();
+            var bestRot = bestRobotPose.getRotation();
+            var altRot = altRobotPose.getRotation();
 
             if (Math.abs(sampledRot.minus(bestRot).getRadians())
                 < Math.abs(sampledRot.minus(altRot).getRadians())) {
-              cameraPose = bestFieldToCamera.toPose3d();
-              robotPose = bestPose;
-              camToTagDistance = bestCamToTarget.getTranslation().getNorm();
+              cameraPose = bestCamPose;
+              robotPose = bestRobotPose;
+              camToTagDistance = singleTagRes.bestCamToTag().getTranslation().getNorm();
             } else {
-              cameraPose = altFieldToCamera.toPose3d();
-              robotPose = altPose;
-              camToTagDistance = altCamToTarget.getTranslation().getNorm();
+              cameraPose = altCamPose;
+              robotPose = altRobotPose;
+              camToTagDistance = singleTagRes.altCamToTag().getTranslation().getNorm();
             }
 
-            useVisionRotation = false; // should be disabled after 2d works
+            useVisionRotation = false;
             baseStdevs = singleTagStdevs;
+
           } else {
             // This estimation is shit, we can still use it for alignment though
-            camToTagDistance = singleTagRes.bestTagToCamera().getTranslation().getNorm();
+            camToTagDistance = singleTagRes.bestCamToTag().getTranslation().getNorm();
           }
 
           // Handle TxTy Observation
@@ -258,12 +255,14 @@ public class VisionBase extends VirtualSubsystem {
 
         allVisionObservations.add(new VisionObservation(robotPose, timestamp, observationStdevs));
         allRobotPoses.add(robotPose);
+        allCameraPoses.add(cameraPose);
 
         // Log data from instance
         if (enableInstanceLogging) {
           Logger.recordOutput(
               "AprilTagVision/Inst" + cameraIndex + "/LatencySecs",
               Timer.getTimestamp() - timestamp);
+          Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/CameraPose", cameraPose);
           Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/RobotPose", robotPose);
           Logger.recordOutput(
               "AprilTagVision/Inst" + cameraIndex + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
@@ -280,6 +279,7 @@ public class VisionBase extends VirtualSubsystem {
 
       //   If no frames from instances, clear robot pose
       if (enableInstanceLogging && inputs[cameraIndex].observations.length == 0) {
+        Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/CameraPose", Pose3d.kZero);
         Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/RobotPose", Pose2d.kZero);
       }
 
@@ -290,7 +290,8 @@ public class VisionBase extends VirtualSubsystem {
       }
     }
 
-    // Log robot poses
+    // Log poses
+    Logger.recordOutput("AprilTagVision/CameraPoses", allCameraPoses.toArray(Pose3d[]::new));
     Logger.recordOutput("AprilTagVision/RobotPoses", allRobotPoses.toArray(Pose2d[]::new));
 
     // Log tag poses

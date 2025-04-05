@@ -28,18 +28,18 @@ public interface VisionIO {
         observation.multitagResult.ifPresentOrElse(
             multitagPose -> {
               packet.encode(true);
-              PacketUtils.packTransform3d(packet, multitagPose.multitagTagToCamera);
+              PacketUtils.packTransform3d(packet, multitagPose.multitagCamPose);
             },
             () -> packet.encode(false));
         observation.singleTagResult.ifPresentOrElse(
-            singletagPose -> {
+            singleTagPose -> {
               packet.encode(true);
-              packet.encode(singletagPose.tagId);
-              PacketUtils.packTransform3d(packet, singletagPose.bestTagToCamera);
-              PacketUtils.packTransform3d(packet, singletagPose.altTagToCamera);
-              packet.encode(singletagPose.ambiguity);
-              PacketUtils.packRotation2d(packet, singletagPose.pitch);
-              PacketUtils.packRotation2d(packet, singletagPose.yaw);
+              packet.encode(singleTagPose.tagId());
+              PacketUtils.packTransform3d(packet, singleTagPose.bestCamToTag());
+              PacketUtils.packTransform3d(packet, singleTagPose.altCamToTag());
+              packet.encode(singleTagPose.ambiguity());
+              PacketUtils.packRotation2d(packet, singleTagPose.pitch());
+              PacketUtils.packRotation2d(packet, singleTagPose.yaw());
             },
             () -> packet.encode(false));
         packet.encode(observation.detectedTagIds);
@@ -92,12 +92,12 @@ public interface VisionIO {
     @Builder.Default public final List<Short> detectedTagIds = List.of();
   }
 
-  public record MultitagPoseObservation(Transform3d multitagTagToCamera) {}
+  public record MultitagPoseObservation(Transform3d multitagCamPose) {}
 
   public record SingleTagPoseObservation(
       int tagId,
-      Transform3d bestTagToCamera,
-      Transform3d altTagToCamera,
+      Transform3d bestCamToTag,
+      Transform3d altCamToTag,
       double ambiguity,
       Rotation2d pitch,
       Rotation2d yaw) {}
