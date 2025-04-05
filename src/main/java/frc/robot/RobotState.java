@@ -13,6 +13,7 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.vision.VisionBase;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.GeomUtil;
@@ -37,19 +38,6 @@ public class RobotState {
   // Increase these numbers to trust your state estimate less.
   private static final Matrix<N3, N1> odometryStateStdDevs = VecBuilder.fill(0.003, 0.003, 0.002);
   private static final double poseBufferSizeSec = 2.0;
-  private static final Map<Integer, Pose2d> tagPoses2d = new HashMap<>();
-
-  static {
-    for (int i = 1; i <= FieldConstants.aprilTagCount; i++) {
-      tagPoses2d.put(
-          i,
-          FieldConstants.defaultAprilTagType
-              .getLayout()
-              .getTagPose(i)
-              .map(Pose3d::toPose2d)
-              .orElse(Pose2d.kZero));
-    }
-  }
 
   private static RobotState instance;
 
@@ -192,6 +180,15 @@ public class RobotState {
       return;
     }
 
+    // Skip if not a valid observation
+    var tagPose2dOpt =
+        VisionBase.getSelectedAprilTagLayout()
+            .getLayout()
+            .getTagPose(observation.tagId())
+            .map(Pose3d::toPose2d);
+    if (tagPose2dOpt.isEmpty()) return;
+    var tagPose2d = tagPose2dOpt.get();
+
     // Get rotation at timestamp
     var sample = poseBuffer.getSample(observation.timestamp());
     if (sample.isEmpty()) {
@@ -202,7 +199,6 @@ public class RobotState {
     Rotation2d robotRotation =
         estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
     var robotToCamera = VisionConstants.cameras[observation.camConfigIndex].robotToCamera();
-    var cameraPose = robotToCamera.toPose3d();
 
     // Use 3D distance and tag angles to find robot pose
     Translation2d camToTagTranslation =
@@ -212,21 +208,25 @@ public class RobotState {
             .transformBy(
                 new Transform3d(new Translation3d(observation.distance(), 0, 0), Rotation3d.kZero))
             .getTranslation()
-            .rotateBy(new Rotation3d(0, cameraPose.getRotation().getY(), 0))
+            .rotateBy(new Rotation3d(0, robotToCamera.getRotation().getY(), 0))
             .toTranslation2d();
     Rotation2d camToTagRotation =
         robotRotation.plus(
-            cameraPose.toPose2d().getRotation().plus(camToTagTranslation.getAngle()));
-    var tagPose2d = tagPoses2d.get(observation.tagId());
-    if (tagPose2d == null) return;
+            robotToCamera.getRotation().toRotation2d().plus(camToTagTranslation.getAngle()));
     Translation2d fieldToCameraTranslation =
         new Pose2d(tagPose2d.getTranslation(), camToTagRotation.plus(Rotation2d.kPi))
             .transformBy(GeomUtil.toTransform2d(camToTagTranslation.getNorm(), 0.0))
             .getTranslation();
     Pose2d robotPose =
         new Pose2d(
-                fieldToCameraTranslation, robotRotation.plus(cameraPose.toPose2d().getRotation()))
-            .transformBy(new Transform2d(cameraPose.toPose2d(), Pose2d.kZero));
+                fieldToCameraTranslation,
+                robotRotation.plus(robotToCamera.getRotation().toRotation2d()))
+            .transformBy(
+                new Transform2d(
+                    new Pose2d(
+                        robotToCamera.getTranslation().toTranslation2d(),
+                        robotToCamera.getRotation().toRotation2d()),
+                    Pose2d.kZero));
     // Use gyro angle at time for robot rotation
     robotPose = new Pose2d(robotPose.getTranslation(), robotRotation);
 
