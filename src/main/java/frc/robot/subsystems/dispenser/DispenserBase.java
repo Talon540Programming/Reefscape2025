@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.FieldConstants;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -49,6 +50,7 @@ public class DispenserBase extends SubsystemBase {
 
     // Update if holding coral.
     holdingCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
+    LEDBase.getInstance().hasCoral = holdingCoral;
   }
 
   public boolean holdingCoral() {

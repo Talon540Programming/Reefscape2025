@@ -73,6 +73,10 @@ public class LEDBase extends VirtualSubsystem {
   public boolean visionDisconnected = false;
   private boolean lastEnabledAuto = false;
   private double lastEnabledTime = 0.0;
+  public boolean atGoal = false;
+  public double percentToGoal = 0.0;
+  public boolean hasCoral = false;
+  public boolean goalisStow = false;
 
   private LEDBase() {
     // Initialize IO
@@ -92,8 +96,7 @@ public class LEDBase extends VirtualSubsystem {
                     fullSection,
                     primaryColor,
                     Color.kBlack,
-                    breathSlowDuration,
-                    Timer.getTimestamp());
+                    breathSlowDuration);
                 leds.setData(buffer);
               }
             });
@@ -174,14 +177,15 @@ public class LEDBase extends VirtualSubsystem {
       wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
     } else {
       // Default pattern
-      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+      breath(fullSection, Color.kWhite, Color.kRed, breathFastDuration);
+      // rainbow(fullSection, rainbowCycleLength, rainbowDuration);
 
       if (autoScoringReef) {
         wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
       }
 
       if (intaking) {
-        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+        wave(fullSection, Color.kBlack, Color.kBlue, waveFastCycleLength, waveFastDuration);
       }
 
       // Human player alert
@@ -192,6 +196,22 @@ public class LEDBase extends VirtualSubsystem {
       // Endgame alert
       if (endgameAlert) {
         strobe(fullSection, Color.kRed, Color.kWhite, strobeDuration);
+      }
+
+      if (!atGoal) {
+        final Section leftChargeupSection = new Section(0, (int) (30 * percentToGoal));
+        final Section rightChargeupSection = new Section(61 - (int) (30 * percentToGoal), 61);
+
+        rainbow(leftChargeupSection, rainbowCycleLength, rainbowDuration);
+        rainbow(rightChargeupSection, rainbowCycleLength, rainbowDuration);
+      }
+
+      if (atGoal && !goalisStow) {
+        rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+      }
+
+      if (goalisStow) {
+        breath(fullSection, Color.kWhite, Color.kRed, breathFastDuration);
       }
     }
 
@@ -227,10 +247,10 @@ public class LEDBase extends VirtualSubsystem {
     solid(section, c1On ? c1 : c2);
   }
 
-  private void breath(Section section, Color c1, Color c2, double duration, double timestamp) {
+  private void breath(Section section, Color c1, Color c2, double duration) {
     if (section == null) return;
 
-    double x = ((timestamp % duration) / duration) * 2.0 * Math.PI;
+    double x = ((Timer.getTimestamp() % duration) / duration) * 2.0 * Math.PI;
     double ratio = (Math.sin(x) + 1.0) / 2.0;
     var color = Color.lerpRGB(c1, c2, ratio);
     solid(section, color);

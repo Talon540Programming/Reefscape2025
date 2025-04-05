@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.RobotState;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
 import frc.robot.subsystems.leds.LEDBase;
@@ -215,9 +216,12 @@ public class ElevatorBase extends SubsystemBase {
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
 
     LEDBase.getInstance().elevatorGoal = goal;
+    LEDBase.getInstance().percentToGoal = Math.abs(setpoint.position - getPositionMeters()) / setpoint.position;
+    LEDBase.getInstance().goalisStow = goal == ElevatorPose.Preset.STOW;
 
     measuredVisualizer.update(getPositionMeters());
     setpointVisualizer.update(setpoint.position);
+
   }
 
   public boolean atGoal() {
