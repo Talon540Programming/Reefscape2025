@@ -201,7 +201,7 @@ public class RobotState {
 
     Rotation2d robotRotation =
         estimatedPose.transformBy(new Transform2d(odometryPose, sample.get())).getRotation();
-    var robotToCamera = VisionConstants.cameras[observation.camera].robotToCamera();
+    var robotToCamera = VisionConstants.cameras[observation.camConfigIndex].robotToCamera();
     var cameraPose = robotToCamera.toPose3d();
 
     // Use 3D distance and tag angles to find robot pose
@@ -300,7 +300,12 @@ public class RobotState {
   public record VisionObservation(Pose2d visionPose, double timestamp, Matrix<N3, N1> stdDevs) {}
 
   public record TxTyObservation(
-      int tagId, int camera, Rotation2d pitch, Rotation2d yaw, double distance, double timestamp) {}
+      int tagId,
+      int camConfigIndex,
+      Rotation2d pitch,
+      Rotation2d yaw,
+      double distance,
+      double timestamp) {}
 
   public record TxTyPoseRecord(Pose2d pose, double distance, double timestamp) {}
 }
