@@ -105,4 +105,8 @@ public interface VisionIO {
   public default void updateInputs(VisionIOInputs inputs) {}
 
   public default void setAprilTagFieldLayout(AprilTagLayoutType layoutType) {}
+
+  public default int getCamIndex() {
+    return -1;
+  }
 }

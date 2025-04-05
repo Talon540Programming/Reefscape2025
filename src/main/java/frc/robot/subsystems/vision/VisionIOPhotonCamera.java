@@ -12,10 +12,12 @@ import org.photonvision.PhotonCamera;
 
 public class VisionIOPhotonCamera implements VisionIO {
   protected final PhotonCamera camera;
+  private final int camIndex;
   private final StringPublisher atflPublisher;
 
   public VisionIOPhotonCamera(int index) {
     camera = new PhotonCamera(cameras[index].cameraName());
+    camIndex = index;
     atflPublisher =
         NetworkTableInstance.getDefault()
             .getTable(PhotonCamera.kTableName)
@@ -74,5 +76,10 @@ public class VisionIOPhotonCamera implements VisionIO {
   @Override
   public void setAprilTagFieldLayout(FieldConstants.AprilTagLayoutType layoutType) {
     atflPublisher.set(layoutType.getLayoutString());
+  }
+
+  @Override
+  public int getCamIndex() {
+    return camIndex;
   }
 }

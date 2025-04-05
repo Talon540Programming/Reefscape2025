@@ -57,7 +57,6 @@ public class VisionConstants {
                       Path.of("camera_calibrations/frontright_calibration@1280x800.json"))
                   .build()
             };
-        default -> new CameraConfig[] {};
       };
 
   @Builder

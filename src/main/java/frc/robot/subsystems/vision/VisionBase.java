@@ -76,7 +76,8 @@ public class VisionBase extends VirtualSubsystem {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs(
-          String.format("Vision/Inst%d (%s)", i, cameras[i].cameraName()), inputs[i]);
+          String.format("Vision/Inst%d (%s)", i, cameras[io[i].getCamIndex()].cameraName()),
+          inputs[i]);
     }
 
     // Update disconnected alerts
@@ -93,9 +94,10 @@ public class VisionBase extends VirtualSubsystem {
             inputs[i].ntConnected
                 ? String.format(
                     "Vision Inst%d (%s) connected to NT but not publishing frames",
-                    i, cameras[i].cameraName())
+                    i, cameras[io[i].getCamIndex()].cameraName())
                 : String.format(
-                    "Vision Inst%d (%s) disconnected from NT", i, cameras[i].cameraName()));
+                    "Vision Inst%d (%s) disconnected from NT",
+                    i, cameras[io[i].getCamIndex()].cameraName()));
       }
       cameraDisconnectedAlerts[i].set(disconnected);
       anyNTDisconnected = anyNTDisconnected || !inputs[i].ntConnected;
@@ -122,6 +124,7 @@ public class VisionBase extends VirtualSubsystem {
     List<VisionObservation> allVisionObservations = new ArrayList<>();
     Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
+      int camConfigIndex = io[cameraIndex].getCamIndex();
       Map<Integer, TxTyObservation> txTyObservations = new HashMap<>();
 
       for (int observationIndex = 0;
@@ -142,7 +145,6 @@ public class VisionBase extends VirtualSubsystem {
         Pose2d robotPose = null;
         boolean useVisionRotation = false;
         Matrix<N3, N1> baseStdevs = null;
-
         if (observation.multitagResult.isPresent()) {
           var multitagRes = observation.multitagResult.get();
           // Handle Multitag
@@ -150,7 +152,7 @@ public class VisionBase extends VirtualSubsystem {
           robotPose =
               cameraPose
                   .toPose2d()
-                  .transformBy(cameras[cameraIndex].robotToCamera().toTransform2d().inverse());
+                  .transformBy(cameras[camConfigIndex].robotToCamera().toTransform2d().inverse());
           useVisionRotation = true;
           baseStdevs = multiTagStdevs;
         } else if (observation.singleTagResult.isPresent()) {
@@ -198,7 +200,7 @@ public class VisionBase extends VirtualSubsystem {
               camToTagDistance = altCamToTarget.getTranslation().getNorm();
             }
 
-            useVisionRotation = false; // should be disabled after 2d works
+            useVisionRotation = false;
             baseStdevs = singleTagStdevs;
           } else {
             // This estimation is shit, we can still use it for alignment though
@@ -210,7 +212,7 @@ public class VisionBase extends VirtualSubsystem {
               singleTagRes.tagId(),
               new TxTyObservation(
                   singleTagRes.tagId(),
-                  cameraIndex,
+                  camConfigIndex,
                   singleTagRes.pitch(),
                   singleTagRes.yaw(),
                   camToTagDistance,
@@ -246,12 +248,12 @@ public class VisionBase extends VirtualSubsystem {
 
         // Update observation trust matrix
         double xyStdev =
-            Math.pow(avgDistance, 2) / tagPoses.size() * cameras[cameraIndex].cameraBiasScalar();
+            Math.pow(avgDistance, 2) / tagPoses.size() * cameras[camConfigIndex].cameraBiasScalar();
         double rotStdev =
             useVisionRotation
                 ? Math.pow(avgDistance, 2)
                     / tagPoses.size()
-                    * cameras[cameraIndex].cameraBiasScalar()
+                    * cameras[camConfigIndex].cameraBiasScalar()
                 : Double.POSITIVE_INFINITY;
         var observationStdevs =
             baseStdevs.elementTimes(VecBuilder.fill(xyStdev, xyStdev, rotStdev));
