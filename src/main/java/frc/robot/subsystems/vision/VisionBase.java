@@ -33,9 +33,9 @@ public class VisionBase extends VirtualSubsystem {
       new LoggedTunableNumber("AprilTagVision/TimestampOffset", 0.0);
 
   private final Alert aprilTagLayoutAlert = new Alert("", Alert.AlertType.kInfo);
-  private final LoggedNetworkBoolean aprilTagsReef =
+  private static final LoggedNetworkBoolean aprilTagsReef =
       new LoggedNetworkBoolean("/SmartDashboard/AprilTagVision/OnlyUseReefAprilTags", false);
-  private final LoggedNetworkBoolean aprilTagFieldBorder =
+  private static final LoggedNetworkBoolean aprilTagFieldBorder =
       new LoggedNetworkBoolean("/SmartDashboard/AprilTagVision/OnlyUseBorderAprilTags", false);
   private FieldConstants.AprilTagLayoutType lastAprilTagLayout = null;
 
@@ -292,7 +292,7 @@ public class VisionBase extends VirtualSubsystem {
   }
 
   /** Returns the current AprilTag layout type. */
-  public FieldConstants.AprilTagLayoutType getSelectedAprilTagLayout() {
+  public static FieldConstants.AprilTagLayoutType getSelectedAprilTagLayout() {
     if (aprilTagsReef.get()) {
       if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Blue) {
         return FieldConstants.AprilTagLayoutType.BLUE_REEF;
