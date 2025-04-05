@@ -139,7 +139,10 @@ public class RobotContainer {
     autoChooser.addOption("Chungus", autoBuilder.chungusAuto(false));
     autoChooser.addOption("DeadreckonedChungus", autoBuilder.chungusAuto(true));
     autoChooser.addOption("SuperSafeSkibidiL4", autoBuilder.superSafeSkibidiL4());
+    autoChooser.addOption("SuperSafeSideStartSkibidiL4", autoBuilder.superSafeSideStartSkibidiL4());
     autoChooser.addOption("Taxi", autoBuilder.taxi());
+    autoChooser.addOption("PracticeFieldAuto", autoBuilder.practiceFieldAuto());
+    autoChooser.addOption("PracticeFieldAutoMulti", autoBuilder.practiceFieldMultiAuto());
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -274,6 +277,19 @@ public class RobotContainer {
     bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
     bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
     bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
+
+    // var obj = new FieldConstants.CoralObjective(3, ReefLevel.L4);
+    // controller
+    //     .b()
+    //     .whileTrue(
+    //         AutoScoreCommands.autoScore(
+    //             driveBase,
+    //             elevatorBase,
+    //             dispenserBase,
+    //             intakeBase,
+    //             obj::reefLevel,
+    //             () -> Optional.of(obj)));
+
     controller
         .rightTrigger()
         .onTrue(

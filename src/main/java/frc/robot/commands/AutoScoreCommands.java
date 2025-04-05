@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.FieldConstants.*;
 import frc.robot.RobotState;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -92,8 +91,6 @@ public class AutoScoreCommands {
       new LoggedTunableNumber("AutoScore/L1AlignOffsetY", 0.0);
   private static final LoggedTunableNumber l1AlignOffsetTheta =
       new LoggedTunableNumber("AutoScore/L1AlignOffsetTheta", 180.0);
-  private static final LoggedTunableNumber minDistanceAim =
-      new LoggedTunableNumber("AutoScore/MinDistanceAim", 0.2);
   private static final LoggedTunableNumber[] ejectTimeSeconds = {
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L1", 0.5),
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L2", 0.5),
@@ -153,10 +150,10 @@ public class AutoScoreCommands {
             goalPose =
                 goalPose.transformBy(
                     GeomUtil.toTransform2d(
-                        goalPose.getTranslation().getDistance(Reef.center)
+                        -(goalPose.getTranslation().getDistance(Reef.center)
                             - Reef.faceLength
                             - (DriveConstants.robotWidth / 2.0)
-                            - clearDistance,
+                            + clearDistance),
                         0.0));
           }
           Logger.recordOutput("AutoScore/Goal", AllianceFlipUtil.apply(goalPose));
@@ -201,17 +198,16 @@ public class AutoScoreCommands {
     var needsToGetBack = new AtomicBoolean(false);
     var hasEnded = new AtomicBoolean(false);
 
-    // Schedule get back command
-    new Trigger(() -> hasEnded.get() && needsToGetBack.get())
-        .and(() -> !disableReefAutoAlign.getAsBoolean())
-        .onTrue(
-            getBackCorrectiveMeasure(driveBase, driverX, driverY, driverOmega, robotRelative)
-                .finallyDo(() -> needsToGetBack.set(false))
-                .withName("Corrective Measure"));
+    // // Schedule get back command
+    // new Trigger(() -> hasEnded.get() && needsToGetBack.get())
+    //     .and(() -> !disableReefAutoAlign.getAsBoolean())
+    //     .onTrue(
+    //         getBackCorrectiveMeasure(driveBase, driverX, driverY, driverOmega, robotRelative)
+    //             .finallyDo(() -> needsToGetBack.set(false))
+    //             .withName("Corrective Measure"));
 
     Timer l4EjectTimer = new Timer();
     l4EjectTimer.start();
-
     return Commands.runOnce(
             () -> {
               // Start LEDs
@@ -223,12 +219,97 @@ public class AutoScoreCommands {
 
               // Log reef level
               Logger.recordOutput("AutoScore/ReefLevel", reefLevel.get().toString());
+
+              // Clear logs
+              Logger.recordOutput("AutoScore/AllowPreReady", false);
+              Logger.recordOutput("AutoScore/AllowEject", false);
             })
-        // TODO
+        .andThen(driveCommand)
+    //     .andThen(
+    //         preIntake(
+    //             elevatorBase,
+    //             intakeBase,
+    //             dispenserBase,
+    //             robot,
+    //             () -> reefLevel.get() == ReefLevel.L4,
+    //             disableReefAutoAlign),
+    //         // Check if you need wait until pre ready or already ready
+    //         Commands.waitUntil(
+    //             () -> {
+    //               boolean ready =
+    //                   coralObjective.get().isPresent()
+    //                           && readyForScore(
+    //                               robot.get(),
+    //                               goal.apply(coralObjective.get().get()),
+    //                               reefLevel.get() == ReefLevel.L4)
+    //                       || disableReefAutoAlign.getAsBoolean();
+    //               Logger.recordOutput("AutoScore/AllowReady", ready);
+    //
+    //               // Get back!
+    //               if (ready
+    //                   && (reefLevel.get() == ReefLevel.L4)
+    //                   && !disableReefAutoAlign.getAsBoolean()
+    //                   && DriverStation.isTeleopEnabled()) {
+    //                 needsToGetBack.set(true);
+    //               }
+    //               return ready;
+    //             }),
+    //         aimAndEject(
+    //                 elevatorBase,
+    //                 dispenserBase,
+    //                 reefLevel,
+    //                 () -> {
+    //                   if (coralObjective.get().isEmpty()) return false;
+    //                   Pose2d poseError =
+    //                       robot.get().relativeTo(goal.apply(coralObjective.get().get()));
+    //
+    //                   int intReefLevel = coralObjective.get().get().reefLevel().ordinal();
+    //                   var driveChassisSpeeds = driveBase.getChassisSpeeds();
+    //                   boolean ready =
+    //                       (Math.abs(poseError.getTranslation().getX())
+    //                                   <= linearXToleranceEject[intReefLevel].get()
+    //                               && Math.abs(poseError.getTranslation().getY())
+    //                                   <= linearYToleranceEject[intReefLevel].get()
+    //                               && Math.hypot(
+    //                                       driveChassisSpeeds.vxMetersPerSecond,
+    //                                       driveChassisSpeeds.vyMetersPerSecond)
+    //                                   <= maxLinearVel[intReefLevel].get()
+    //                               && Math.abs(driveChassisSpeeds.omegaRadiansPerSecond)
+    //                                   <=
+    // Units.degreesToRadians(maxAngularVel[intReefLevel].get())
+    //                               && Math.abs(poseError.getRotation().getDegrees())
+    //                                   <= thetaToleranceEject[intReefLevel].get()
+    //                               && elevatorBase.atGoal()
+    //                               && !disableReefAutoAlign.getAsBoolean())
+    //                           || manualEject.getAsBoolean();
+    //                   if (reefLevel.get() == ReefLevel.L4) {
+    //                     if (!ready) {
+    //                       l4EjectTimer.restart();
+    //                     }
+    //                     ready =
+    //                         ready
+    //                             && l4EjectTimer.hasElapsed(
+    //                                 DriverStation.isAutonomous()
+    //                                     ? l4EjectDelayAuto.get()
+    //                                     : l4EjectDelay.get());
+    //                   }
+    //                   Logger.recordOutput("AutoScore/AllowEject", ready);
+    //                   return ready;
+    //                 },
+    //                 manualEject)
+    //             .andThen(
+    //                 elevatorBase
+    //                     .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
+    //                     .until(() -> !disableReefAutoAlign.getAsBoolean())))
+    //     .deadlineFor(
+    //         Commands.either(
+    //             joystickDrive, driveCommand, disableReefAutoAlign)) // Deadline with driving
         .finallyDo(
             interrupted -> {
               // Clear logs
               Logger.recordOutput("AutoScore/ReefLevel", "");
+              Logger.recordOutput("AutoScore/AllowPreReady", false);
+              Logger.recordOutput("AutoScore/AllowEject", false);
 
               // Stop LEDs
               LEDBase.getInstance().autoScoringReef = false;
@@ -267,26 +348,28 @@ public class AutoScoreCommands {
       Supplier<ReefLevel> reefLevel,
       BooleanSupplier eject,
       BooleanSupplier holdEject) {
-    final Timer ejectTimer = new Timer();
     return elevatorBase
-        .runGoal(() -> Preset.fromLevel(reefLevel.get()))
+        .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
         .until(eject)
         .andThen(
-            Commands.runOnce(ejectTimer::restart),
             elevatorBase
-                .runGoal(() -> Preset.fromLevel(reefLevel.get()))
-                .alongWith(
+                .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
+                .withDeadline(
                     Commands.waitUntil(elevatorBase::atGoal)
                         .andThen(
                             dispenserBase
                                 .runDispenser(
                                     () ->
                                         dispenserBase.getDispenserVoltageFromLevel(reefLevel.get()))
-                                .until(
-                                    () ->
-                                        ejectTimer.hasElapsed(
-                                                ejectTimeSeconds[reefLevel.get().ordinal()].get())
-                                            && !holdEject.getAsBoolean()))));
+                                .withDeadline(
+                                    Commands.deferredProxy(
+                                            () ->
+                                                Commands.waitSeconds(
+                                                    ejectTimeSeconds[reefLevel.get().ordinal()]
+                                                        .get()))
+                                        .andThen(
+                                            Commands.waitUntil(() -> !holdEject.getAsBoolean()))))),
+            elevatorBase.runGoal(Preset.STOW));
   }
 
   private static Command preIntake(
@@ -350,7 +433,6 @@ public class AutoScoreCommands {
                     RobotState.getInstance().getEstimatedPose(), correctiveMeasureDistance.get()));
   }
 
-
   public static Command autoAlign(
       DriveBase driveBase,
       ElevatorBase elevatorBase,
@@ -376,15 +458,15 @@ public class AutoScoreCommands {
           boolean isL4 = objective.reefLevel() == ReefLevel.L4;
           if ((!elevatorBase.readyForL4() && isL4)
               || (elevatorBase.readyForL4()
-              && withinDistanceToReef(robot.get(), clearDistance - 0.05)
-              && !isL4)) {
+                  && withinDistanceToReef(robot.get(), clearDistance - 0.05)
+                  && !isL4)) {
             goalPose =
                 goalPose.transformBy(
                     GeomUtil.toTransform2d(
-                        goalPose.getTranslation().getDistance(Reef.center)
+                        -(goalPose.getTranslation().getDistance(Reef.center)
                             - Reef.faceLength
                             - (DriveConstants.robotWidth / 2.0)
-                            - clearDistance,
+                            + clearDistance),
                         0.0));
           }
           Logger.recordOutput("AutoScore/Goal", AllianceFlipUtil.apply(goalPose));
@@ -426,6 +508,12 @@ public class AutoScoreCommands {
         () -> DriveCommands.getOmegaFromJoysticks(driverOmega.getAsDouble()));
   }
 
+  public static Command autoAlign(
+      DriveBase driveBase,
+      ElevatorBase elevatorBase,
+      Supplier<Optional<CoralObjective>> coralObjective) {
+    return autoAlign(driveBase, elevatorBase, coralObjective, () -> 0, () -> 0, () -> 0);
+  }
 
   private static Pose2d getDriveTarget(Pose2d robot, Pose2d goal) {
     Rotation2d angleToGoal =
@@ -501,7 +589,7 @@ public class AutoScoreCommands {
   }
 
   /** Get position of robot aligned with branch for provided objective. */
-  private static Pose2d getCoralScorePose(CoralObjective coralObjective) {
+  public static Pose2d getCoralScorePose(CoralObjective coralObjective) {
     return getBranchPose(coralObjective)
         .transformBy(getCoralDispenserPose(coralObjective.reefLevel()).toRobotPose());
   }

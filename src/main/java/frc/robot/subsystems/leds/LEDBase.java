@@ -2,8 +2,13 @@ package frc.robot.subsystems.leds;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.subsystems.elevator.ElevatorPose;
 import frc.robot.util.VirtualSubsystem;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class LEDBase extends VirtualSubsystem {
   private static LEDBase instance;
@@ -33,9 +38,8 @@ public class LEDBase extends VirtualSubsystem {
 
   // Color Constants
   private static final Color primaryColor = Color.kWhite;
-  private static final Color secondaryColor = null; // TODO
-  private static final Color disabledColor = null; // TODO
-  private static final Color secondaryDisabledColor = null; // TODO
+  private static Color disabledColor = Color.kGold;
+  private static Color secondaryDisabledColor = Color.kRed;
   private static final Color stowColor = null; // TODO
   private static final Color l1Color = Color.kHotPink;
   private static final Color l2Color = Color.kOrange;
@@ -54,16 +58,21 @@ public class LEDBase extends VirtualSubsystem {
   private final Section firstTopBarSection = null; // TODO
   private final Section secondTopBarSection = null; // TODO
 
-  // private final Section scoringStateIndicators = null; // TODO
-  // private final Section coralIndicator = null; // TODO
-  // private final Section humanPlayerIndicator = null; // TODO
-
   // State Constants
+  private DriverStation.Alliance alliance;
   private static final int minLoopCycleCount = 10;
   public int loopCycleCount = 0;
-  public boolean autoScoringReef = false;
+  public ElevatorPose.Preset elevatorGoal = null;
+  public boolean lowBatteryAlert = false;
   public boolean humanPlayerAlert = false;
+  public boolean autoScoringReef = false;
+  public boolean intaking = false;
   public boolean endgameAlert = false;
+  public boolean robotTipping = false;
+  // public boolean reserializing = false;
+  public boolean visionDisconnected = false;
+  private boolean lastEnabledAuto = false;
+  private double lastEnabledTime = 0.0;
 
   private LEDBase() {
     // Initialize IO
@@ -91,8 +100,31 @@ public class LEDBase extends VirtualSubsystem {
     loadingNotifier.startPeriodic(0.02);
   }
 
+  // TODO make elevator charge up sequence
+  // TODO auto score indicator sequences
+  // TODO elevator goal indicators
+  // TODO reserialize error
+  // TODO vision state (error?)
+
   @Override
   public synchronized void periodic() {
+    // Update alliance color
+    if (DriverStation.isFMSAttached()) {
+      var allianceOpt = DriverStation.getAlliance();
+      allianceOpt.ifPresent(
+          alliance -> {
+            this.alliance = alliance;
+            disabledColor = alliance == DriverStation.Alliance.Blue ? Color.kBlue : Color.kRed;
+            secondaryDisabledColor = Color.kBlack;
+          });
+    }
+
+    // Update auto state
+    if (DriverStation.isEnabled()) {
+      lastEnabledAuto = DriverStation.isAutonomous();
+      lastEnabledTime = Timer.getTimestamp();
+    }
+
     // Exit during initial cycles
     loopCycleCount += 1;
     if (loopCycleCount < minLoopCycleCount) {
@@ -107,8 +139,37 @@ public class LEDBase extends VirtualSubsystem {
     if (DriverStation.isEStopped()) {
       solid(fullSection, Color.kRed);
     } else if (DriverStation.isDisabled()) {
-      // Default pattern
-      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+      if (lastEnabledAuto && Timer.getTimestamp() - lastEnabledTime < autoFadeMaxTime) {
+        // Auto fade
+        int length = (int) Math.ceil((numLEDs / 2.0));
+        wave(
+            new Section(
+                (int) (length * ((Timer.getTimestamp() - lastEnabledTime) / autoFadeTime)), length),
+            Color.kGold,
+            Color.kDarkBlue,
+            waveFastCycleLength,
+            waveFastDuration);
+      } else if (lowBatteryAlert) {
+        // Low battery
+        strobe(fullSection, Color.kOrangeRed, Color.kBlack, strobeDuration);
+      } else {
+        // Default pattern
+        wave(
+            fullSection,
+            disabledColor,
+            secondaryDisabledColor,
+            waveDisabledCycleLength,
+            waveDisabledDuration);
+      }
+
+      // // Vision disconnected alert
+      // if (visionDisconnected) {
+      //   strobe(
+      //       new Section(firstTopBarSection, secondTopBarSection),
+      //       Color.kRed,
+      //       Color.kBlack,
+      //       strobeDuration);
+      // }
     } else if (DriverStation.isAutonomous()) {
       wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
     } else {
@@ -119,9 +180,13 @@ public class LEDBase extends VirtualSubsystem {
         wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
       }
 
+      if (intaking) {
+        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+      }
+
       // Human player alert
       if (humanPlayerAlert) {
-        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+        strobe(fullSection, Color.kWhite, Color.kBlack, strobeDuration);
       }
 
       // Endgame alert
@@ -134,11 +199,24 @@ public class LEDBase extends VirtualSubsystem {
     leds.setData(buffer);
   }
 
+  public static Trigger setLEDState(Trigger base, BiConsumer<LEDBase, Boolean> stateSetter) {
+    return base.onTrue(Commands.runOnce(() -> stateSetter.accept(LEDBase.getInstance(), true)))
+        .onFalse(Commands.runOnce(() -> stateSetter.accept(LEDBase.getInstance(), false)));
+  }
+
+  public static Command setLEDState(Command base, BiConsumer<LEDBase, Boolean> stateSetter) {
+    return base.deadlineFor(
+        Commands.startEnd(
+            () -> stateSetter.accept(LEDBase.getInstance(), true),
+            () -> stateSetter.accept(LEDBase.getInstance(), false)));
+  }
+
   private void solid(Section section, Color color) {
     if (section == null || color == null) return;
 
-    for (int i = section.start(); i < section.end(); i++) {
-      buffer.setLED(i, color);
+    for (int ledIdx = section.start(); ledIdx < section.end(); ledIdx++) {
+      // for (int ledIdx : section) {
+      buffer.setLED(ledIdx, color);
     }
   }
 
@@ -163,9 +241,10 @@ public class LEDBase extends VirtualSubsystem {
 
     double base = (1 - ((Timer.getTimestamp() / duration) % 1.0)) * 180.0;
     double xDiffPerLed = 180.0 / cycleLength;
-    for (int i = section.end() - 1; i >= section.start(); i--) {
-      double x = (base + i * xDiffPerLed) % 180.0;
-      buffer.setHSV(i, (int) x, 255, 255);
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
+      // for (int ledIdx : section.reversed()) {
+      double x = (base + ledIdx * xDiffPerLed) % 180.0;
+      buffer.setHSV(ledIdx, (int) x, 255, 255);
     }
   }
 
@@ -174,8 +253,9 @@ public class LEDBase extends VirtualSubsystem {
 
     double base = (1 - ((Timer.getTimestamp() % duration) / duration)) * 2.0 * Math.PI;
     double xDiffPerLed = (2.0 * Math.PI) / cycleLength;
-    for (int i = section.end() - 1; i >= section.start(); i--) {
-      double x = base + i * xDiffPerLed;
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
+      // for (int ledIdx : section.reversed()) {
+      double x = base + ledIdx * xDiffPerLed;
       double ratio = (Math.pow(Math.sin(x), waveExponent) + 1.0) / 2.0;
 
       if (Double.isNaN(ratio)) {
@@ -186,7 +266,7 @@ public class LEDBase extends VirtualSubsystem {
       }
 
       var color = Color.lerpRGB(c1, c2, ratio);
-      buffer.setLED(i, color);
+      buffer.setLED(ledIdx, color);
     }
   }
 
@@ -194,13 +274,55 @@ public class LEDBase extends VirtualSubsystem {
     if (section == null) return;
 
     int offset = (int) (Timer.getTimestamp() % duration / duration * stripeLength * colors.size());
-    for (int i = section.end() - 1; i >= section.start(); i--) {
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
+      // for (int ledIdx : section.reversed()) {
       int colorIndex =
-          (int) (Math.floor((double) (i - offset) / stripeLength) + colors.size()) % colors.size();
+          (int) (Math.floor((double) (ledIdx - offset) / stripeLength) + colors.size())
+              % colors.size();
       colorIndex = colors.size() - 1 - colorIndex;
-      buffer.setLED(i, colors.get(colorIndex));
+      buffer.setLED(ledIdx, colors.get(colorIndex));
     }
   }
 
+  // @RequiredArgsConstructor
+  // private static class Section implements Iterable<Integer> {
+  //   private final int start;
+  //   private final int end;
+  //   private final boolean reversed;
+  //
+  //   // TODO
+  //   public Section(Section... sections) {
+  //     start = 0;
+  //     end = 0;
+  //     reversed = false;
+  //   }
+  //
+  //   public Section reversed() {
+  //     return new Section(start, end, !reversed);
+  //   }
+  //
+  //   @Override
+  //   public Iterator<Integer> iterator() {
+  //     return new Iterator<>() {
+  //       private int current = reversed ? end : start;
+  //       private final int step = reversed ? -1 : 1;
+  //
+  //       @Override
+  //       public boolean hasNext() {
+  //         return reversed ? current >= start : current <= end;
+  //       }
+  //
+  //       @Override
+  //       public Integer next() {
+  //         if (!hasNext()) {
+  //           throw new NoSuchElementException();
+  //         }
+  //         int value = current;
+  //         current += step;
+  //         return value;
+  //       }
+  //     };
+  //   }
+  // }
   private record Section(int start, int end) {}
 }
