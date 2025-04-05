@@ -55,12 +55,12 @@ public class VisionIOPhotonCamera implements VisionIO {
             .singleTagResult(
                 Optional.of(
                     new SingleTagPoseObservation(
-                        singleTagDetection.fiducialId,
-                        singleTagDetection.bestCameraToTarget,
-                        singleTagDetection.altCameraToTarget,
-                        singleTagDetection.poseAmbiguity,
-                        Rotation2d.fromDegrees(-singleTagDetection.pitch),
-                        Rotation2d.fromDegrees(-singleTagDetection.yaw))));
+                        singleTagDetection.getFiducialId(),
+                        singleTagDetection.getBestCameraToTarget(),
+                        singleTagDetection.getAlternateCameraToTarget(),
+                        singleTagDetection.getPoseAmbiguity(),
+                        Rotation2d.fromDegrees(-singleTagDetection.getPitch()),
+                        Rotation2d.fromDegrees(-singleTagDetection.getYaw()))));
 
         var tagList = new ArrayList<Short>();
         for (var res : result.getTargets()) {
