@@ -120,6 +120,7 @@ public class VisionBase extends VirtualSubsystem {
     }
 
     // Loop over instances
+    List<Pose3d> allCameraPoses = new ArrayList<>();
     List<Pose2d> allRobotPoses = new ArrayList<>();
     List<VisionObservation> allVisionObservations = new ArrayList<>();
     Map<Integer, TxTyObservation> allTxTyObservations = new HashMap<>();
@@ -254,14 +255,16 @@ public class VisionBase extends VirtualSubsystem {
         var observationStdevs =
             baseStdevs.elementTimes(VecBuilder.fill(xyStdev, xyStdev, rotStdev));
 
-        allVisionObservations.add(new VisionObservation(robotPose, timestamp, observationStdevs));
+        allCameraPoses.add(cameraPose);
         allRobotPoses.add(robotPose);
+        allVisionObservations.add(new VisionObservation(robotPose, timestamp, observationStdevs));
 
         // Log data from instance
         if (enableInstanceLogging) {
           Logger.recordOutput(
               "AprilTagVision/Inst" + cameraIndex + "/LatencySecs",
               Timer.getTimestamp() - timestamp);
+          Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/CameraPose", cameraPose);
           Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/RobotPose", robotPose);
           Logger.recordOutput(
               "AprilTagVision/Inst" + cameraIndex + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
@@ -278,6 +281,7 @@ public class VisionBase extends VirtualSubsystem {
 
       //   If no frames from instances, clear robot pose
       if (enableInstanceLogging && inputs[cameraIndex].observations.length == 0) {
+        Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/CameraPose", Pose3d.kZero);
         Logger.recordOutput("AprilTagVision/Inst" + cameraIndex + "/RobotPose", Pose2d.kZero);
       }
 
@@ -288,7 +292,8 @@ public class VisionBase extends VirtualSubsystem {
       }
     }
 
-    // Log robot poses
+    // Log poses
+    Logger.recordOutput("AprilTagVision/CameraPoses", allCameraPoses.toArray(Pose3d[]::new));
     Logger.recordOutput("AprilTagVision/RobotPoses", allRobotPoses.toArray(Pose2d[]::new));
 
     // Log tag poses
