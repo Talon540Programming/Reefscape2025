@@ -270,6 +270,10 @@ public class RobotContainer {
                   .withName("Operator Score on " + level));
         };
 
+    bindOperatorCoralScore.accept(controller.povDown(), ReefLevel.L1);
+    bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
+    bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
+    bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
     controller
         .rightTrigger()
         .onTrue(
@@ -285,11 +289,6 @@ public class RobotContainer {
                               default -> ReefLevel.L2;
                             }))
                 .withTimeout(0.75));
-
-    bindOperatorCoralScore.accept(controller.povDown(), ReefLevel.L1);
-    bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
-    bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
-    bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
 
     // ***** MISCELlANEOUS *****
     // Reset gyro
