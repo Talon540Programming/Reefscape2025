@@ -21,7 +21,7 @@ public class VisionConstants {
   static final boolean enableInstanceLogging =
       forceEnableInstanceLogging || Constants.getMode() == Constants.Mode.REPLAY;
 
-  static final double ambiguityThreshold = 0.4;
+  static final double ambiguityThreshold = 0.2;
   static final double targetLogTimeSecs = 0.1;
   static final double fieldBorderMargin = 0.5;
 

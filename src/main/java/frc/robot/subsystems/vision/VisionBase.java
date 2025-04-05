@@ -168,36 +168,15 @@ public class VisionBase extends VirtualSubsystem {
             if (tagPoseOpt.isEmpty()) break;
             var tagPose = tagPoseOpt.get();
 
-            var bestCamPose = tagPose.transformBy(singleTagRes.bestCamToTag().inverse());
-            var altCamPose = tagPose.transformBy(singleTagRes.altCamToTag().inverse());
-
-            var bestRobotPose =
-                bestCamPose
+            var camToTag = singleTagRes.bestCamToTag();
+            cameraPose = tagPose.transformBy(camToTag.inverse());
+            robotPose =
+                cameraPose
                     .toPose2d()
                     .transformBy(cameras[camConfigIndex].robotToCamera().toTransform2d().inverse());
-            var altRobotPose =
-                altCamPose
-                    .toPose2d()
-                    .transformBy(cameras[camConfigIndex].robotToCamera().toTransform2d().inverse());
+            camToTagDistance = camToTag.getTranslation().getNorm();
 
-            // TODO latency compensate this to get rotation at this timestamp for better accuracy
-            var sampledPose = RobotState.getInstance().getEstimatedPose();
-            var sampledRot = sampledPose.getRotation();
-            var bestRot = bestRobotPose.getRotation();
-            var altRot = altRobotPose.getRotation();
-
-            if (Math.abs(sampledRot.minus(bestRot).getRadians())
-                < Math.abs(sampledRot.minus(altRot).getRadians())) {
-              cameraPose = bestCamPose;
-              robotPose = bestRobotPose;
-              camToTagDistance = singleTagRes.bestCamToTag().getTranslation().getNorm();
-            } else {
-              cameraPose = altCamPose;
-              robotPose = altRobotPose;
-              camToTagDistance = singleTagRes.altCamToTag().getTranslation().getNorm();
-            }
-
-            useVisionRotation = false;
+            useVisionRotation = true;
             baseStdevs = singleTagStdevs;
           } else {
             // This estimation is shit, we can still use it for alignment though
