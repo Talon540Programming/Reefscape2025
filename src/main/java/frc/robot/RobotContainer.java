@@ -151,6 +151,7 @@ public class RobotContainer {
 
     // Stow
     controller
+<<<<<<< Updated upstream
         .povDown()
         .onTrue(
             Commands.runOnce(
@@ -172,6 +173,16 @@ public class RobotContainer {
                       robotRelativeEnabled = true;
                     })
                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L2_CORAL))));
+=======
+        .leftTrigger()
+        .whileTrue(
+            Commands.either(
+                    joystickDriveCommandFactory.get(),
+                    new DriveToStation(driveBase, driverX, driverY, driverOmega, false),
+                    disableCoralStationAutoAlign::get)
+                .alongWith(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase))
+                .withName("Coral Station Intake"));
+>>>>>>> Stashed changes
 
     controller
         .povUp()
@@ -193,8 +204,49 @@ public class RobotContainer {
                     })
                 .andThen(Commands.runOnce(() -> elevatorBase.setGoal(ElevatorState.L4_CORAL))));
 
+<<<<<<< Updated upstream
     // Intake
     controller.x().toggleOnTrue(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase));
+=======
+    // Coral intake
+    controller
+        .x()
+        .toggleOnTrue(
+            IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase)
+                .withName("Operator Coral Intake"));
+    // operator
+    //     .rightBumper()
+    //     .toggleOnTrue(
+    //         IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase)
+    //             .withName("Operator Coral Intake"));
+
+    // Home elevator
+    controller.b().doublePress().onTrue(elevatorBase.homingSequence().withName("Home Elevator"));
+
+    // operator
+    //     .y()
+    //     .doublePress()
+    //     .onTrue(elevatorBase.homingSequence().withName("Operator Home Elevator"));
+
+    BiConsumer<Trigger, FieldConstants.ReefLevel> bindOperatorCoralScore =
+        (faceButton, level) -> {
+          faceButton.whileTrueRepeatedly(
+              elevatorBase
+                  .runGoal(() -> Preset.fromLevel(level))
+                  .withName("Operator Score on " + level));
+          // faceButton
+          //     // .and(operator.rightTrigger())
+          //     .and(driver.rightTrigger())
+          //     .whileTrueRepeatedly(
+          //         elevatorBase
+          //             .runGoal(() -> Preset.fromLevel(level))
+          //             .until(elevatorBase::atGoal)
+          //             .andThen(
+          //                 dispenserBase.runDispenser(
+          //                     () -> dispenserBase.getDispenserVoltageFromLevel(level)))
+          //             .withName("Operator Score & Eject On " + level));
+        };
+>>>>>>> Stashed changes
 
     // Dispense
     controller
@@ -206,12 +258,23 @@ public class RobotContainer {
                 IntakeCommands.reserialize(elevatorBase, intakeBase, dispenserBase),
                 controller.leftTrigger().negate().debounce(0.25)));
 
+<<<<<<< Updated upstream
     // Home Elevator
     controller
         .back()
         .and(controller.start().negate())
         .debounce(0.5)
         .onTrue(elevatorBase.homingSequence());
+=======
+    // bindOperatorCoralScore.accept(operator.povDown(), ReefLevel.L1);
+    // bindOperatorCoralScore.accept(operator.povLeft(), ReefLevel.L2);
+    // bindOperatorCoralScore.accept(operator.povUp(), ReefLevel.L3);
+    // bindOperatorCoralScore.accept(operator.povRight(), ReefLevel.L4);
+    bindOperatorCoralScore.accept(controller.povDown(), ReefLevel.L1);
+    bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
+    bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
+    bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
+>>>>>>> Stashed changes
 
     // Auto Align (Left or Right)
     // TODO
