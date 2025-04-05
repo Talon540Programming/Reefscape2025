@@ -250,7 +250,7 @@ public class RobotContainer {
     controller
         .a()
         .doublePress()
-        .onTrue(elevatorBase.runGoal(Preset.STOW).withName("Stow Elevator Coral Stuck"));
+        .onTrue(elevatorBase.runGoal(Preset.STUCK_CORAL).withName("Stow Elevator Coral Stuck"));
 
     // Coral intake
     controller
@@ -282,7 +282,7 @@ public class RobotContainer {
                               case L2_CORAL -> ReefLevel.L2;
                               case L3_CORAL -> ReefLevel.L3;
                               case L4_CORAL -> ReefLevel.L4;
-                              default -> ReefLevel.L3;
+                              default -> ReefLevel.L2;
                             }))
                 .withTimeout(0.75));
 
