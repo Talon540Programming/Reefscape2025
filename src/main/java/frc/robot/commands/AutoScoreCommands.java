@@ -4,13 +4,11 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.FieldConstants.*;
 import frc.robot.RobotState;
 import frc.robot.subsystems.dispenser.DispenserBase;
@@ -19,13 +17,11 @@ import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.elevator.ElevatorBase;
 import frc.robot.subsystems.elevator.ElevatorPose.CoralDispenserPose;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
-import frc.robot.subsystems.intake.IntakeBase;
 import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.AllianceFlipUtil;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
@@ -45,7 +41,6 @@ public class AutoScoreCommands {
       new LoggedTunableNumber("AutoScore/DistanceSuperstructureReady", 2);
   private static final LoggedTunableNumber distanceSuperstructureReadyAuto =
       new LoggedTunableNumber("AutoScore/DistanceSuperstructureReadyAuto", 2.0);
-
   private static final LoggedTunableNumber thetaToleranceReady =
       new LoggedTunableNumber("AutoScore/ThetaToleranceReady", 35.0);
   private static final LoggedTunableNumber arcDistanceReady =
@@ -62,7 +57,7 @@ public class AutoScoreCommands {
     new LoggedTunableNumber("AutoScore/LinearYToleranceEject/L1", 0.05),
     new LoggedTunableNumber("AutoScore/LinearYToleranceEject/L2", 0.15),
     new LoggedTunableNumber("AutoScore/LinearYToleranceEject/L3", 0.15),
-    new LoggedTunableNumber("AutoScore/LinearYToleranceEject/L4", 0.08)
+    new LoggedTunableNumber("AutoScore/LinearYToleranceEject/L4", 0.05)
   };
   private static final LoggedTunableNumber[] maxLinearVel = {
     new LoggedTunableNumber("AutoScore/MaxLinearVel/L1", 0.1),
@@ -80,7 +75,7 @@ public class AutoScoreCommands {
     new LoggedTunableNumber("AutoScore/ThetaToleranceEject/L1", 5),
     new LoggedTunableNumber("AutoScore/ThetaToleranceEject/L2", 5),
     new LoggedTunableNumber("AutoScore/ThetaToleranceEject/L3", 5),
-    new LoggedTunableNumber("AutoScore/ThetaToleranceEject/L4", 10)
+    new LoggedTunableNumber("AutoScore/ThetaToleranceEject/L4", 5)
   };
   private static final LoggedTunableNumber l4EjectDelay =
       new LoggedTunableNumber("AutoScore/L4EjectDelay", 0.05);
@@ -92,21 +87,12 @@ public class AutoScoreCommands {
       new LoggedTunableNumber("AutoScore/L1AlignOffsetY", 0.0);
   private static final LoggedTunableNumber l1AlignOffsetTheta =
       new LoggedTunableNumber("AutoScore/L1AlignOffsetTheta", 180.0);
-  private static final LoggedTunableNumber minDistanceAim =
-      new LoggedTunableNumber("AutoScore/MinDistanceAim", 0.2);
   private static final LoggedTunableNumber[] ejectTimeSeconds = {
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L1", 0.5),
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L2", 0.5),
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L3", 0.5),
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L4", 0.3)
   };
-  private static final LoggedTunableNumber correctiveMeasureFF =
-      new LoggedTunableNumber("AutoScore/CorrectiveMeasureFF", 0.7);
-  private static final LoggedTunableNumber correctiveMeasureDistance =
-      new LoggedTunableNumber("AutoScore/CorrectiveMeasureDistance", Units.inchesToMeters(20.0));
-  private static final LoggedTunableNumber correctiveMeasureBlendDistance =
-      new LoggedTunableNumber(
-          "AutoScore/CorrectiveMeasureBlendDistance", Units.inchesToMeters(6.0));
   private static final LoggedTunableNumber maxAimingAngle =
       new LoggedTunableNumber("AutoScore/MaxAimingAngle", 5.0);
   private static final LoggedTunableNumber[] branchFudgeX = {
@@ -120,7 +106,6 @@ public class AutoScoreCommands {
       DriveBase driveBase,
       ElevatorBase elevatorBase,
       DispenserBase dispenserBase,
-      IntakeBase intakeBase,
       Supplier<ReefLevel> reefLevel,
       Supplier<Optional<CoralObjective>> coralObjective,
       DoubleSupplier driverX,
@@ -144,21 +129,6 @@ public class AutoScoreCommands {
           }
 
           Pose2d goalPose = getCoralScorePose(objective);
-          final double clearDistance = minDistanceReefClearL4.get();
-          boolean isL4 = objective.reefLevel() == ReefLevel.L4;
-          if ((!elevatorBase.readyForL4() && isL4)
-              || (elevatorBase.readyForL4()
-                  && withinDistanceToReef(robot.get(), clearDistance - 0.05)
-                  && !isL4)) {
-            goalPose =
-                goalPose.transformBy(
-                    GeomUtil.toTransform2d(
-                        goalPose.getTranslation().getDistance(Reef.center)
-                            - Reef.faceLength
-                            - (DriveConstants.robotWidth / 2.0)
-                            - clearDistance,
-                        0.0));
-          }
           Logger.recordOutput("AutoScore/Goal", AllianceFlipUtil.apply(goalPose));
 
           if (DriverStation.isAutonomousEnabled()) {
@@ -198,43 +168,87 @@ public class AutoScoreCommands {
                     .times(AllianceFlipUtil.shouldFlip() ? -1.0 : 1.0),
             () -> DriveCommands.getOmegaFromJoysticks(driverOmega.getAsDouble()));
 
-    var needsToGetBack = new AtomicBoolean(false);
-    var hasEnded = new AtomicBoolean(false);
-
-    // Schedule get back command
-    new Trigger(() -> hasEnded.get() && needsToGetBack.get())
-        .and(() -> !disableReefAutoAlign.getAsBoolean())
-        .onTrue(
-            getBackCorrectiveMeasure(driveBase, driverX, driverY, driverOmega, robotRelative)
-                .finallyDo(() -> needsToGetBack.set(false))
-                .withName("Corrective Measure"));
-
     Timer l4EjectTimer = new Timer();
     l4EjectTimer.start();
-
     return Commands.runOnce(
             () -> {
               // Start LEDs
               LEDBase.getInstance().autoScoringReef = true;
 
-              // Reset State
-              needsToGetBack.set(false);
-              hasEnded.set(false);
-
               // Log reef level
               Logger.recordOutput("AutoScore/ReefLevel", reefLevel.get().toString());
+
+              // Clear logs
+              Logger.recordOutput("AutoScore/AllowPreReady", false);
+              Logger.recordOutput("AutoScore/AllowEject", false);
             })
-        // TODO
+        .andThen(
+            Commands.waitUntil(
+                () -> {
+                  boolean ready =
+                      coralObjective.get().isPresent()
+                              && readyForScore(
+                                  robot.get(),
+                                  goal.apply(coralObjective.get().get()),
+                                  reefLevel.get() == ReefLevel.L4)
+                          || disableReefAutoAlign.getAsBoolean();
+                  Logger.recordOutput("AutoScore/AllowReady", ready);
+
+                  return ready;
+                }),
+            aimAndEject(
+                elevatorBase,
+                dispenserBase,
+                reefLevel,
+                () -> {
+                  if (coralObjective.get().isEmpty()) return false;
+                  Pose2d poseError = robot.get().relativeTo(goal.apply(coralObjective.get().get()));
+
+                  int intReefLevel = coralObjective.get().get().reefLevel().ordinal();
+                  var driveChassisSpeeds = driveBase.getChassisSpeeds();
+                  boolean ready =
+                      (Math.abs(poseError.getTranslation().getX())
+                                  <= linearXToleranceEject[intReefLevel].get()
+                              && Math.abs(poseError.getTranslation().getY())
+                                  <= linearYToleranceEject[intReefLevel].get()
+                              && Math.abs(poseError.getRotation().getDegrees())
+                                  <= thetaToleranceEject[intReefLevel].get()
+                              && Math.hypot(
+                                      driveChassisSpeeds.vxMetersPerSecond,
+                                      driveChassisSpeeds.vyMetersPerSecond)
+                                  <= maxLinearVel[intReefLevel].get()
+                              && Math.abs(driveChassisSpeeds.omegaRadiansPerSecond)
+                                  <= Units.degreesToRadians(maxAngularVel[intReefLevel].get())
+                              && elevatorBase.atGoal()
+                              && !disableReefAutoAlign.getAsBoolean())
+                          || manualEject.getAsBoolean();
+                  if (reefLevel.get() == ReefLevel.L4) {
+                    if (!ready) {
+                      l4EjectTimer.restart();
+                    }
+                    ready =
+                        ready
+                            && l4EjectTimer.hasElapsed(
+                                DriverStation.isAutonomous()
+                                    ? l4EjectDelayAuto.get()
+                                    : l4EjectDelay.get());
+                  }
+                  Logger.recordOutput("AutoScore/AllowEject", ready);
+                  return ready;
+                },
+                manualEject))
+        .deadlineFor(
+            Commands.either(
+                joystickDrive, driveCommand, disableReefAutoAlign)) // Deadline with driving
         .finallyDo(
             interrupted -> {
               // Clear logs
               Logger.recordOutput("AutoScore/ReefLevel", "");
+              Logger.recordOutput("AutoScore/AllowPreReady", false);
+              Logger.recordOutput("AutoScore/AllowEject", false);
 
               // Stop LEDs
               LEDBase.getInstance().autoScoringReef = false;
-
-              // Indicate has ended command
-              hasEnded.set(true);
             });
   }
 
@@ -242,14 +256,12 @@ public class AutoScoreCommands {
       DriveBase driveBase,
       ElevatorBase elevatorBase,
       DispenserBase dispenserBase,
-      IntakeBase intakeBase,
       Supplier<ReefLevel> reefLevel,
       Supplier<Optional<CoralObjective>> coralObjective) {
     return autoScore(
         driveBase,
         elevatorBase,
         dispenserBase,
-        intakeBase,
         reefLevel,
         coralObjective,
         () -> 0,
@@ -267,89 +279,45 @@ public class AutoScoreCommands {
       Supplier<ReefLevel> reefLevel,
       BooleanSupplier eject,
       BooleanSupplier holdEject) {
-    final Timer ejectTimer = new Timer();
     return elevatorBase
-        .runGoal(() -> Preset.fromLevel(reefLevel.get()))
+        .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
         .until(eject)
         .andThen(
-            Commands.runOnce(ejectTimer::restart),
             elevatorBase
-                .runGoal(() -> Preset.fromLevel(reefLevel.get()))
-                .alongWith(
+                .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
+                .withDeadline(
                     Commands.waitUntil(elevatorBase::atGoal)
                         .andThen(
                             dispenserBase
                                 .runDispenser(
                                     () ->
                                         dispenserBase.getDispenserVoltageFromLevel(reefLevel.get()))
-                                .until(
-                                    () ->
-                                        ejectTimer.hasElapsed(
-                                                ejectTimeSeconds[reefLevel.get().ordinal()].get())
-                                            && !holdEject.getAsBoolean()))));
+                                .withDeadline(
+                                    Commands.deferredProxy(
+                                            () ->
+                                                Commands.waitSeconds(
+                                                    ejectTimeSeconds[reefLevel.get().ordinal()]
+                                                        .get()))
+                                        .andThen(
+                                            Commands.waitUntil(() -> !holdEject.getAsBoolean()))))),
+            elevatorBase.runGoal(Preset.STOW));
   }
 
-  private static Command preIntake(
-      ElevatorBase elevator,
-      IntakeBase intake,
-      DispenserBase dispenser,
-      Supplier<Pose2d> robot,
-      BooleanSupplier shouldClearReef,
-      BooleanSupplier disableReefAutoAlign) {
-    return Commands.waitUntil(
-            () ->
-                outOfDistanceToReef(robot.get(), minDistanceReefClearL4.get())
-                    || !shouldClearReef.getAsBoolean()
-                    || disableReefAutoAlign.getAsBoolean())
-        .andThen(IntakeCommands.intake(elevator, intake, dispenser))
-        .onlyIf(() -> !dispenser.holdingCoral());
-  }
-
-  private static Command getBackCorrectiveMeasure(
-      DriveBase driveBase,
-      DoubleSupplier driverX,
-      DoubleSupplier driverY,
-      DoubleSupplier driverOmega,
-      BooleanSupplier robotRelative) {
-    Supplier<Translation2d> correctiveMeasure =
-        () -> {
-          var flippedRobot = AllianceFlipUtil.apply(RobotState.getInstance().getEstimatedPose());
-          Translation2d driverLinearVel =
-              DriveCommands.getLinearVelocityFromJoysticks(
-                  driverX.getAsDouble(), driverY.getAsDouble());
-
-          return driverLinearVel.plus(
-              flippedRobot
-                  .getTranslation()
-                  .minus(Reef.center)
-                  .div(flippedRobot.getTranslation().getDistance(Reef.center))
-                  .times(
-                      correctiveMeasureFF.get()
-                          * (1.0
-                              - MathUtil.clamp(
-                                  (flippedRobot.getTranslation().getDistance(Reef.center)
-                                          - Reef.faceLength
-                                          - DriveConstants.robotWidth / 2.0
-                                          - correctiveMeasureBlendDistance.get())
-                                      / (correctiveMeasureDistance.get()
-                                          - correctiveMeasureBlendDistance.get()),
-                                  0.0,
-                                  1.0)))
-                  .times(driverLinearVel.getNorm()));
-        };
-
-    return DriveCommands.joystickDrive(
-            driveBase,
-            () -> correctiveMeasure.get().getX(),
-            () -> correctiveMeasure.get().getY(),
-            driverOmega,
-            robotRelative)
-        .until(
-            () ->
-                outOfDistanceToReef(
-                    RobotState.getInstance().getEstimatedPose(), correctiveMeasureDistance.get()));
-  }
-
+  // private static Command preIntake(
+  //     ElevatorBase elevator,
+  //     IntakeBase intake,
+  //     DispenserBase dispenser,
+  //     Supplier<Pose2d> robot,
+  //     BooleanSupplier shouldClearReef,
+  //     BooleanSupplier disableReefAutoAlign) {
+  //   return Commands.waitUntil(
+  //           () ->
+  //               outOfDistanceToReef(robot.get(), minDistanceReefClearL4.get())
+  //                   || !shouldClearReef.getAsBoolean()
+  //                   || disableReefAutoAlign.getAsBoolean())
+  //       .andThen(IntakeCommands.intake(elevator, intake, dispenser))
+  //       .onlyIf(() -> !dispenser.holdingCoral());
+  // }
 
   public static Command autoAlign(
       DriveBase driveBase,
@@ -372,21 +340,6 @@ public class AutoScoreCommands {
           }
 
           Pose2d goalPose = getCoralScorePose(objective);
-          final double clearDistance = minDistanceReefClearL4.get();
-          boolean isL4 = objective.reefLevel() == ReefLevel.L4;
-          if ((!elevatorBase.readyForL4() && isL4)
-              || (elevatorBase.readyForL4()
-              && withinDistanceToReef(robot.get(), clearDistance - 0.05)
-              && !isL4)) {
-            goalPose =
-                goalPose.transformBy(
-                    GeomUtil.toTransform2d(
-                        goalPose.getTranslation().getDistance(Reef.center)
-                            - Reef.faceLength
-                            - (DriveConstants.robotWidth / 2.0)
-                            - clearDistance,
-                        0.0));
-          }
           Logger.recordOutput("AutoScore/Goal", AllianceFlipUtil.apply(goalPose));
 
           if (DriverStation.isAutonomousEnabled()) {
@@ -412,20 +365,40 @@ public class AutoScoreCommands {
         };
 
     return new DriveToPose(
-        driveBase,
-        () ->
-            coralObjective
-                .get()
-                .map(objective -> getDriveTarget(robot.get(), goal.apply(objective)))
-                .orElseGet(RobotState.getInstance()::getEstimatedPose),
-        robot,
-        () ->
-            DriveCommands.getLinearVelocityFromJoysticks(
-                    driverX.getAsDouble(), driverY.getAsDouble())
-                .times(AllianceFlipUtil.shouldFlip() ? -1.0 : 1.0),
-        () -> DriveCommands.getOmegaFromJoysticks(driverOmega.getAsDouble()));
-  }
+            driveBase,
+            () ->
+                coralObjective
+                    .get()
+                    .map(objective -> getDriveTarget(robot.get(), goal.apply(objective)))
+                    .orElseGet(RobotState.getInstance()::getEstimatedPose),
+            robot,
+            () ->
+                DriveCommands.getLinearVelocityFromJoysticks(
+                        driverX.getAsDouble(), driverY.getAsDouble())
+                    .times(AllianceFlipUtil.shouldFlip() ? -1.0 : 1.0),
+            () -> DriveCommands.getOmegaFromJoysticks(driverOmega.getAsDouble()))
+        .until(
+            () -> {
+              if (coralObjective.get().isEmpty()) return false;
+              Pose2d poseError = robot.get().relativeTo(goal.apply(coralObjective.get().get()));
 
+              int intReefLevel = coralObjective.get().get().reefLevel().ordinal();
+              var driveChassisSpeeds = driveBase.getChassisSpeeds();
+              return Math.abs(poseError.getTranslation().getX())
+                      <= linearXToleranceEject[intReefLevel].get()
+                  && Math.abs(poseError.getTranslation().getY())
+                      <= linearYToleranceEject[intReefLevel].get()
+                  && Math.abs(poseError.getRotation().getDegrees())
+                      <= thetaToleranceEject[intReefLevel].get()
+                  && Math.hypot(
+                          driveChassisSpeeds.vxMetersPerSecond,
+                          driveChassisSpeeds.vyMetersPerSecond)
+                      <= maxLinearVel[intReefLevel].get()
+                  && Math.abs(driveChassisSpeeds.omegaRadiansPerSecond)
+                      <= Units.degreesToRadians(maxAngularVel[intReefLevel].get())
+                  && elevatorBase.atGoal();
+            });
+  }
 
   private static Pose2d getDriveTarget(Pose2d robot, Pose2d goal) {
     Rotation2d angleToGoal =
@@ -501,7 +474,7 @@ public class AutoScoreCommands {
   }
 
   /** Get position of robot aligned with branch for provided objective. */
-  private static Pose2d getCoralScorePose(CoralObjective coralObjective) {
+  public static Pose2d getCoralScorePose(CoralObjective coralObjective) {
     return getBranchPose(coralObjective)
         .transformBy(getCoralDispenserPose(coralObjective.reefLevel()).toRobotPose());
   }
