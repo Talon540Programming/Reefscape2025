@@ -20,7 +20,7 @@ public class DispenserBase extends SubsystemBase {
   public static final LoggedTunableNumber[] coralDispenseVolts = {
     new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L1", 1.75),
     new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L2", 2.5),
-    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L3", 2.825),
+    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L3", 2.5),
     new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L4", 6.0)
   };
 
