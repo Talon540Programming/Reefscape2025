@@ -136,9 +136,8 @@ public class RobotContainer {
 
     var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
     autoChooser.addDefaultOption("Noting", Commands.none());
-    autoChooser.addOption("Chungus", autoBuilder.chungusAuto(false));
-    autoChooser.addOption("DeadreckonedChungus", autoBuilder.chungusAuto(true));
-    autoChooser.addOption("SuperSafeSkibidiL4", autoBuilder.superSafeSkibidiL4());
+    autoChooser.addOption("DeadreckonedCenterStartL4", autoBuilder.deadreckonedL4());
+    autoChooser.addOption("DeadreckonedSideStartL4", autoBuilder.deadreckonedSideStartL4());
     autoChooser.addOption("Taxi", autoBuilder.taxi());
 
     if (Constants.TUNING_MODE) {
@@ -282,6 +281,7 @@ public class RobotContainer {
     bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
     bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
     bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
+
     controller
         .rightTrigger()
         .onTrue(
