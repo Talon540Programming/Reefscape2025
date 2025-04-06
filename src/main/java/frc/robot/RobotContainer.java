@@ -210,9 +210,17 @@ public class RobotContainer {
                                                     .getRadians())))
                             .getKey();
 
+                    var currentReefLevel =
+                        switch (elevatorBase.getGoal()) {
+                          case L1_CORAL -> ReefLevel.L1;
+                          case L2_CORAL -> ReefLevel.L2;
+                          case L3_CORAL -> ReefLevel.L3;
+                          case L4_CORAL -> ReefLevel.L4;
+                          default -> ReefLevel.L2;
+                        };
                     return Optional.of(
                         new FieldConstants.CoralObjective(
-                            closesFaceIdx * 2 + (isLeftSide ? 1 : 0), ReefLevel.L4));
+                            closesFaceIdx * 2 + (isLeftSide ? 1 : 0), currentReefLevel));
                   },
                   driverX,
                   driverY,
