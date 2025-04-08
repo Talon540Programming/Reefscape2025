@@ -4,19 +4,18 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.FieldConstants;
+import frc.robot.FieldConstants.ReefLevel;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class DispenserBase extends SubsystemBase {
-  private static final LoggedTunableNumber coralIntakeVolts =
+  public static final LoggedTunableNumber coralIntakeVolts =
       new LoggedTunableNumber("Dispenser/CoralIntakeVolts", 4.0);
-  private static final LoggedTunableNumber coralIntakeWaitPeriod =
-      new LoggedTunableNumber("Dispenser/CoralIntakeWaitPeriod", 0.5); // TODO
+  public static final LoggedTunableNumber coralIntakeWaitPeriod =
+      new LoggedTunableNumber("Dispenser/CoralIntakeWaitPeriod", 0.5);
   public static final LoggedTunableNumber[] coralDispenseVolts = {
     new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L1", 1.75),
     new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L2", 2.5),
@@ -63,14 +62,7 @@ public class DispenserBase extends SubsystemBase {
     return runEnd(() -> io.runVolts(inputVolts.getAsDouble()), io::stop);
   }
 
-  public Command intakeTillHolding() {
-    return runDispenser(coralIntakeVolts.get())
-        .withDeadline(
-            Commands.waitUntil(this::holdingCoral)
-                .andThen(Commands.waitSeconds(coralIntakeWaitPeriod.get())));
-  }
-
-  public double getDispenserVoltageFromLevel(FieldConstants.ReefLevel level) {
+  public double getDispenserVoltageFromLevel(ReefLevel level) {
     return coralDispenseVolts[level.ordinal()].get();
   }
 }
