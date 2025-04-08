@@ -4,6 +4,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.util.LoggedTunableNumber;
 
 public class ElevatorConstants {
   // Measured from CAD
@@ -27,6 +28,9 @@ public class ElevatorConstants {
       new Translation3d(dispenserOrigin2d.getX(), 0.0, dispenserOrigin2d.getY());
 
   public static final double elevatorMaxTravel = 1.631;
+
+  public static final LoggedTunableNumber elevatorL4ClearHeight =
+      new LoggedTunableNumber("Superstructure/ElevatorL4ClearHeight", 1.65);
 
   static final double drumRadius = Units.inchesToMeters(1.0);
   static final double gearing = 4.0;
