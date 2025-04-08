@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
 import frc.robot.util.EqualsUtil;
@@ -45,6 +46,9 @@ public class ElevatorBase extends SubsystemBase {
 
   private static final LoggedTunableNumber toleranceMeters =
       new LoggedTunableNumber("Elevator/ToleranceMeters", 0.5);
+
+  private static final LoggedTunableNumber robotAntiTipThreshold =
+      new LoggedTunableNumber("Elevator/AntiTipThreshold", 10.0);
 
   static {
     switch (Constants.getRobot()) {
@@ -148,6 +152,13 @@ public class ElevatorBase extends SubsystemBase {
     outOfTolleranceAlert.set(shouldEStop);
     if (shouldEStop) {
       eStopped = true;
+    }
+
+    // Check if robot is about to tip
+    if (Math.abs(RobotState.getInstance().getPitch().getDegrees()) > robotAntiTipThreshold.get()
+        || Math.abs(RobotState.getInstance().getRoll().getDegrees())
+            > robotAntiTipThreshold.get()) {
+      goal = Preset.STOW;
     }
 
     if (shouldRunProfile) {

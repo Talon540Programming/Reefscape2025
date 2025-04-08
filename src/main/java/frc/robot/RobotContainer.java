@@ -148,20 +148,7 @@ public class RobotContainer {
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
 
-    registerStateTriggers();
     configureButtonBindings();
-  }
-
-  private void registerStateTriggers() {
-    // Put the elevator down if the robot is starting to tip
-    double tipThresholdDeg = 10.0;
-    new Trigger(
-            () ->
-                Math.abs(RobotState.getInstance().getPitch().getDegrees()) > tipThresholdDeg
-                    || Math.abs(RobotState.getInstance().getRoll().getDegrees()) > tipThresholdDeg)
-        .setLEDState((visionBase, state) -> visionBase.robotTipping = state)
-        .whileTrueRepeatedly(
-            elevatorBase.runGoal(Preset.STOW).withName("Automatic Tip Prevention"));
   }
 
   private void configureButtonBindings() {
