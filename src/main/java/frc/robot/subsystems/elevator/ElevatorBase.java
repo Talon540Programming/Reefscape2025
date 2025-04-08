@@ -159,6 +159,9 @@ public class ElevatorBase extends SubsystemBase {
         || Math.abs(RobotState.getInstance().getRoll().getDegrees())
             > robotAntiTipThreshold.get()) {
       goal = Preset.STOW;
+      LEDBase.getInstance().robotTipping = true;
+    } else {
+      LEDBase.getInstance().robotTipping = false;
     }
 
     if (shouldRunProfile) {
