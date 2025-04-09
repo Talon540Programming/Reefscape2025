@@ -81,12 +81,6 @@ public class AutoScoreCommands {
       new LoggedTunableNumber("AutoScore/L4EjectDelay", 0.05);
   private static final LoggedTunableNumber l4EjectDelayAuto =
       new LoggedTunableNumber("AutoScore/L4EjectDelayAuto", 0.05);
-  private static final LoggedTunableNumber l1AlignOffsetX =
-      new LoggedTunableNumber("AutoScore/L1AlignOffsetX", 0.45);
-  private static final LoggedTunableNumber l1AlignOffsetY =
-      new LoggedTunableNumber("AutoScore/L1AlignOffsetY", 0.0);
-  private static final LoggedTunableNumber l1AlignOffsetTheta =
-      new LoggedTunableNumber("AutoScore/L1AlignOffsetTheta", 180.0);
   private static final LoggedTunableNumber[] ejectTimeSeconds = {
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L1", 0.5),
     new LoggedTunableNumber("AutoScore/EjectTimeSeconds/L2", 0.5),
@@ -466,11 +460,13 @@ public class AutoScoreCommands {
   }
 
   private static Pose2d getL1Pose(CoralObjective coralObjective) {
+    boolean onRightSide = coralObjective.branchId() % 2 == 0;
+
     return Reef.centerFaces[coralObjective.branchId() / 2].transformBy(
         new Transform2d(
-            l1AlignOffsetX.get(),
-            l1AlignOffsetY.get(),
-            Rotation2d.fromDegrees(l1AlignOffsetTheta.get())));
+            DriveConstants.robotWidth / 2.0,
+            Reef.faceLength / 2.0 * (onRightSide ? 1 : -1),
+            Rotation2d.kPi));
   }
 
   /** Get position of robot aligned with branch for provided objective. */
