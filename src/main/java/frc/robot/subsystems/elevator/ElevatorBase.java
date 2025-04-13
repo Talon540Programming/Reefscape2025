@@ -16,7 +16,9 @@ import frc.robot.Constants;
 import frc.robot.FieldConstants;
 import frc.robot.RobotState;
 import frc.robot.subsystems.elevator.ElevatorPose.Preset;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.EqualsUtil;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.Supplier;
 import lombok.Getter;
@@ -224,6 +226,11 @@ public class ElevatorBase extends SubsystemBase {
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
+
+
+    // Record cycle time
+    LoggedTracer.record("Elevator");
+  }
 
   public boolean atGoal() {
     return atGoal;

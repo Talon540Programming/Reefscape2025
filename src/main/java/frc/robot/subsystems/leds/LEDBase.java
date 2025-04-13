@@ -132,6 +132,9 @@ public class LEDBase extends VirtualSubsystem {
 
     // Set buffer to LEDs
     leds.setData(buffer);
+
+    // Record cycle time
+    LoggedTracer.record("LEDs");
   }
 
   private void solid(Section section, Color color) {

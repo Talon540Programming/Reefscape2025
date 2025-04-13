@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.simulation.DriverStationSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.leds.LEDBase;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggerUtil;
 import frc.robot.util.NTClientLogger;
 import frc.robot.util.VirtualSubsystem;
@@ -153,16 +154,18 @@ public class Robot extends LoggedRobot {
     robotContainer = new RobotContainer();
 
     // Switch thread to high priority to improve loop timing
-    Threads.setCurrentThreadPriority(true, 2);
+    Threads.setCurrentThreadPriority(true, 1);
   }
 
   @Override
   public void robotPeriodic() {
+    LoggedTracer.reset();
     // Run virtual subsystems
     VirtualSubsystem.periodicAll();
 
     // Run command scheduler
     CommandScheduler.getInstance().run();
+    LoggedTracer.record("Commands");
 
     // Print auto duration
     if (autonomousCommand != null) {
@@ -178,12 +181,16 @@ public class Robot extends LoggedRobot {
       }
     }
 
-    // Log NT client list
-    NTClientLogger.log();
-
+    // Handle Alerts
     // Robot container periodic methods
     robotContainer.updateAlerts();
     robotContainer.updateDashboardOutputs();
+
+    // Log NT client list
+    NTClientLogger.log();
+
+    // Record cycle time
+    LoggedTracer.record("RobotPeriodic");
   }
 
   @Override

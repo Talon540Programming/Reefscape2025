@@ -19,6 +19,7 @@ import frc.robot.RobotState.VisionObservation;
 import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.VisionIO.VisionIOInputs;
 import frc.robot.util.GeomUtil;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.VirtualSubsystem;
 import java.util.*;
@@ -289,6 +290,9 @@ public class VisionBase extends VirtualSubsystem {
         .sorted(Comparator.comparingDouble(VisionObservation::timestamp))
         .forEach(RobotState.getInstance()::addVisionObservation);
     allTxTyObservations.values().forEach(RobotState.getInstance()::addTxTyObservation);
+
+    // Record cycle time
+    LoggedTracer.record("Vision");
   }
 
   /** Returns the current AprilTag layout type. */

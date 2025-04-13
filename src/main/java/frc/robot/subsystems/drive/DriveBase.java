@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotState;
 import frc.robot.RobotState.OdometryObservation;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
@@ -116,6 +117,7 @@ public class DriveBase extends SubsystemBase {
       Logger.processInputs("Drive/OdometryTimestamps", m_timestampInputs);
     } finally {
       OdometryManager.odometryLock.unlock();
+      LoggedTracer.record("Drive/Inputs");
     }
 
     // Call periodic on modules
@@ -179,6 +181,9 @@ public class DriveBase extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!m_gyroInputs.connected && Constants.getMode() != Constants.Mode.SIM);
+
+    // Record cycle time
+    LoggedTracer.record("Drive/Periodic");
   }
 
   /** Set brake mode to {@code enabled} doesn't change brake mode if already set. */
