@@ -194,10 +194,13 @@ public class AutoScoreCommands {
                 dispenserBase,
                 reefLevel,
                 () -> {
-                  if (coralObjective.get().isEmpty()) return false;
-                  Pose2d poseError = robot.get().relativeTo(goal.apply(coralObjective.get().get()));
+                  var coralObjectiveOpt = coralObjective.get();
+                  if (coralObjectiveOpt.isEmpty()) return false;
+                  var obj = coralObjectiveOpt.get();
 
-                  int intReefLevel = coralObjective.get().get().reefLevel().ordinal();
+                  Pose2d poseError = robot.get().relativeTo(goal.apply(obj));
+
+                  int intReefLevel = obj.reefLevel().ordinal();
                   var driveChassisSpeeds = driveBase.getChassisSpeeds();
                   boolean ready =
                       (Math.abs(poseError.getTranslation().getX())
