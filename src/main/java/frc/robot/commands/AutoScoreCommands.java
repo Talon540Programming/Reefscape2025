@@ -271,6 +271,7 @@ public class AutoScoreCommands {
       Supplier<ReefLevel> reefLevel,
       BooleanSupplier eject,
       BooleanSupplier holdEject) {
+    final Timer ejectTimer = new Timer();
     return elevatorBase
         .runGoal(() -> ElevatorBase.getScoringState(reefLevel.get()))
         .until(eject)
@@ -280,18 +281,16 @@ public class AutoScoreCommands {
                 .withDeadline(
                     Commands.waitUntil(elevatorBase::atGoal)
                         .andThen(
+                            Commands.runOnce(ejectTimer::restart),
                             dispenserBase
                                 .runDispenser(
                                     () ->
-                                        dispenserBase.getDispenserVoltageFromLevel(reefLevel.get()))
-                                .withDeadline(
-                                    Commands.deferredProxy(
-                                            () ->
-                                                Commands.waitSeconds(
-                                                    ejectTimeSeconds[reefLevel.get().ordinal()]
-                                                        .get()))
-                                        .andThen(
-                                            Commands.waitUntil(() -> !holdEject.getAsBoolean()))))),
+                                        DispenserBase.getDispenserVoltageFromLevel(reefLevel.get()))
+                                .until(
+                                    () ->
+                                        ejectTimer.hasElapsed(
+                                                ejectTimeSeconds[reefLevel.get().ordinal()].get())
+                                            && !holdEject.getAsBoolean()))),
             elevatorBase.runGoal(Preset.STOW));
   }
 
