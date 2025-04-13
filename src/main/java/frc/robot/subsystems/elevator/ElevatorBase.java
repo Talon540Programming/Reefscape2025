@@ -272,10 +272,6 @@ public class ElevatorBase extends SubsystemBase {
     return goal.getElevatorHeight();
   }
 
-  public boolean readyForL4() {
-    return getPositionMeters() >= elevatorL4ClearHeight.get();
-  }
-
   public static Preset getScoringState(FieldConstants.ReefLevel level) {
     return switch (level) {
       case L1 -> Preset.L1_CORAL;

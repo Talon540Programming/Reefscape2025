@@ -29,9 +29,6 @@ public class ElevatorConstants {
 
   public static final double elevatorMaxTravel = 1.631;
 
-  public static final LoggedTunableNumber elevatorL4ClearHeight =
-      new LoggedTunableNumber("Superstructure/ElevatorL4ClearHeight", 1.65);
-
   static final double drumRadius = Units.inchesToMeters(1.0);
   static final double gearing = 4.0;
 

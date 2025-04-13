@@ -106,7 +106,6 @@ public class AutoScoreCommands {
       DoubleSupplier driverY,
       DoubleSupplier driverOmega,
       Command joystickDrive,
-      BooleanSupplier robotRelative,
       BooleanSupplier disableReefAutoAlign,
       BooleanSupplier manualEject) {
     Supplier<Pose2d> robot =
@@ -262,7 +261,6 @@ public class AutoScoreCommands {
         () -> 0,
         () -> 0,
         Commands.none(),
-        () -> false,
         () -> false,
         () -> false);
   }
