@@ -49,14 +49,9 @@ public class LEDBase extends VirtualSubsystem {
 
   // LED Sections
   private final Section fullSection = new Section(0, numLEDs);
-  private final Section leftBottomSection = new Section(0, 30);
-  private final Section rightBottomSection = new Section(31, 61);
-  private final Section firstTopBarSection = null; // TODO
-  private final Section secondTopBarSection = null; // TODO
-
-  // private final Section scoringStateIndicators = null; // TODO
-  // private final Section coralIndicator = null; // TODO
-  // private final Section humanPlayerIndicator = null; // TODO
+  private final Section bottomSection = new Section(0, 31);
+  private final Section topSideSection = null; // TODO need to wire this
+  private final Section topSection = null; // TODO need to wire this
 
   // State Constants
   private static final int minLoopCycleCount = 10;
@@ -130,6 +125,13 @@ public class LEDBase extends VirtualSubsystem {
       }
     }
 
+    // Update Followed Sections
+    for (int i = bottomSection.start; i < bottomSection.end; i++) {
+      buffer.setLED(61 - i, buffer.getLED(i));
+    }
+    // TODO
+    // for(int i = topSideSection.start; i < topSideSection.end; i++) {}
+
     // Set buffer to LEDs
     leds.setData(buffer);
 
@@ -139,22 +141,19 @@ public class LEDBase extends VirtualSubsystem {
 
   private void solid(Section section, Color color) {
     if (section == null || color == null) return;
-
-    for (int i = section.start(); i < section.end(); i++) {
-      buffer.setLED(i, color);
+    for (int ledIdx = section.start(); ledIdx < section.end(); ledIdx++) {
+      buffer.setLED(ledIdx, color);
     }
   }
 
   private void strobe(Section section, Color c1, Color c2, double duration) {
     if (section == null) return;
-
     boolean c1On = ((Timer.getTimestamp() % duration) / duration) > 0.5;
     solid(section, c1On ? c1 : c2);
   }
 
   private void breath(Section section, Color c1, Color c2, double duration, double timestamp) {
     if (section == null) return;
-
     double x = ((timestamp % duration) / duration) * 2.0 * Math.PI;
     double ratio = (Math.sin(x) + 1.0) / 2.0;
     var color = Color.lerpRGB(c1, c2, ratio);
@@ -163,22 +162,20 @@ public class LEDBase extends VirtualSubsystem {
 
   private void rainbow(Section section, double cycleLength, double duration) {
     if (section == null) return;
-
     double base = (1 - ((Timer.getTimestamp() / duration) % 1.0)) * 180.0;
     double xDiffPerLed = 180.0 / cycleLength;
-    for (int i = section.end() - 1; i >= section.start(); i--) {
-      double x = (base + i * xDiffPerLed) % 180.0;
-      buffer.setHSV(i, (int) x, 255, 255);
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
+      double x = (base + ledIdx * xDiffPerLed) % 180.0;
+      buffer.setHSV(ledIdx, (int) x, 255, 255);
     }
   }
 
   private void wave(Section section, Color c1, Color c2, double cycleLength, double duration) {
     if (section == null) return;
-
     double base = (1 - ((Timer.getTimestamp() % duration) / duration)) * 2.0 * Math.PI;
     double xDiffPerLed = (2.0 * Math.PI) / cycleLength;
-    for (int i = section.end() - 1; i >= section.start(); i--) {
-      double x = base + i * xDiffPerLed;
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
+      double x = base + ledIdx * xDiffPerLed;
       double ratio = (Math.pow(Math.sin(x), waveExponent) + 1.0) / 2.0;
 
       if (Double.isNaN(ratio)) {
@@ -189,19 +186,19 @@ public class LEDBase extends VirtualSubsystem {
       }
 
       var color = Color.lerpRGB(c1, c2, ratio);
-      buffer.setLED(i, color);
+      buffer.setLED(ledIdx, color);
     }
   }
 
   private void stripes(Section section, List<Color> colors, int stripeLength, double duration) {
     if (section == null) return;
-
     int offset = (int) (Timer.getTimestamp() % duration / duration * stripeLength * colors.size());
-    for (int i = section.end() - 1; i >= section.start(); i--) {
+    for (int ledIdx = section.end() - 1; ledIdx >= section.start(); ledIdx--) {
       int colorIndex =
-          (int) (Math.floor((double) (i - offset) / stripeLength) + colors.size()) % colors.size();
+          (int) (Math.floor((double) (ledIdx - offset) / stripeLength) + colors.size())
+              % colors.size();
       colorIndex = colors.size() - 1 - colorIndex;
-      buffer.setLED(i, colors.get(colorIndex));
+      buffer.setLED(ledIdx, colors.get(colorIndex));
     }
   }
 
