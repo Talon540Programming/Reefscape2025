@@ -155,14 +155,10 @@ public class LEDBase extends VirtualSubsystem {
             waveDisabledDuration);
       }
 
-      // // Vision disconnected alert
-      // if (visionDisconnected) {
-      //   strobe(
-      //       new Section(firstTopBarSection, secondTopBarSection),
-      //       Color.kRed,
-      //       Color.kBlack,
-      //       strobeDuration);
-      // }
+      // Vision disconnected alert
+      if (visionDisconnected) {
+        strobe(topSection, Color.kRed, Color.kBlack, strobeDuration);
+      }
     } else if (DriverStation.isAutonomous()) {
       wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
     } else {
@@ -170,11 +166,27 @@ public class LEDBase extends VirtualSubsystem {
       rainbow(fullSection, rainbowCycleLength, rainbowDuration);
 
       if (autoScoringReef) {
-        wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
+        rainbow(topSection, rainbowCycleLength, rainbowDuration);
+        solid(
+            topSideSection,
+            switch (autoScoringLevel) {
+              case L1 -> l1Color;
+              case L2 -> l2Color;
+              case L3 -> l3Color;
+              case L4 -> l4Color;
+            });
+      }
+
+      if (robotTipping) {
+        strobe(fullSection, Color.kRed, Color.kBlack, strobeDuration);
       }
 
       if (intaking) {
         strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+      }
+
+      if (coralGrabbed) {
+        solid(topSection, Color.kLime);
       }
 
       // Human player alert
