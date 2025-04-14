@@ -28,7 +28,7 @@ public class VisionConstants {
   static final Vector<N3> singleTagStdevs = VecBuilder.fill(0.1, 0.1, Math.toRadians(5.0));
   static final Vector<N3> multiTagStdevs = VecBuilder.fill(0.015, 0.015, Math.toRadians(2.0));
 
-  public static CameraConfig[] cameras =
+  public static final CameraConfig[] cameras =
       switch (Constants.getRobot()) {
         case COMPBOT, SIMBOT ->
             new CameraConfig[] {

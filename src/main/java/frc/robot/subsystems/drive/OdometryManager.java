@@ -13,7 +13,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.AutoLog;
 
 class OdometryManager implements AutoCloseable {
-  public static Lock odometryLock =
+  public static final Lock odometryLock =
       new ReentrantLock(); // Prevent conflicts when reading and writing data
 
   private static OdometryManager instance = null;

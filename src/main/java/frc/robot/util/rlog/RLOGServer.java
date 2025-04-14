@@ -65,7 +65,7 @@ public class RLOGServer implements LogDataReceiver, AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     if (thread != null) {
       thread.close();
       thread = null;
@@ -80,9 +80,9 @@ public class RLOGServer implements LogDataReceiver, AutoCloseable {
     ServerSocket server;
     Thread broadcastThread;
 
-    ArrayBlockingQueue<byte[]> broadcastQueue = new ArrayBlockingQueue<>(500);
-    List<Socket> sockets = new ArrayList<>();
-    List<Double> lastHeartbeats = new ArrayList<>();
+    final ArrayBlockingQueue<byte[]> broadcastQueue = new ArrayBlockingQueue<>(500);
+    final List<Socket> sockets = new ArrayList<>();
+    final List<Double> lastHeartbeats = new ArrayList<>();
 
     public ServerThread(int port) {
       super("AdvantageKit_RLOGServer");
