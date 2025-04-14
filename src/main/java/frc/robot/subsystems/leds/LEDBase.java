@@ -2,8 +2,14 @@ package frc.robot.subsystems.leds;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.FieldConstants.ReefLevel;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.VirtualSubsystem;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class LEDBase extends VirtualSubsystem {
   private static LEDBase instance;
@@ -23,6 +29,7 @@ public class LEDBase extends VirtualSubsystem {
   private static final double breathSlowDuration = 1.0;
   private static final double rainbowCycleLength = 25.0;
   private static final double rainbowDuration = 0.25;
+  private static final double rainbowStrobeDuration = 0.2;
   private static final double waveExponent = 0.4;
   private static final double waveFastCycleLength = 25.0;
   private static final double waveFastDuration = 0.25;
@@ -30,17 +37,15 @@ public class LEDBase extends VirtualSubsystem {
   private static final double waveDisabledDuration = 2.0;
   private static final double autoFadeTime = 2.5; // 3s nominal
   private static final double autoFadeMaxTime = 5.0; // Return to normal
+  private static final Color l1Color = Color.kOrange;
+  private static final Color l2Color = Color.kYellow;
+  private static final Color l3Color = Color.kGreen;
+  private static final Color l4Color = Color.kPurple;
 
   // Color Constants
   private static final Color primaryColor = Color.kWhite;
-  private static final Color secondaryColor = null; // TODO
-  private static final Color disabledColor = null; // TODO
-  private static final Color secondaryDisabledColor = null; // TODO
-  private static final Color stowColor = null; // TODO
-  private static final Color l1Color = Color.kHotPink;
-  private static final Color l2Color = Color.kOrange;
-  private static final Color l3Color = Color.kYellow;
-  private static final Color l4Color = Color.kGreen;
+  private static Color disabledColor = Color.kGold;
+  private static Color secondaryDisabledColor = Color.kRed;
 
   // LED IO
   private final AddressableLED leds;
@@ -56,9 +61,17 @@ public class LEDBase extends VirtualSubsystem {
   // State Constants
   private static final int minLoopCycleCount = 10;
   public int loopCycleCount = 0;
-  public boolean autoScoringReef = false;
   public boolean humanPlayerAlert = false;
+  public boolean lowBatteryAlert = false;
+  public boolean intaking = false;
   public boolean endgameAlert = false;
+  public boolean robotTipping = false;
+  public boolean autoScoringReef = false;
+  public ReefLevel autoScoringLevel = null;
+  public boolean visionDisconnected = false;
+  private boolean lastEnabledAuto = false;
+  private double lastEnabledTime = 0.0;
+  public boolean coralGrabbed = false;
 
   private LEDBase() {
     // Initialize IO
@@ -88,6 +101,22 @@ public class LEDBase extends VirtualSubsystem {
 
   @Override
   public synchronized void periodic() {
+    // Update alliance color
+    if (DriverStation.isFMSAttached()) {
+      var allianceOpt = DriverStation.getAlliance();
+      allianceOpt.ifPresent(
+          alliance -> {
+            disabledColor = alliance == DriverStation.Alliance.Blue ? Color.kBlue : Color.kRed;
+            secondaryDisabledColor = Color.kBlack;
+          });
+    }
+
+    // Update auto state
+    if (DriverStation.isEnabled()) {
+      lastEnabledAuto = DriverStation.isAutonomous();
+      lastEnabledTime = Timer.getTimestamp();
+    }
+
     // Exit during initial cycles
     loopCycleCount += 1;
     if (loopCycleCount < minLoopCycleCount) {
@@ -102,8 +131,38 @@ public class LEDBase extends VirtualSubsystem {
     if (DriverStation.isEStopped()) {
       solid(fullSection, Color.kRed);
     } else if (DriverStation.isDisabled()) {
-      // Default pattern
-      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
+      if (lastEnabledAuto && Timer.getTimestamp() - lastEnabledTime < autoFadeMaxTime) {
+        // Auto fade
+        wave(
+            new Section(
+                (int)
+                    (bottomSection.end * ((Timer.getTimestamp() - lastEnabledTime) / autoFadeTime)),
+                bottomSection.end),
+            Color.kRed,
+            Color.kWhite,
+            waveFastCycleLength,
+            waveFastDuration);
+      } else if (lowBatteryAlert) {
+        // Low battery
+        strobe(fullSection, Color.kOrangeRed, Color.kBlack, strobeDuration);
+      } else {
+        // Default pattern
+        wave(
+            fullSection,
+            disabledColor,
+            secondaryDisabledColor,
+            waveDisabledCycleLength,
+            waveDisabledDuration);
+      }
+
+      // // Vision disconnected alert
+      // if (visionDisconnected) {
+      //   strobe(
+      //       new Section(firstTopBarSection, secondTopBarSection),
+      //       Color.kRed,
+      //       Color.kBlack,
+      //       strobeDuration);
+      // }
     } else if (DriverStation.isAutonomous()) {
       wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
     } else {
@@ -114,9 +173,13 @@ public class LEDBase extends VirtualSubsystem {
         wave(fullSection, Color.kRed, Color.kOrange, waveFastCycleLength, waveFastDuration);
       }
 
+      if (intaking) {
+        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+      }
+
       // Human player alert
       if (humanPlayerAlert) {
-        strobe(fullSection, Color.kRed, Color.kBlue, strobeDuration);
+        strobe(fullSection, Color.kWhite, Color.kBlack, strobeDuration);
       }
 
       // Endgame alert
@@ -137,6 +200,18 @@ public class LEDBase extends VirtualSubsystem {
 
     // Record cycle time
     LoggedTracer.record("LEDs");
+  }
+
+  public static Trigger setLEDState(Trigger base, BiConsumer<LEDBase, Boolean> stateSetter) {
+    return base.onTrue(Commands.runOnce(() -> stateSetter.accept(LEDBase.getInstance(), true)))
+        .onFalse(Commands.runOnce(() -> stateSetter.accept(LEDBase.getInstance(), false)));
+  }
+
+  public static Command setLEDState(Command base, BiConsumer<LEDBase, Boolean> stateSetter) {
+    return base.deadlineFor(
+        Commands.startEnd(
+            () -> stateSetter.accept(LEDBase.getInstance(), true),
+            () -> stateSetter.accept(LEDBase.getInstance(), false)));
   }
 
   private void solid(Section section, Color color) {

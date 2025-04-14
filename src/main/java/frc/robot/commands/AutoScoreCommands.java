@@ -167,6 +167,7 @@ public class AutoScoreCommands {
             () -> {
               // Start LEDs
               LEDBase.getInstance().autoScoringReef = true;
+              LEDBase.getInstance().autoScoringLevel = reefLevel.get();
 
               // Log reef level
               Logger.recordOutput("AutoScore/ReefLevel", reefLevel.get().toString());
@@ -245,6 +246,7 @@ public class AutoScoreCommands {
 
               // Stop LEDs
               LEDBase.getInstance().autoScoringReef = false;
+              LEDBase.getInstance().autoScoringLevel = null;
             });
   }
 
