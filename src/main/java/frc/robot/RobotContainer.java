@@ -137,9 +137,10 @@ public class RobotContainer {
 
     var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
     autoChooser.addDefaultOption("Noting", Commands.none());
-    autoChooser.addOption("DeadreckonedCenterStartL4", autoBuilder.deadreckonedL4());
-    autoChooser.addOption("DeadreckonedSideStartL4", autoBuilder.deadreckonedSideStartL4());
     autoChooser.addOption("Taxi", autoBuilder.taxi());
+    autoChooser.addOption("SingleCoralCenterStart", autoBuilder.centerStartSingle());
+    autoChooser.addOption("MultiCoralSideStart", autoBuilder.sideStartMulti(false));
+    autoChooser.addOption("LockedInMultiCoralSideStart", autoBuilder.sideStartMulti(true));
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines

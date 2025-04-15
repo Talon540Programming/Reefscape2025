@@ -22,7 +22,6 @@ import frc.robot.util.Container;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.MirrorUtil;
-import java.awt.*;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
@@ -31,7 +30,7 @@ public class AutoBuilder {
   private static final LoggedTunableNumber scoreCancelSecs =
       new LoggedTunableNumber("AutoBuilder/ScoreCancelSeconds", 1.5);
   private static final LoggedTunableNumber intakeTimeSecs =
-      new LoggedTunableNumber("AutoBuilder/IntakeTimeSecs", 0.75);
+      new LoggedTunableNumber("AutoBuilder/IntakeTimeSecs", 0.5);
 
   private static final Pose2d centerStartingPose =
       new Pose2d(
@@ -49,51 +48,132 @@ public class AutoBuilder {
   private final DispenserBase dispenserBase;
   private final IntakeBase intakeBase;
 
-  public Command deadreckonedL4() {
+  public Command centerStartSingle() {
     final var objective = new CoralObjective(7, ReefLevel.L4);
 
-    return AutoScoreCommands.autoScore(
-            driveBase,
-            elevatorBase,
-            dispenserBase,
-            objective::reefLevel,
-            () -> Optional.of(MirrorUtil.apply(objective)))
+    return Commands.runOnce(
+            () ->
+                RobotState.getInstance()
+                    .resetPose(AllianceFlipUtil.apply(MirrorUtil.apply(centerStartingPose))))
         .andThen(
+            safetyPush(),
+            AutoScoreCommands.autoScore(
+                driveBase,
+                elevatorBase,
+                dispenserBase,
+                objective::reefLevel,
+                () -> Optional.of(MirrorUtil.apply(objective))),
             new DriveToPose(
                     driveBase,
                     () ->
                         AllianceFlipUtil.apply(
                             AutoScoreCommands.getCoralScorePose(objective)
                                 .transformBy(new Transform2d(-0.5, 0.0, Rotation2d.kZero))))
-                .withTimeout(3.0))
-        .beforeStarting(
-            Commands.runOnce(
-                () ->
-                    RobotState.getInstance()
-                        .resetPose(AllianceFlipUtil.apply(MirrorUtil.apply(centerStartingPose)))));
+                .withTimeout(3.0));
   }
 
-  public Command deadreckonedSideStartL4() {
-    final var objective = new CoralObjective(8, ReefLevel.L4);
+  public Command sideStartMulti(boolean isDeadReckoned) {
+    CoralObjective[] coralObjectives =
+        new CoralObjective[] {
+          new CoralObjective(8, isDeadReckoned ? ReefLevel.L4 : ReefLevel.L2),
+          new CoralObjective(10, FieldConstants.ReefLevel.L4),
+          new CoralObjective(11, ReefLevel.L4),
+          new CoralObjective(0, ReefLevel.L4)
+        };
+    Container<Integer> currentObjectiveIndex = new Container<>();
 
-    return AutoScoreCommands.autoScore(
-            driveBase,
-            elevatorBase,
-            dispenserBase,
-            objective::reefLevel,
-            () -> Optional.of(MirrorUtil.apply(objective)))
+    var driveToStation = new DriveToStation(driveBase, true);
+
+    Timer autoTimer = new Timer();
+    Timer intakeTimer = new Timer();
+    Timer coralIndexedTimer = new Timer();
+
+    return Commands.runOnce(
+            () -> {
+              RobotState.getInstance()
+                  .resetPose(AllianceFlipUtil.apply(MirrorUtil.apply(sideStartingPose)));
+              autoTimer.restart();
+              currentObjectiveIndex.value = 0;
+            })
+        .andThen(
+            safetyPush(),
+            Commands.sequence(
+                    // Intake
+                    driveToStation
+                        .deadlineFor(
+                            AutoScoreCommands.aimAndEject(
+                                    elevatorBase,
+                                    dispenserBase,
+                                    () -> coralObjectives[currentObjectiveIndex.value].reefLevel(),
+                                    () -> true,
+                                    () -> true)
+                                .until(
+                                    () -> {
+                                      Pose2d robot = RobotState.getInstance().getEstimatedPose();
+                                      Pose2d flippedRobot = AllianceFlipUtil.apply(robot);
+                                      return AutoScoreCommands.outOfDistanceToReef(
+                                              robot, AutoScoreCommands.minDistanceReefClearL4.get())
+                                          || Math.abs(
+                                                  FieldConstants.Reef.center
+                                                      .minus(flippedRobot.getTranslation())
+                                                      .getAngle()
+                                                      .minus(flippedRobot.getRotation())
+                                                      .getDegrees())
+                                              >= AutoScoreCommands.minAngleReefClear.get();
+                                    })
+                                .andThen(
+                                    IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase)))
+                        .until(
+                            () -> {
+                              if (!driveToStation.withinTolerance(
+                                  Units.inchesToMeters(5.0), Rotation2d.fromDegrees(5.0))) {
+                                intakeTimer.restart();
+                              }
+                              return dispenserBase.holdingCoral()
+                                  || intakeTimer.hasElapsed(intakeTimeSecs.get());
+                            }),
+                    // Score
+                    AutoScoreCommands.autoScore(
+                            driveBase,
+                            elevatorBase,
+                            dispenserBase,
+                            () -> coralObjectives[currentObjectiveIndex.value].reefLevel(),
+                            () ->
+                                Optional.of(
+                                    MirrorUtil.apply(coralObjectives[currentObjectiveIndex.value])))
+                        .withTimeout(1.0)
+                        .finallyDo(
+                            interrupted -> {
+                              if (!interrupted) {
+                                System.out.printf(
+                                    "Scored Coral #"
+                                        + (currentObjectiveIndex.value + 1)
+                                        + " at %.2f\n",
+                                    autoTimer.get());
+                                currentObjectiveIndex.value++;
+                              }
+                            })
+                        .beforeStarting(coralIndexedTimer::restart)
+                        .raceWith(
+                            Commands.waitUntil(
+                                    () -> coralIndexedTimer.hasElapsed(scoreCancelSecs.get()))
+                                .andThen(Commands.idle().onlyIf(dispenserBase::holdingCoral))))
+                .repeatedly()
+                .until(() -> currentObjectiveIndex.value >= coralObjectives.length))
         .andThen(
             new DriveToPose(
-                driveBase,
-                () ->
-                    AllianceFlipUtil.apply(
-                        AutoScoreCommands.getCoralScorePose(objective)
-                            .transformBy(new Transform2d(-0.5, 0.0, Rotation2d.kZero)))))
-        .beforeStarting(
-            Commands.runOnce(
-                () ->
-                    RobotState.getInstance()
-                        .resetPose(AllianceFlipUtil.apply(MirrorUtil.apply(sideStartingPose)))));
+                    driveBase,
+                    () ->
+                        RobotState.getInstance()
+                            .getEstimatedPose()
+                            .transformBy(
+                                GeomUtil.toTransform2d(
+                                    -AutoScoreCommands.minDistanceReefClearL4.get(), 0.0)))
+                .until(
+                    () ->
+                        AutoScoreCommands.outOfDistanceToReef(
+                            RobotState.getInstance().getEstimatedPose(),
+                            AutoScoreCommands.minDistanceReefClearL4.get())));
   }
 
   public Command taxi() {
@@ -115,15 +195,18 @@ public class AutoBuilder {
                     () -> 0.0)
                 .withTimeout(0.6));
   }
+
+  private Command safetyPush() {
+    return new DriveToPose(
             driveBase,
             () -> {
-              Pose2d robot = RobotState.getInstance().getEstimatedPose();
+              var robot = RobotState.getInstance().getEstimatedPose();
               return new Pose2d(
                   robot
                       .getTranslation()
-                      .plus(new Translation2d(AllianceFlipUtil.shouldFlip() ? 0.1 : -0.1, 0.0)),
+                      .plus(new Translation2d(AllianceFlipUtil.shouldFlip() ? -0.1 : 0.1, 0.0)),
                   robot.getRotation());
             })
-        .withTimeout(0.5);
+        .withTimeout(0.25);
   }
 }
