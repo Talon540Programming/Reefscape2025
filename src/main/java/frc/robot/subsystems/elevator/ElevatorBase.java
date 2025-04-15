@@ -105,7 +105,6 @@ public class ElevatorBase extends SubsystemBase {
   @AutoLogOutput(key = "Elevator/Profile/AtGoal")
   private boolean atGoal = false;
 
-
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
   }
@@ -226,7 +225,6 @@ public class ElevatorBase extends SubsystemBase {
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
-
 
     // Record cycle time
     LoggedTracer.record("Elevator");
