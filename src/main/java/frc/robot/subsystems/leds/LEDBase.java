@@ -96,6 +96,7 @@ public class LEDBase extends VirtualSubsystem {
                 leds.setData(buffer);
               }
             });
+    loadingNotifier.setName("LEDs Loading Indicator");
     loadingNotifier.startPeriodic(0.02);
   }
 
