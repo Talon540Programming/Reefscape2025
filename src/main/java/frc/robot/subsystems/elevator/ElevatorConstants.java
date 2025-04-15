@@ -31,6 +31,6 @@ public class ElevatorConstants {
   static final double drumRadius = Units.inchesToMeters(1.0);
   static final double gearing = 4.0;
 
-  static final double carriageMassKg = Units.lbsToKilograms(8.0); // TODO
-  static final double stagesMassKg = Units.lbsToKilograms(12.0); // TODO
+  static final double carriageMassKg = Units.lbsToKilograms(6.0);
+  static final double stagesMassKg = Units.lbsToKilograms(12.0);
 }

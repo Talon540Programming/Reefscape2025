@@ -19,7 +19,7 @@ public class ElevatorIOSim implements ElevatorIO {
           elevatorMaxTravel,
           true,
           0,
-          0.01,
+          0.0035,
           0.0);
 
   private final PIDController controller = new PIDController(0, 0, 0);
