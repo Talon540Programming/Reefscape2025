@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -26,11 +27,9 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.*;
-import frc.robot.util.AllianceFlipUtil;
-import frc.robot.util.DoublePressTracker;
-import frc.robot.util.MirrorUtil;
-import frc.robot.util.TriggerUtil;
-import java.util.*;
+import frc.robot.util.*;
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -63,6 +62,8 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
+  private final LoggedNetworkBoolean disableReefAutoScore =
+      new LoggedNetworkBoolean("/SmartDashboard/ReefAutoScoreDisabled", false);
   private final LoggedNetworkBoolean disableReefAutoAlign =
       new LoggedNetworkBoolean("/SmartDashboard/ReefAutoAlignDisabled", false);
   private final LoggedNetworkBoolean disableCoralStationAutoAlign =
@@ -166,55 +167,83 @@ public class RobotContainer {
         () -> DriveCommands.joystickDrive(driveBase, driverX, driverY, driverOmega, robotRelative);
     driveBase.setDefaultCommand(joystickDriveCommandFactory.get());
 
-    BiConsumer<Trigger, Boolean> bindAutoAlign =
-        (faceButton, isLeftSide) -> {
-          faceButton.whileTrue(
-              AutoScoreCommands.autoAlign(
-                  driveBase,
-                  elevatorBase,
-                  () -> {
-                    Pose2d robot = RobotState.getInstance().getEstimatedPose();
-                    Map<Integer, Pose2d> centerFaces = new HashMap<>();
-                    for (int i = 0; i < 6; i++) {
-                      centerFaces.put(
-                          i, AllianceFlipUtil.apply(FieldConstants.Reef.centerFaces[i]));
-                    }
-                    int closesFaceIdx =
-                        Collections.min(
-                                centerFaces.entrySet(),
-                                Comparator.comparing(
-                                        (Map.Entry<Integer, Pose2d> other) ->
-                                            robot
-                                                .getTranslation()
-                                                .getDistance(other.getValue().getTranslation()))
-                                    .thenComparing(
-                                        (var other) ->
-                                            Math.abs(
-                                                robot
-                                                    .getRotation()
-                                                    .minus(other.getValue().getRotation())
-                                                    .getRadians())))
-                            .getKey();
+    // ***** DRIVER CONTROLLER *****
+    // Bind coral score function
+    var goalReefLevel = new Container<ReefLevel>(null);
+    BiConsumer<Trigger, Boolean> bindAutoScore =
+        (trigger, isLeftSide) -> {
+          Supplier<Optional<ReefLevel>> levelSupplier =
+              () -> Optional.ofNullable(goalReefLevel.value);
 
-                    var currentReefLevel =
-                        switch (elevatorBase.getGoal()) {
-                          case L1_CORAL -> ReefLevel.L1;
-                          case L2_CORAL -> ReefLevel.L2;
-                          case L3_CORAL -> ReefLevel.L3;
-                          case L4_CORAL -> ReefLevel.L4;
-                          default -> ReefLevel.L2;
-                        };
-                    return Optional.of(
-                        new FieldConstants.CoralObjective(
-                            closesFaceIdx * 2 + (isLeftSide ? 1 : 0), currentReefLevel));
-                  },
-                  driverX,
-                  driverY,
-                  driverOmega));
+          trigger
+              .and(() -> levelSupplier.get().isPresent())
+              .whileTrue(
+                  AutoScoreCommands.autoScore(
+                      driveBase,
+                      elevatorBase,
+                      dispenserBase,
+                      () -> levelSupplier.get().orElseThrow(),
+                      () -> {
+                        var robot = RobotState.getInstance().getEstimatedPose();
+                        var reefFaces =
+                            Arrays.stream(FieldConstants.Reef.centerFaces)
+                                .map(AllianceFlipUtil::apply)
+                                .toList();
+
+                        var closestReefFace = robot.nearest(reefFaces);
+                        int closestIndex = reefFaces.indexOf(closestReefFace);
+
+                        return Optional.of(
+                            new FieldConstants.CoralObjective(
+                                closestIndex * 2 + (isLeftSide ? 1 : 0),
+                                levelSupplier.get().orElseThrow()));
+                      },
+                      driverX,
+                      driverY,
+                      driverOmega,
+                      joystickDriveCommandFactory.get(),
+                      disableReefAutoAlign::get,
+                      controller.b().doublePress()));
         };
 
-    bindAutoAlign.accept(controller.leftBumper(), true);
-    bindAutoAlign.accept(controller.rightBumper(), false);
+    // Autoscore Left Side
+    bindAutoScore.accept(controller.leftBumper(), true);
+    // Autoscore Right Side
+    bindAutoScore.accept(controller.rightBumper(), false);
+
+    // Handle Coral Score
+    BiConsumer<Trigger, FieldConstants.ReefLevel> bindCoralScore =
+        (faceButton, level) ->
+            faceButton
+                .onTrue(Commands.runOnce(() -> goalReefLevel.value = level))
+                .whileTrueRepeatedly(
+                    elevatorBase
+                        .runGoal(() -> ElevatorBase.getScoringState(level))
+                        .withName("Operator Score on " + level)
+                        .onlyIf(disableReefAutoScore::get));
+
+    bindCoralScore.accept(controller.povDown(), ReefLevel.L1);
+    bindCoralScore.accept(controller.povLeft(), ReefLevel.L2);
+    bindCoralScore.accept(controller.povUp(), ReefLevel.L3);
+    bindCoralScore.accept(controller.povRight(), ReefLevel.L4);
+
+    // Handle Coral Eject
+    var ejectTimer = new Timer();
+    controller
+        .rightTrigger()
+        .and(() -> goalReefLevel.value != null)
+        .onTrue(
+            Commands.runOnce(ejectTimer::restart)
+                .andThen(
+                    dispenserBase
+                        .runDispenser(() -> DispenserBase.getScoringVoltage(goalReefLevel.value))
+                        .until(
+                            () ->
+                                ejectTimer.hasElapsed(
+                                    AutoScoreCommands.ejectTimeSeconds[
+                                        goalReefLevel.value.ordinal()]
+                                        .get())))
+                .withName("Operator Coral Eject"));
 
     // Coral intake
     controller
@@ -227,6 +256,7 @@ public class RobotContainer {
                 .alongWith(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase))
                 .withName("Coral Station Intake"));
 
+    // Strobe at Human Player
     controller
         .y()
         .whileTrue(
@@ -240,6 +270,7 @@ public class RobotContainer {
         .a()
         .debounce(0.1)
         .onTrue(elevatorBase.runGoal(Preset.STOW).withName("Stow Elevator"));
+
     // Stuck Coral (Chunus Solutions)
     controller
         .a()
@@ -254,36 +285,10 @@ public class RobotContainer {
                 .withName("Operator Coral Intake"));
 
     // Home elevator
-    controller.b().doublePress().onTrue(elevatorBase.homingSequence().withName("Home Elevator"));
-
-    BiConsumer<Trigger, FieldConstants.ReefLevel> bindOperatorCoralScore =
-        (faceButton, level) -> {
-          faceButton.whileTrueRepeatedly(
-              elevatorBase
-                  .runGoal(() -> ElevatorBase.getScoringState(level))
-                  .withName("Operator Score on " + level));
-        };
-
-    bindOperatorCoralScore.accept(controller.povDown(), ReefLevel.L1);
-    bindOperatorCoralScore.accept(controller.povLeft(), ReefLevel.L2);
-    bindOperatorCoralScore.accept(controller.povUp(), ReefLevel.L3);
-    bindOperatorCoralScore.accept(controller.povRight(), ReefLevel.L4);
-
     controller
-        .rightTrigger()
-        .onTrue(
-            dispenserBase
-                .runDispenser(
-                    () ->
-                        dispenserBase.getDispenserVoltageFromLevel(
-                            switch (elevatorBase.getGoal()) {
-                              case L1_CORAL -> ReefLevel.L1;
-                              case L2_CORAL -> ReefLevel.L2;
-                              case L3_CORAL -> ReefLevel.L3;
-                              case L4_CORAL -> ReefLevel.L4;
-                              default -> ReefLevel.L2;
-                            }))
-                .withTimeout(0.75));
+        .start()
+        .doublePress()
+        .onTrue(elevatorBase.homingSequence().withName("Home Elevator"));
 
     // ***** MISCELlANEOUS *****
     // Reset gyro

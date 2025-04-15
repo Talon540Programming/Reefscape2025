@@ -66,7 +66,7 @@ public class DispenserBase extends SubsystemBase {
     return runEnd(() -> io.runVolts(inputVolts.getAsDouble()), io::stop);
   }
 
-  public double getDispenserVoltageFromLevel(ReefLevel level) {
+  public static double getScoringVoltage(ReefLevel level) {
     return coralDispenseVolts[level.ordinal()].get();
   }
 }
