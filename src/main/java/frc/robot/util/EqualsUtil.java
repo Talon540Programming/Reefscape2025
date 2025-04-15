@@ -1,14 +1,11 @@
 package frc.robot.util;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Twist2d;
 
 public class EqualsUtil {
-  public static boolean epsilonEquals(double a, double b, double epsilon) {
-    return (a - epsilon <= b) && (a + epsilon >= b);
-  }
-
   public static boolean epsilonEquals(double a, double b) {
-    return epsilonEquals(a, b, 1e-9);
+    return MathUtil.isNear(a, b, 1e-9);
   }
 
   /** Extension methods for wpi geometry objects */

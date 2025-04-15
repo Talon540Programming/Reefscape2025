@@ -3,10 +3,10 @@ package frc.robot.subsystems.drive;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
@@ -18,26 +18,34 @@ class Module {
       new LoggedTunableNumber("Drive/Module/DrivekV");
   private static final LoggedTunableNumber drivekP =
       new LoggedTunableNumber("Drive/Module/DrivekP");
+  private static final LoggedTunableNumber drivekI =
+      new LoggedTunableNumber("Drive/Module/DrivekI");
   private static final LoggedTunableNumber drivekD =
       new LoggedTunableNumber("Drive/Module/DrivekD");
+  private static final LoggedTunableNumber driveIZone =
+      new LoggedTunableNumber("Drive/Module/DrivekIZone");
   private static final LoggedTunableNumber turnkP = new LoggedTunableNumber("Drive/Module/TurnkP");
   private static final LoggedTunableNumber turnkD = new LoggedTunableNumber("Drive/Module/TurnkD");
 
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        drivekS.initDefault(0.19700);
-        drivekV.initDefault(0.12941);
-        drivekP.initDefault(0.005);
-        drivekD.initDefault(0.0);
-        turnkP.initDefault(2.0);
-        turnkD.initDefault(0.05);
+        drivekS.initDefault(0.69641);
+        drivekV.initDefault(0.12647);
+        drivekP.initDefault(0.0075);
+        drivekI.initDefault(0.0000005);
+        drivekD.initDefault(0.001);
+        driveIZone.initDefault(0.01);
+        turnkP.initDefault(0.65);
+        turnkD.initDefault(0.1);
       }
       default -> {
         drivekS.initDefault(0.113190);
         drivekV.initDefault(0.841640);
         drivekP.initDefault(0.1);
+        drivekI.initDefault(0.0);
         drivekD.initDefault(0.0);
+        driveIZone.initDefault(0.0);
         turnkP.initDefault(10.0);
         turnkD.initDefault(0.0);
       }
@@ -70,15 +78,18 @@ class Module {
 
   public void periodic() {
     // Update tunable numbers
-    if (drivekS.hasChanged(hashCode()) || drivekV.hasChanged(hashCode())) {
-      m_io.setDriveFF(drivekS.get(), drivekV.get());
-    }
-    if (drivekP.hasChanged(hashCode()) || drivekD.hasChanged(hashCode())) {
-      m_io.setDrivePID(drivekP.get(), 0, drivekD.get());
-    }
-    if (turnkP.hasChanged(hashCode()) || turnkD.hasChanged(hashCode())) {
-      m_io.setTurnPID(turnkP.get(), 0, turnkD.get());
-    }
+    LoggedTunableNumber.ifChanged(
+        hashCode(), () -> m_io.setDriveFF(drivekS.get(), drivekV.get()), true, drivekS, drivekV);
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> m_io.setDrivePID(drivekP.get(), drivekI.get(), drivekD.get(), driveIZone.get()),
+        true,
+        drivekP,
+        drivekI,
+        drivekD,
+        driveIZone);
+    LoggedTunableNumber.ifChanged(
+        hashCode(), () -> m_io.setTurnPID(turnkP.get(), 0, turnkD.get()), true, turnkP, turnkD);
 
     // Update Odometry Positions
     int sampleCount = m_inputs.odometryDrivePositionsRad.length;
@@ -91,6 +102,9 @@ class Module {
 
     driveDisconnectedAlert.set(!m_inputs.driveConnected);
     turnDisconnectedAlert.set(!m_inputs.turnConnected);
+
+    // Record cycle time
+    LoggedTracer.record("Drive/Module" + index);
   }
 
   /** Runs the module with the specified setpoint state. */
@@ -141,9 +155,9 @@ class Module {
     return m_inputs.drivePositionRad;
   }
 
-  /** Returns the module velocity in rotations/sec (Phoenix native units). */
+  /** Returns the module velocity in rad/sec. */
   public double getFFCharacterizationVelocity() {
-    return Units.radiansToRotations(m_inputs.driveVelocityRadPerSec);
+    return m_inputs.driveVelocityRadPerSec;
   }
 
   /* Sets brake mode to {@code enabled} */

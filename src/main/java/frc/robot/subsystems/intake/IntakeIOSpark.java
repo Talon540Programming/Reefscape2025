@@ -22,10 +22,17 @@ public class IntakeIOSpark implements IntakeIO {
 
     var config = new SparkMaxConfig();
     config
-        .inverted(intakeInverted)
+        .inverted(inverted)
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(40, 50)
         .voltageCompensation(12.0);
+
+    config
+        .encoder
+        .positionConversionFactor(2 * Math.PI / gearing)
+        .velocityConversionFactor(2 * Math.PI / 60.0 / gearing)
+        .uvwMeasurementPeriod(10)
+        .uvwAverageDepth(2);
 
     config
         .signals
@@ -35,14 +42,8 @@ public class IntakeIOSpark implements IntakeIO {
         .primaryEncoderVelocityPeriodMs(20)
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
-        .outputCurrentPeriodMs(20);
-
-    config
-        .encoder
-        .positionConversionFactor(intakePositionConversionFactor)
-        .velocityConversionFactor(intakeVelocityConversionFactor)
-        .uvwMeasurementPeriod(10)
-        .uvwAverageDepth(2);
+        .outputCurrentPeriodMs(20)
+        .motorTemperaturePeriodMs(20);
 
     spark.configure(
         config, SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);

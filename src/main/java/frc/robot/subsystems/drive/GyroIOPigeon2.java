@@ -14,34 +14,42 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import java.util.Queue;
 
 public class GyroIOPigeon2 implements GyroIO {
-  private final Pigeon2 m_gyro = new Pigeon2(id);
+  private final Pigeon2 pigeon = new Pigeon2(id);
 
-  private final StatusSignal<Angle> yaw;
-  private final StatusSignal<AngularVelocity> yawVelocity;
+  private final StatusSignal<Angle> yaw = pigeon.getYaw();
+  private final StatusSignal<Angle> pitch = pigeon.getPitch();
+  private final StatusSignal<Angle> roll = pigeon.getRoll();
+  private final StatusSignal<AngularVelocity> yawVelocity = pigeon.getAngularVelocityZWorld();
+  private final StatusSignal<AngularVelocity> pitchVelocity = pigeon.getAngularVelocityXWorld();
+  private final StatusSignal<AngularVelocity> rollVelocity = pigeon.getAngularVelocityYWorld();
 
   private final Queue<Double> yawPositionQueue;
 
   public GyroIOPigeon2() {
-    m_gyro.getConfigurator().apply(new Pigeon2Configuration());
-    m_gyro.getConfigurator().setYaw(0.0);
-
-    yaw = m_gyro.getYaw();
-    yawVelocity = m_gyro.getAngularVelocityZWorld();
+    pigeon.getConfigurator().apply(new Pigeon2Configuration());
+    pigeon.getConfigurator().setYaw(0.0);
 
     yaw.setUpdateFrequency(DriveConstants.odometryFrequencyHz);
-    yawVelocity.setUpdateFrequency(50.0);
-    m_gyro.optimizeBusUtilization();
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        50, pitch, roll, yawVelocity, pitchVelocity, rollVelocity);
+    pigeon.optimizeBusUtilization();
 
     yawPositionQueue =
-        OdometryManager.getInstance().registerSignal(() -> m_gyro.getYaw().getValueAsDouble());
+        OdometryManager.getInstance().registerSignal(yaw.refresh()::getValueAsDouble);
   }
 
   @Override
   public void updateInputs(GyroIOInputs inputs) {
-    inputs.connected = BaseStatusSignal.refreshAll(yaw, yawVelocity).equals(StatusCode.OK);
+    inputs.connected =
+        BaseStatusSignal.refreshAll(yaw, yawVelocity, pitch, pitchVelocity, roll, rollVelocity)
+            .equals(StatusCode.OK);
 
     inputs.yawPosition = Rotation2d.fromDegrees(yaw.getValueAsDouble());
     inputs.yawVelocityRadPerSec = Units.degreesToRadians(yawVelocity.getValueAsDouble());
+    inputs.pitchPosition = Rotation2d.fromDegrees(pitch.getValueAsDouble());
+    inputs.pitchVelocityRadPerSec = Units.degreesToRadians(pitchVelocity.getValueAsDouble());
+    inputs.rollPosition = Rotation2d.fromDegrees(roll.getValueAsDouble());
+    inputs.rollVelocityRadPerSec = Units.degreesToRadians(rollVelocity.getValueAsDouble());
 
     inputs.odometryYawPositions =
         yawPositionQueue.stream().map(Rotation2d::fromDegrees).toArray(Rotation2d[]::new);

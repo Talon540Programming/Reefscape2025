@@ -11,8 +11,8 @@ import frc.robot.Constants;
 import java.util.Queue;
 
 public class ModuleIOSim implements ModuleIO {
-  private static final DCMotor driveMotorModel = DCMotor.getNEO(1);
-  private static final DCMotor turnMotorModel = DCMotor.getNEO(1);
+  private final DCMotor driveMotorModel = DCMotor.getNEO(1);
+  private final DCMotor turnMotorModel = DCMotor.getNEO(1);
 
   private final DCMotorSim driveSim =
       new DCMotorSim(
@@ -119,8 +119,9 @@ public class ModuleIOSim implements ModuleIO {
   }
 
   @Override
-  public void setDrivePID(double kP, double kI, double kD) {
+  public void setDrivePID(double kP, double kI, double kD, double IZone) {
     driveController.setPID(kP, kI, kD);
+    driveController.setI(IZone);
   }
 
   @Override
