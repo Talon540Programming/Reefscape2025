@@ -17,7 +17,7 @@ import lombok.RequiredArgsConstructor;
  * have a blue alliance origin.
  */
 public class FieldConstants {
-  public static final FieldType fieldType = FieldType.ANDYMARK;
+  public static final FieldType fieldType = FieldType.WELDED;
 
   public static final double fieldLength = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
   public static final double fieldWidth = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
