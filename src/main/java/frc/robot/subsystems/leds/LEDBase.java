@@ -167,7 +167,7 @@ public class LEDBase extends VirtualSubsystem {
       rainbow(fullSection, rainbowCycleLength, rainbowDuration);
 
       if (autoScoringReef) {
-        rainbow(topSection, rainbowCycleLength, rainbowDuration);
+        wave(topSection, Color.kWhite, Color.kLavender, waveFastCycleLength, waveFastDuration);
         solid(
             topSideSection,
             switch (autoScoringLevel) {
@@ -202,11 +202,11 @@ public class LEDBase extends VirtualSubsystem {
     }
 
     // Update Followed Sections
-    for (int i = bottomSection.start; i < bottomSection.end; i++) {
-      buffer.setLED(61 - i, buffer.getLED(i));
-    }
     // TODO
     // for(int i = topSideSection.start; i < topSideSection.end; i++) {}
+    for (int i = bottomSection.start; i < bottomSection.end; i++) {
+      buffer.setLED(numLEDs - 1 - i, buffer.getLED(i));
+    }
 
     // Set buffer to LEDs
     leds.setData(buffer);
