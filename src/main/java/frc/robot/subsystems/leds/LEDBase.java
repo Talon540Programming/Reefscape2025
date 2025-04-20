@@ -160,13 +160,8 @@ public class LEDBase extends VirtualSubsystem {
       if (visionDisconnected) {
         strobe(topSection, Color.kRed, Color.kBlack, strobeDuration);
       }
-    } else if (DriverStation.isAutonomous()) {
-      wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
     } else {
       // Default pattern
-      rainbow(fullSection, rainbowCycleLength, rainbowDuration);
-        wave(topSection, Color.kWhite, Color.kLavender, waveFastCycleLength, waveFastDuration);
-        solid(
       if (DriverStation.isAutonomous()) {
         wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
       } else {
@@ -174,6 +169,8 @@ public class LEDBase extends VirtualSubsystem {
       }
 
       if (autoScoringReef) {
+        var autoScoreColor = Color.kLavender;
+        if (autoScoringLevel != null) {
           autoScoreColor =
               switch (autoScoringLevel) {
                 case L1 -> l1Color;
