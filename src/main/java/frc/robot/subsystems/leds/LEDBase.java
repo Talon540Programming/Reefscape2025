@@ -22,7 +22,7 @@ public class LEDBase extends VirtualSubsystem {
   }
 
   // LED Constants
-  private static final int numLEDs = 62;
+  private static final int numLEDs = 84;
   private static final int ledDriverPort = 0;
   private static final double strobeDuration = 0.2;
   private static final double breathFastDuration = 0.5;
@@ -55,8 +55,7 @@ public class LEDBase extends VirtualSubsystem {
   // LED Sections
   private final Section fullSection = new Section(0, numLEDs);
   private final Section bottomSection = new Section(0, 31);
-  private final Section topSideSection = null; // TODO need to wire this
-  private final Section topSection = null; // TODO need to wire this
+  private final Section topSection = new Section(31, 53);
 
   // State Constants
   private static final int minLoopCycleCount = 10;
@@ -165,21 +164,25 @@ public class LEDBase extends VirtualSubsystem {
     } else {
       // Default pattern
       rainbow(fullSection, rainbowCycleLength, rainbowDuration);
-
-      if (autoScoringReef) {
         wave(topSection, Color.kWhite, Color.kLavender, waveFastCycleLength, waveFastDuration);
         solid(
-            topSideSection,
-            switch (autoScoringLevel) {
-              case L1 -> l1Color;
-              case L2 -> l2Color;
-              case L3 -> l3Color;
-              case L4 -> l4Color;
-            });
+      if (DriverStation.isAutonomous()) {
+        wave(fullSection, Color.kRed, Color.kWhite, waveFastCycleLength, waveFastDuration);
+      } else {
+        rainbow(fullSection, rainbowCycleLength, rainbowDuration);
       }
 
-      if (robotTipping) {
-        strobe(fullSection, Color.kRed, Color.kBlack, strobeDuration);
+      if (autoScoringReef) {
+          autoScoreColor =
+              switch (autoScoringLevel) {
+                case L1 -> l1Color;
+                case L2 -> l2Color;
+                case L3 -> l3Color;
+                case L4 -> l4Color;
+              };
+        }
+
+        wave(topSection, autoScoreColor, Color.kWhite, waveFastCycleLength, waveFastDuration);
       }
 
       if (intaking) {
