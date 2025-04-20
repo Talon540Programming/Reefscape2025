@@ -222,6 +222,9 @@ public class ElevatorBase extends SubsystemBase {
     // Set extension in robot state
     RobotState.getInstance().setElevatorExtensionPercent(getPositionMeters() / elevatorMaxTravel);
 
+    // Update LEDs
+    LEDBase.getInstance().elevatorEStopped = eStopped;
+
     Logger.recordOutput(
         "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
     Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());

@@ -71,6 +71,7 @@ public class LEDBase extends VirtualSubsystem {
   private boolean lastEnabledAuto = false;
   private double lastEnabledTime = 0.0;
   public boolean coralGrabbed = false;
+  public boolean elevatorEStopped = false;
 
   private LEDBase() {
     // Initialize IO
@@ -202,11 +203,17 @@ public class LEDBase extends VirtualSubsystem {
       if (endgameAlert) {
         strobe(fullSection, Color.kRed, Color.kWhite, strobeDuration);
       }
+
+      if (elevatorEStopped) {
+        strobe(fullSection, Color.kCyan, Color.kWhite, strobeDuration);
+      }
+
+      if (robotTipping) {
+        strobe(fullSection, Color.kRed, Color.kBlack, strobeDuration);
+      }
     }
 
     // Update Followed Sections
-    // TODO
-    // for(int i = topSideSection.start; i < topSideSection.end; i++) {}
     for (int i = bottomSection.start; i < bottomSection.end; i++) {
       buffer.setLED(numLEDs - 1 - i, buffer.getLED(i));
     }
