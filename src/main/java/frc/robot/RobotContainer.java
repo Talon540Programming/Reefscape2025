@@ -123,20 +123,14 @@ public class RobotContainer {
     }
 
     // Set up auto routines
+    var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
     autoChooser = new LoggedDashboardChooser<>("Auto Choices");
 
-    LoggedDashboardChooser<Boolean> mirror =
-        new LoggedDashboardChooser<>("Starting on Processor Side?");
-    mirror.addDefaultOption("Yes", false);
-    mirror.addOption("No", true);
-    MirrorUtil.setMirror(mirror::get);
-
-    var autoBuilder = new AutoBuilder(driveBase, elevatorBase, dispenserBase, intakeBase);
     autoChooser.addDefaultOption("Noting", Commands.none());
     autoChooser.addOption("Taxi", autoBuilder.taxi());
     autoChooser.addOption("SingleCoralCenterStart", autoBuilder.centerStartSingle());
-    autoChooser.addOption("MultiCoralSideStart", autoBuilder.sideStartMulti(false));
-    autoChooser.addOption("LockedInMultiCoralSideStart", autoBuilder.sideStartMulti(true));
+    autoChooser.addOption("Multi", autoBuilder.sideStartMulti(false));
+    autoChooser.addOption("DeadreckonedMulti", autoBuilder.sideStartMulti(true));
 
     if (Constants.TUNING_MODE) {
       // Set up Characterization routines
@@ -145,6 +139,12 @@ public class RobotContainer {
       autoChooser.addOption(
           "Drive Simple FF Characterization", driveBase.feedforwardCharacterization());
     }
+
+    LoggedDashboardChooser<Boolean> mirror =
+        new LoggedDashboardChooser<>("Starting on Processor Side?");
+    mirror.addDefaultOption("Yes", false);
+    mirror.addOption("No", true);
+    MirrorUtil.setMirror(mirror::get);
 
     configureButtonBindings();
   }
@@ -293,10 +293,7 @@ public class RobotContainer {
                 .withName("Operator Coral Intake"));
 
     // Home elevator
-    controller
-        .start()
-        .doublePress()
-        .onTrue(elevatorBase.homingSequence().withName("Home Elevator"));
+    controller.b().doublePress().onTrue(elevatorBase.homingSequence().withName("Home Elevator"));
 
     // ***** MISCELlANEOUS *****
     // Reset gyro
