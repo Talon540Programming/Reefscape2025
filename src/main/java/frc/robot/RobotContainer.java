@@ -62,10 +62,6 @@ public class RobotContainer {
   private final LoggedNetworkNumber endgameAlert2 =
       new LoggedNetworkNumber("/SmartDashboard/Endgame Alert #2", 15.0);
 
-  private final LoggedNetworkBoolean disableReefAutoScore =
-      new LoggedNetworkBoolean("/SmartDashboard/ReefAutoScoreDisabled", false);
-  private final LoggedNetworkBoolean disableReefAutoAlign =
-      new LoggedNetworkBoolean("/SmartDashboard/ReefAutoAlignDisabled", false);
   private final LoggedNetworkBoolean disableCoralStationAutoAlign =
       new LoggedNetworkBoolean("/SmartDashboard/CoralStationAutoAlignDisabled", false);
 
@@ -170,58 +166,54 @@ public class RobotContainer {
 
     // ***** DRIVER CONTROLLER *****
     // Bind coral score function
-    var goalReefLevel = new Container<ReefLevel>(null);
-    BiConsumer<Trigger, Boolean> bindAutoScore =
+    BiConsumer<Trigger, Boolean> bindAutoAlign =
         (trigger, isLeftSide) -> {
           Supplier<Optional<ReefLevel>> levelSupplier =
-              () -> Optional.ofNullable(goalReefLevel.value);
+              () ->
+                  switch (elevatorBase.getGoal()) {
+                    case L1_CORAL -> Optional.of(ReefLevel.L1);
+                    case L2_CORAL -> Optional.of(ReefLevel.L2);
+                    case L3_CORAL -> Optional.of(ReefLevel.L3);
+                    case L4_CORAL -> Optional.of(ReefLevel.L4);
+                    default -> Optional.empty();
+                  };
 
-          trigger
-              .and(() -> levelSupplier.get().isPresent())
-              .whileTrue(
-                  AutoScoreCommands.autoScore(
-                      driveBase,
-                      elevatorBase,
-                      dispenserBase,
-                      () -> levelSupplier.get().orElseThrow(),
-                      () -> {
-                        var robot = RobotState.getInstance().getEstimatedPose();
-                        var reefFaces =
-                            Arrays.stream(FieldConstants.Reef.centerFaces)
-                                .map(AllianceFlipUtil::apply)
-                                .toList();
+          trigger.whileTrue(
+              AutoScoreCommands.autoAlign(
+                  driveBase,
+                  () -> {
+                    var robot = RobotState.getInstance().getEstimatedPose();
+                    var reefFaces =
+                        Arrays.stream(FieldConstants.Reef.centerFaces)
+                            .map(AllianceFlipUtil::apply)
+                            .toList();
 
-                        var closestReefFace = robot.nearest(reefFaces);
-                        int closestIndex = reefFaces.indexOf(closestReefFace);
+                    var closestReefFace = robot.nearest(reefFaces);
+                    int closestIndex = reefFaces.indexOf(closestReefFace);
 
-                        return Optional.of(
-                            new FieldConstants.CoralObjective(
-                                closestIndex * 2 + (isLeftSide ? 1 : 0),
-                                levelSupplier.get().orElseThrow()));
-                      },
-                      driverX,
-                      driverY,
-                      driverOmega,
-                      joystickDriveCommandFactory.get(),
-                      disableReefAutoAlign::get,
-                      controller.b().doublePress()));
+                    return Optional.of(
+                        new FieldConstants.CoralObjective(
+                            closestIndex * 2 + (isLeftSide ? 1 : 0),
+                            // Default L4 ig
+                            levelSupplier.get().orElse(ReefLevel.L4)));
+                  },
+                  driverX,
+                  driverY,
+                  driverOmega));
         };
 
-    // Autoscore Left Side
-    bindAutoScore.accept(controller.leftBumper(), true);
-    // Autoscore Right Side
-    bindAutoScore.accept(controller.rightBumper(), false);
+    // Auto-align Left Side
+    bindAutoAlign.accept(controller.leftBumper(), true);
+    // Auto-align Right Side
+    bindAutoAlign.accept(controller.rightBumper(), false);
 
     // Handle Coral Score
     BiConsumer<Trigger, FieldConstants.ReefLevel> bindCoralScore =
         (faceButton, level) ->
-            faceButton
-                .onTrue(Commands.runOnce(() -> goalReefLevel.value = level))
-                .whileTrueRepeatedly(
-                    elevatorBase
-                        .runGoal(() -> ElevatorBase.getScoringState(level))
-                        .withName("Operator Score on " + level)
-                        .onlyIf(disableReefAutoScore::get));
+            faceButton.onTrue(
+                elevatorBase
+                    .runGoal(ElevatorBase.getScoringState(level))
+                    .withName("Operator Score on " + level));
 
     bindCoralScore.accept(controller.povDown(), ReefLevel.L1);
     bindCoralScore.accept(controller.povLeft(), ReefLevel.L2);
@@ -232,18 +224,33 @@ public class RobotContainer {
     var ejectTimer = new Timer();
     controller
         .rightTrigger()
-        .and(() -> goalReefLevel.value != null)
         .onTrue(
             Commands.runOnce(ejectTimer::restart)
                 .andThen(
                     dispenserBase
-                        .runDispenser(() -> DispenserBase.getScoringVoltage(goalReefLevel.value))
-                        .until(
+                        .runDispenser(
                             () ->
-                                ejectTimer.hasElapsed(
-                                    AutoScoreCommands.ejectTimeSeconds[
-                                        goalReefLevel.value.ordinal()]
-                                        .get())))
+                                switch (elevatorBase.getGoal()) {
+                                  case L1_CORAL -> DispenserBase.getScoringVoltage(ReefLevel.L1);
+                                  case L2_CORAL -> DispenserBase.getScoringVoltage(ReefLevel.L2);
+                                  case L3_CORAL -> DispenserBase.getScoringVoltage(ReefLevel.L3);
+                                  case L4_CORAL -> DispenserBase.getScoringVoltage(ReefLevel.L4);
+                                  default -> 1.5;
+                                })
+                        .until(
+                            () -> {
+                              var currentReefLevel =
+                                  switch (elevatorBase.getGoal()) {
+                                    case L1_CORAL -> ReefLevel.L1;
+                                    case L2_CORAL -> ReefLevel.L2;
+                                    case L3_CORAL -> ReefLevel.L3;
+                                    case L4_CORAL -> ReefLevel.L4;
+                                    default -> ReefLevel.L2;
+                                  };
+                              return ejectTimer.hasElapsed(
+                                  AutoScoreCommands.ejectTimeSeconds[currentReefLevel.ordinal()]
+                                      .get());
+                            }))
                 .withName("Operator Coral Eject"));
 
     // Coral intake

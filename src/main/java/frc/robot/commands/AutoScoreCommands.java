@@ -96,6 +96,86 @@ public class AutoScoreCommands {
     new LoggedTunableNumber("AutoScore/FudgeX/L4", 0.0)
   };
 
+  public static Command autoAlign(
+      DriveBase driveBase,
+      Supplier<Optional<CoralObjective>> coralObjective,
+      DoubleSupplier driverX,
+      DoubleSupplier driverY,
+      DoubleSupplier driverOmega) {
+    Supplier<Pose2d> robot =
+        () ->
+            coralObjective
+                .get()
+                .map(AutoScoreCommands::getRobotPose)
+                .orElseGet(RobotState.getInstance()::getEstimatedPose);
+
+    Function<CoralObjective, Pose2d> goal =
+        objective -> {
+          if (objective.reefLevel() == ReefLevel.L1) {
+            return AllianceFlipUtil.apply(getL1Pose(objective));
+          }
+
+          Pose2d goalPose = getCoralScorePose(objective);
+          Logger.recordOutput("AutoScore/Goal", AllianceFlipUtil.apply(goalPose));
+
+          if (DriverStation.isAutonomousEnabled()) {
+            return AllianceFlipUtil.apply(goalPose);
+          } else {
+            Pose2d flippedGoalPose = AllianceFlipUtil.apply(goalPose);
+            Rotation2d originalRotation = flippedGoalPose.getRotation();
+            Rotation2d rotationAdjustment =
+                AllianceFlipUtil.apply(getBranchPose(objective))
+                    .getTranslation()
+                    .minus(robot.get().getTranslation())
+                    .getAngle()
+                    .minus(originalRotation);
+            rotationAdjustment =
+                Rotation2d.fromDegrees(
+                    MathUtil.clamp(
+                        rotationAdjustment.getDegrees(),
+                        -maxAimingAngle.get(),
+                        maxAimingAngle.get()));
+            return new Pose2d(
+                flippedGoalPose.getTranslation(), originalRotation.plus(rotationAdjustment));
+          }
+        };
+
+    return new DriveToPose(
+            driveBase,
+            () ->
+                coralObjective
+                    .get()
+                    .map(objective -> getDriveTarget(robot.get(), goal.apply(objective)))
+                    .orElseGet(RobotState.getInstance()::getEstimatedPose),
+            robot,
+            () ->
+                DriveCommands.getLinearVelocityFromJoysticks(
+                        driverX.getAsDouble(), driverY.getAsDouble())
+                    .times(AllianceFlipUtil.shouldFlip() ? -1.0 : 1.0),
+            () -> DriveCommands.getOmegaFromJoysticks(driverOmega.getAsDouble()))
+        .until(
+            () -> {
+              var coralObjectiveOpt = coralObjective.get();
+              if (coralObjectiveOpt.isEmpty()) return false;
+              Pose2d poseError = robot.get().relativeTo(goal.apply(coralObjectiveOpt.get()));
+
+              int intReefLevel = coralObjectiveOpt.get().reefLevel().ordinal();
+              var driveChassisSpeeds = driveBase.getChassisSpeeds();
+              return Math.abs(poseError.getTranslation().getX())
+                      <= linearXToleranceEject[intReefLevel].get()
+                  && Math.abs(poseError.getTranslation().getY())
+                      <= linearYToleranceEject[intReefLevel].get()
+                  && Math.abs(poseError.getRotation().getDegrees())
+                      <= thetaToleranceEject[intReefLevel].get()
+                  && Math.hypot(
+                          driveChassisSpeeds.vxMetersPerSecond,
+                          driveChassisSpeeds.vyMetersPerSecond)
+                      <= maxLinearVel[intReefLevel].get()
+                  && Math.abs(driveChassisSpeeds.omegaRadiansPerSecond)
+                      <= Units.degreesToRadians(maxAngularVel[intReefLevel].get());
+            });
+  }
+
   public static Command autoScore(
       DriveBase driveBase,
       ElevatorBase elevatorBase,
