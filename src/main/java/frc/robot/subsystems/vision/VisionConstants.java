@@ -16,21 +16,19 @@ import frc.robot.Constants;
 import java.nio.file.Path;
 import lombok.Builder;
 
-class VisionConstants {
+public class VisionConstants {
   private static final boolean forceEnableInstanceLogging = true;
-  public static final boolean enableInstanceLogging =
+  static final boolean enableInstanceLogging =
       forceEnableInstanceLogging || Constants.getMode() == Constants.Mode.REPLAY;
 
-  public static final double ambiguityThreshold = 0.4;
-  public static final double targetLogTimeSecs = 0.1;
-  public static final double fieldBorderMargin = 0.5;
+  static final double ambiguityThreshold = 0.2;
+  static final double targetLogTimeSecs = 0.1;
+  static final double fieldBorderMargin = 0.5;
 
-  public static final Vector<N3> singleTagStdevs =
-      VecBuilder.fill(0.1, 0.1, Math.toRadians(5.0)); // TODO
-  public static final Vector<N3> multiTagStdevs =
-      VecBuilder.fill(0.015, 0.015, Math.toRadians(2.0)); // TODO
+  static final Vector<N3> singleTagStdevs = VecBuilder.fill(0.1, 0.1, Math.toRadians(5.0));
+  static final Vector<N3> multiTagStdevs = VecBuilder.fill(0.015, 0.015, Math.toRadians(2.0));
 
-  public static CameraConfig[] cameras =
+  public static final CameraConfig[] cameras =
       switch (Constants.getRobot()) {
         case COMPBOT, SIMBOT ->
             new CameraConfig[] {
@@ -59,7 +57,6 @@ class VisionConstants {
                       Path.of("camera_calibrations/frontright_calibration@1280x800.json"))
                   .build()
             };
-        default -> new CameraConfig[] {};
       };
 
   @Builder

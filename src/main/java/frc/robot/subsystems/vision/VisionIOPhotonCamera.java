@@ -2,54 +2,84 @@ package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
-import java.util.LinkedList;
-import java.util.List;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StringPublisher;
+import frc.robot.FieldConstants;
+import java.util.ArrayList;
+import java.util.Optional;
 import org.photonvision.PhotonCamera;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 public class VisionIOPhotonCamera implements VisionIO {
   protected final PhotonCamera camera;
+  private final int camIndex;
+  private final StringPublisher atflPublisher;
 
   public VisionIOPhotonCamera(int index) {
     camera = new PhotonCamera(cameras[index].cameraName());
+    camIndex = index;
+    atflPublisher =
+        NetworkTableInstance.getDefault()
+            .getTable(PhotonCamera.kTableName)
+            .getStringTopic("apriltag_field_layout")
+            .publish();
   }
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
     inputs.ntConnected = camera.isConnected();
 
-    // Read new camera observations
-    List<PoseObservation> poseObservations = new LinkedList<>();
-
     // Process camera results
-    for (var result : camera.getAllUnreadResults()) {
-      var observationBuilder = PoseObservation.builder().timestamp(result.getTimestampSeconds());
+    var resultQueue = camera.getAllUnreadResults();
+    // Read new camera observations
+    inputs.observations = new PoseObservation[resultQueue.size()];
+    for (int i = 0; i < resultQueue.size(); i++) {
+      var result = resultQueue.get(i);
+
+      var observationBuilder =
+          PoseObservation.builder().timestampSeconds(result.getTimestampSeconds());
 
       var multitagResOpt = result.getMultiTagResult();
       if (multitagResOpt.isPresent()) {
         var multitagRes = multitagResOpt.get();
-
         observationBuilder
-            .multitagTagToCamera(multitagRes.estimatedPose.best)
-            .ambiguity(multitagRes.estimatedPose.ambiguity)
-            .detectedTagsIds(
-                multitagRes.fiducialIDsUsed.stream().mapToInt(Short::shortValue).toArray());
+            .hasResult(true)
+            .multitagResult(
+                Optional.of(new MultitagPoseObservation(multitagRes.estimatedPose.best)))
+            .detectedTagIds(multitagRes.fiducialIDsUsed);
       } else if (result.hasTargets()) {
-        var singletagDetection = result.getBestTarget();
+        var singleTagDetection = result.getBestTarget();
 
         observationBuilder
-            .bestTagToCamera(singletagDetection.bestCameraToTarget)
-            .altTagToCamera(singletagDetection.altCameraToTarget)
-            .ambiguity(singletagDetection.poseAmbiguity)
-            .detectedTagsIds(
-                result.getTargets().stream()
-                    .mapToInt(PhotonTrackedTarget::getFiducialId)
-                    .toArray());
+            .hasResult(true)
+            .singleTagResult(
+                Optional.of(
+                    new SingleTagPoseObservation(
+                        singleTagDetection.getFiducialId(),
+                        singleTagDetection.getBestCameraToTarget(),
+                        singleTagDetection.getAlternateCameraToTarget(),
+                        singleTagDetection.getPoseAmbiguity(),
+                        Rotation2d.fromDegrees(-singleTagDetection.getPitch()),
+                        Rotation2d.fromDegrees(-singleTagDetection.getYaw()))));
+
+        var tagList = new ArrayList<Short>();
+        for (var res : result.getTargets()) {
+          tagList.add((short) res.getFiducialId());
+        }
+        observationBuilder.detectedTagIds(tagList);
       }
 
-      poseObservations.add(observationBuilder.build());
+      inputs.observations[i] = observationBuilder.build();
     }
+  }
 
-    inputs.observations = poseObservations.toArray(new PoseObservation[0]);
+  @Override
+  public void setAprilTagFieldLayout(FieldConstants.AprilTagLayoutType layoutType) {
+    atflPublisher.set(layoutType.getLayoutString());
+  }
+
+  @Override
+  public int getCamIndex() {
+    return camIndex;
   }
 }

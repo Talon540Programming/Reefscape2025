@@ -6,6 +6,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import frc.robot.Constants;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
@@ -101,6 +102,9 @@ class Module {
 
     driveDisconnectedAlert.set(!m_inputs.driveConnected);
     turnDisconnectedAlert.set(!m_inputs.turnConnected);
+
+    // Record cycle time
+    LoggedTracer.record("Drive/Module" + index);
   }
 
   /** Runs the module with the specified setpoint state. */

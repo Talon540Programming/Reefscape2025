@@ -7,19 +7,22 @@ import frc.robot.Constants;
 import frc.robot.util.swerve.SwerveSetpointGenerator.ModuleLimits;
 import lombok.Builder;
 
-class DriveConstants {
-  public static final double odometryFrequencyHz =
-      Constants.getMode() == Constants.Mode.SIM ? 50 : 250;
+public class DriveConstants {
+  static final double odometryFrequencyHz = Constants.getMode() == Constants.Mode.SIM ? 50 : 250;
 
-  public static final double trackWidthX = Units.inchesToMeters(20.75);
-  public static final double trackWidthY = Units.inchesToMeters(20.75);
-  public static final double driveBaseRadius = Math.hypot(trackWidthX / 2, trackWidthY / 2);
+  static final double trackWidthX = Units.inchesToMeters(20.75);
+  static final double trackWidthY = Units.inchesToMeters(20.75);
+  static final double driveBaseRadius = Math.hypot(trackWidthX / 2, trackWidthY / 2);
 
   public static final double maxLinearVelocityMetersPerSec = Units.feetToMeters(15.1);
   public static final double maxLinearAccelerationMetersPerSecSquared = Units.feetToMeters(75.0);
   public static final double maxAngularVelocityRadPerSec =
       maxLinearVelocityMetersPerSec / driveBaseRadius;
   public static final double maxAngularAccelerationRadPerSecSquared = 2.0 * Math.PI;
+
+  public static final double driveWidth = Units.inchesToMeters(26.5);
+  public static final double bumperThickness = Units.inchesToMeters(3.0);
+  public static final double robotWidth = driveWidth + (2 * bumperThickness);
 
   public static final Translation2d[] moduleTranslations = {
     new Translation2d(trackWidthX / 2, trackWidthY / 2),
@@ -28,12 +31,12 @@ class DriveConstants {
     new Translation2d(-trackWidthX / 2, -trackWidthY / 2)
   };
 
-  public static final double wheelRadius = Units.inchesToMeters(2.0);
+  static final double wheelRadius = Units.inchesToMeters(2.0);
 
-  public static final double mk4iDriveGearing = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
-  public static final double mk4iTurnGearing = (150.0 / 7.0);
+  static final double mk4iDriveGearing = (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0);
+  static final double mk4iTurnGearing = (150.0 / 7.0);
 
-  public static final ModuleConfig[] moduleConfigs = {
+  static final ModuleConfig[] moduleConfigs = {
     // FL
     ModuleConfig.builder()
         .turnMotorId(2)
@@ -76,12 +79,12 @@ class DriveConstants {
         .build(),
   };
 
-  public static class PigeonConstants {
+  static class PigeonConstants {
     public static final int id = 10;
   }
 
   @Builder
-  public record ModuleConfig(
+  record ModuleConfig(
       int turnMotorId,
       int driveMotorId,
       int encoderChannel,
@@ -90,7 +93,7 @@ class DriveConstants {
       double turnGearing,
       boolean turnInverted) {}
 
-  public static final ModuleLimits moduleLimitsFree =
+  static final ModuleLimits moduleLimitsFree =
       new ModuleLimits(
           maxLinearVelocityMetersPerSec,
           maxLinearAccelerationMetersPerSecSquared,

@@ -8,7 +8,7 @@ import com.revrobotics.spark.SparkLowLevel;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import frc.robot.util.Debouncer;
+import edu.wpi.first.math.filter.Debouncer;
 
 public class IntakeIOSpark implements IntakeIO {
   private final SparkBase spark;
@@ -17,7 +17,7 @@ public class IntakeIOSpark implements IntakeIO {
   private final Debouncer connectedDebouncer = new Debouncer(.5);
 
   public IntakeIOSpark() {
-    spark = new SparkMax(id, SparkLowLevel.MotorType.kBrushless);
+    spark = new SparkMax(11, SparkLowLevel.MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();

@@ -8,8 +8,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.DigitalInput;
-import frc.robot.util.Debouncer;
 
 public class DispenserIOSpark implements DispenserIO {
   private final SparkBase spark;
@@ -21,7 +21,7 @@ public class DispenserIOSpark implements DispenserIO {
   private final DigitalInput rearBeamBreak = new DigitalInput(0);
 
   public DispenserIOSpark() {
-    spark = new SparkMax(id, MotorType.kBrushless);
+    spark = new SparkMax(14, MotorType.kBrushless);
     encoder = spark.getEncoder();
 
     var config = new SparkMaxConfig();

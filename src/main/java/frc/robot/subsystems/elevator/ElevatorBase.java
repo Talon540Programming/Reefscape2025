@@ -1,10 +1,10 @@
 package frc.robot.subsystems.elevator;
 
-import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.elevator.ElevatorConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.wpilibj.Alert;
@@ -12,11 +12,15 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.util.Debouncer;
+import frc.robot.FieldConstants;
+import frc.robot.RobotState;
+import frc.robot.subsystems.elevator.ElevatorPose.Preset;
+import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.util.EqualsUtil;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -31,9 +35,9 @@ public class ElevatorBase extends SubsystemBase {
   private static final LoggedTunableNumber kA = new LoggedTunableNumber("Elevator/kA");
 
   private static final LoggedTunableNumber maxVelocityMetersPerSec =
-      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 2.0);
+      new LoggedTunableNumber("Elevator/MaxVelocityMetersPerSec", 5.0);
   private static final LoggedTunableNumber maxAccelerationMetersPerSec2 =
-      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 10);
+      new LoggedTunableNumber("Elevator/MaxAccelerationMetersPerSec2", 6.5);
 
   private static final LoggedTunableNumber homingVolts =
       new LoggedTunableNumber("Elevator/HomingVolts", -2.0);
@@ -43,23 +47,26 @@ public class ElevatorBase extends SubsystemBase {
       new LoggedTunableNumber("Elevator/HomingVelocityThresh", 5.0);
 
   private static final LoggedTunableNumber toleranceMeters =
-      new LoggedTunableNumber("Elevator/ToleranceMeters", 0.2);
+      new LoggedTunableNumber("Elevator/ToleranceMeters", 0.5);
+
+  private static final LoggedTunableNumber robotAntiTipThreshold =
+      new LoggedTunableNumber("Elevator/AntiTipThreshold", 10.0);
 
   static {
     switch (Constants.getRobot()) {
       case COMPBOT -> {
-        kP.initDefault(0.3);
-        kD.initDefault(0.25);
-        kS.initDefault(0);
-        kG.initDefault(1.05);
+        kS.initDefault(1.0);
+        kG.initDefault(0.0);
         kA.initDefault(0.0);
+        kP.initDefault(0.15);
+        kD.initDefault(0.0);
       }
       case SIMBOT -> {
-        kP.initDefault(0); // TODO
-        kD.initDefault(0); // TODO
         kS.initDefault(0); // TODO
         kG.initDefault(0); // TODO
         kA.initDefault(0); // TODO
+        kP.initDefault(5000); // TODO
+        kD.initDefault(2000); // TODO
       }
     }
   }
@@ -75,7 +82,7 @@ public class ElevatorBase extends SubsystemBase {
   @AutoLogOutput(key = "Elevator/Goal")
   @Getter
   @Setter
-  private ElevatorState goal = ElevatorState.START;
+  private Preset goal = Preset.START;
 
   private TrapezoidProfile profile;
   private State setpoint = new State();
@@ -96,35 +103,10 @@ public class ElevatorBase extends SubsystemBase {
           Alert.AlertType.kWarning);
 
   @AutoLogOutput(key = "Elevator/Profile/AtGoal")
-  @Getter
   private boolean atGoal = false;
-
-  private final ElevatorVisualizer measuredVisualizer = new ElevatorVisualizer("Measured");
-  private final ElevatorVisualizer setpointVisualizer = new ElevatorVisualizer("Setpoint");
-
-  private final SysIdRoutine sysId;
 
   public ElevatorBase(ElevatorIO io) {
     this.io = io;
-
-    profile =
-        new TrapezoidProfile(
-            new TrapezoidProfile.Constraints(
-                maxVelocityMetersPerSec.get(), maxAccelerationMetersPerSec2.get()));
-
-    sysId =
-        new SysIdRoutine(
-            new SysIdRoutine.Config(
-                Volts.of(.1).per(Second),
-                Volts.of(4),
-                Seconds.of(
-                    45), // Effectively disable the timeout and allow the Command factories to set
-                // them
-                (state) -> Logger.recordOutput("SysIdTestState", state.toString())),
-            new SysIdRoutine.Mechanism(
-                (voltage) -> io.runOpenLoop(voltage.in(Volts)),
-                null, // No log consumer, since data is recorded by AdvantageKit
-                this));
   }
 
   @Override
@@ -163,26 +145,35 @@ public class ElevatorBase extends SubsystemBase {
         !profileDisabled && homed && !eStopped && DriverStation.isEnabled();
     Logger.recordOutput("Elevator/RunningProfile", shouldRunProfile);
 
-    // // Check if out of tolerance
-    // boolean outOfTolerance =
-    //     Math.abs(getPositionMeters() - setpoint.position) > toleranceMeters.get();
-    // boolean shouldEStop = toleranceDebouncer.calculate(outOfTolerance && shouldRunProfile);
-    //
-    // outOfTolleranceAlert.set(shouldEStop);
-    // if (shouldEStop) {
-    //   eStopped = true;
-    // }
+    // Check if out of tolerance
+    boolean outOfTolerance =
+        Math.abs(getPositionMeters() - setpoint.position) > toleranceMeters.get();
+    boolean shouldEStop = toleranceDebouncer.calculate(outOfTolerance && shouldRunProfile);
+
+    outOfTolleranceAlert.set(shouldEStop);
+    if (shouldEStop) {
+      eStopped = true;
+    }
+
+    // Check if robot is about to tip
+    if (Math.abs(RobotState.getInstance().getPitch().getDegrees()) > robotAntiTipThreshold.get()
+        || Math.abs(RobotState.getInstance().getRoll().getDegrees())
+            > robotAntiTipThreshold.get()) {
+      goal = Preset.STOW;
+      LEDBase.getInstance().robotTipping = true;
+    } else {
+      LEDBase.getInstance().robotTipping = false;
+    }
 
     if (shouldRunProfile) {
-      //   Clamp goal
+      // Clamp goal
       var goalState =
-          new State(
-              MathUtil.clamp(goal.getElevatorHeightMeters().getAsDouble(), 0.0, maxTravel), 0);
+          new State(MathUtil.clamp(goal.getElevatorHeight(), 0.0, elevatorMaxTravel), 0);
 
       double previousVelocity = setpoint.velocity;
       setpoint = profile.calculate(Constants.kLoopPeriodSecs, setpoint, goalState);
-      if (setpoint.position < 0.0 || setpoint.position > maxTravel) {
-        setpoint = new State(MathUtil.clamp(setpoint.position, 0.0, maxTravel), 0.0);
+      if (setpoint.position < 0.0 || setpoint.position > elevatorMaxTravel) {
+        setpoint = new State(MathUtil.clamp(setpoint.position, 0.0, elevatorMaxTravel), 0.0);
       }
 
       io.runPosition(
@@ -206,7 +197,7 @@ public class ElevatorBase extends SubsystemBase {
       Logger.recordOutput("Elevator/Profile/GoalVelocityMetersPerSec", goalState.velocity);
     } else {
       if (DriverStation.isDisabled()) {
-        goal = ElevatorState.STOW;
+        goal = Preset.STOW;
       }
 
       // Reset setpoint
@@ -223,40 +214,35 @@ public class ElevatorBase extends SubsystemBase {
       io.stop();
     }
 
-    Logger.recordOutput(
-        "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
-
     // If not homed, schedule that command
     if (!homed && !profileDisabled) {
       homingSequence().schedule();
     }
 
-    measuredVisualizer.update(getPositionMeters());
-    setpointVisualizer.update(setpoint.position);
+    // Set extension in robot state
+    RobotState.getInstance().setElevatorExtensionPercent(getPositionMeters() / elevatorMaxTravel);
+
+    // Update LEDs
+    LEDBase.getInstance().elevatorEStopped = eStopped;
+
+    Logger.recordOutput(
+        "Elevator/MeasuredVelocityMetersPerSec", inputs.velocityRadPerSec * drumRadius);
+    Logger.recordOutput("Elevator/PositionError", setpoint.position - getPositionMeters());
+
+    // Record cycle time
+    LoggedTracer.record("Elevator");
   }
 
-  /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction, double timeoutSecs) {
-    return runOnce(
-            () -> {
-              profileDisabled = true;
-              io.stop();
-            })
-        .andThen(Commands.waitSeconds(1))
-        .andThen(sysId.quasistatic(direction).withTimeout(timeoutSecs))
-        .finallyDo(() -> profileDisabled = false);
+  public boolean atGoal() {
+    return atGoal;
   }
 
-  /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction, double timeoutSecs) {
-    return runOnce(
-            () -> {
-              profileDisabled = true;
-              io.stop();
-            })
-        .andThen(Commands.waitSeconds(1))
-        .andThen(sysId.dynamic(direction).withTimeout(timeoutSecs))
-        .finallyDo(() -> profileDisabled = false);
+  public Command runGoal(Preset preset) {
+    return runOnce(() -> setGoal(preset));
+  }
+
+  public Command runGoal(Supplier<Preset> preset) {
+    return run(() -> setGoal(preset.get()));
   }
 
   public Command homingSequence() {
@@ -274,11 +260,7 @@ public class ElevatorBase extends SubsystemBase {
                       Math.abs(inputs.velocityRadPerSec) <= homingVelocityThresh.get());
             })
         .until(() -> homed)
-        .andThen(
-            () -> {
-              io.resetOrigin();
-              homed = true;
-            })
+        .andThen(io::resetOrigin)
         .finallyDo(() -> profileDisabled = false);
   }
 
@@ -288,6 +270,15 @@ public class ElevatorBase extends SubsystemBase {
   }
 
   public double getGoalMeters() {
-    return goal.getElevatorHeightMeters().getAsDouble();
+    return goal.getElevatorHeight();
+  }
+
+  public static Preset getScoringState(FieldConstants.ReefLevel level) {
+    return switch (level) {
+      case L1 -> Preset.L1_CORAL;
+      case L2 -> Preset.L2_CORAL;
+      case L3 -> Preset.L3_CORAL;
+      case L4 -> Preset.L4_CORAL;
+    };
   }
 }

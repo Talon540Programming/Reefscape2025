@@ -13,7 +13,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.AutoLog;
 
 class OdometryManager implements AutoCloseable {
-  public static Lock odometryLock =
+  public static final Lock odometryLock =
       new ReentrantLock(); // Prevent conflicts when reading and writing data
 
   private static OdometryManager instance = null;
@@ -65,12 +65,9 @@ class OdometryManager implements AutoCloseable {
 
   public void start() throws IllegalStateException {
     // Check that any sources are supplied
-    if (signalSuppliers.isEmpty()) {
-      throw new IllegalStateException(
-          "Tried to start OdometryManager, but no sources have been set.");
+    if (!signalSuppliers.isEmpty()) {
+      notifier.startPeriodic(1.0 / DriveConstants.odometryFrequencyHz);
     }
-
-    notifier.startPeriodic(1.0 / DriveConstants.odometryFrequencyHz);
   }
 
   @Override

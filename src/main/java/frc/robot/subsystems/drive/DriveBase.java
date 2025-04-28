@@ -1,10 +1,7 @@
 package frc.robot.subsystems.drive;
 
-import static edu.wpi.first.units.Units.Volts;
-
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -17,10 +14,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
-import frc.robot.PoseEstimator;
-import frc.robot.PoseEstimator.OdometryObservation;
+import frc.robot.RobotState;
+import frc.robot.RobotState.OdometryObservation;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.swerve.SwerveSetpointGenerator;
 import java.text.DecimalFormat;
@@ -78,16 +75,6 @@ public class DriveBase extends SubsystemBase {
   @AutoLogOutput(key = "Drive/BrakeModeEnabled")
   private boolean BRAKE_MODE = true;
 
-  private final SysIdRoutine sysId =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              null,
-              null,
-              null,
-              (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
-          new SysIdRoutine.Mechanism(
-              (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
-
   public DriveBase(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -130,6 +117,7 @@ public class DriveBase extends SubsystemBase {
       Logger.processInputs("Drive/OdometryTimestamps", m_timestampInputs);
     } finally {
       OdometryManager.odometryLock.unlock();
+      LoggedTracer.record("Drive/Inputs");
     }
 
     // Call periodic on modules
@@ -150,6 +138,7 @@ public class DriveBase extends SubsystemBase {
       Logger.recordOutput("SwerveStates/SetpointsUnoptimized", new SwerveModuleState[] {});
     }
 
+    // Send odometry updates to robot state
     var timestamps = m_timestampInputs.timestamps;
     var sampleCount = timestamps.length;
     for (int i = 0; i < sampleCount; i++) {
@@ -157,7 +146,7 @@ public class DriveBase extends SubsystemBase {
       for (int j = 0; j < 4; j++) {
         wheelPositions[j] = modules[j].getOdometryPositions()[i];
       }
-      PoseEstimator.getInstance()
+      RobotState.getInstance()
           .addOdometryObservation(
               new OdometryObservation(
                   wheelPositions,
@@ -166,7 +155,11 @@ public class DriveBase extends SubsystemBase {
                   timestamps[i]));
     }
 
+    RobotState.getInstance().setPitch(m_gyroInputs.pitchPosition);
+    RobotState.getInstance().setRoll(m_gyroInputs.rollPosition);
+
     // Disable brake mode a short duration after the robot is disabled
+    // Reset movement timer if velocity above threshold
     for (var module : modules) {
       if (Math.abs(module.getVelocityMetersPerSec()) > coastMetersPerSecondThreshold.get()) {
         lastMovementTimer.reset();
@@ -188,6 +181,9 @@ public class DriveBase extends SubsystemBase {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!m_gyroInputs.connected && Constants.getMode() != Constants.Mode.SIM);
+
+    // Record cycle time
+    LoggedTracer.record("Drive/Periodic");
   }
 
   /** Set brake mode to {@code enabled} doesn't change brake mode if already set. */
@@ -326,12 +322,7 @@ public class DriveBase extends SubsystemBase {
             }),
 
         // Allow modules to orient
-        Commands.run(
-                () -> {
-                  this.runCharacterization(0.0);
-                },
-                this)
-            .withTimeout(FF_START_DELAY),
+        Commands.run(() -> this.runCharacterization(0.0), this).withTimeout(FF_START_DELAY),
 
         // Start timer
         Commands.runOnce(timer::restart),
@@ -378,10 +369,7 @@ public class DriveBase extends SubsystemBase {
         // Drive control sequence
         Commands.sequence(
             // Reset acceleration limiter
-            Commands.runOnce(
-                () -> {
-                  limiter.reset(0.0);
-                }),
+            Commands.runOnce(() -> limiter.reset(0.0)),
 
             // Turn in place, accelerating up to full speed
             Commands.run(
@@ -438,33 +426,9 @@ public class DriveBase extends SubsystemBase {
                     })));
   }
 
-  /** Returns a command to run a quasistatic test in the specified direction. */
-  public Command sysIdQuasistatic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0))
-        .withTimeout(1.0)
-        .andThen(sysId.quasistatic(direction));
-  }
-
-  /** Returns a command to run a dynamic test in the specified direction. */
-  public Command sysIdDynamic(SysIdRoutine.Direction direction) {
-    return run(() -> runCharacterization(0.0)).withTimeout(1.0).andThen(sysId.dynamic(direction));
-  }
-
   private static class WheelRadiusCharacterizationState {
     double[] positions = new double[4];
     Rotation2d lastAngle = new Rotation2d();
     double gyroDelta = 0.0;
-  }
-
-  public static double getMaxLinearVelocityMetersPerSecond() {
-    return DriveConstants.maxLinearVelocityMetersPerSec;
-  }
-
-  public static double getMaxAngularVelocityRadPerSec() {
-    return DriveConstants.maxAngularVelocityRadPerSec;
-  }
-
-  public static Translation2d[] getModuleTranslations() {
-    return DriveConstants.moduleTranslations;
   }
 }

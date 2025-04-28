@@ -8,7 +8,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.ClosedLoopConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import frc.robot.util.Debouncer;
+import edu.wpi.first.math.filter.Debouncer;
 
 public class ElevatorIOSpark implements ElevatorIO {
   private final SparkBase leaderSpark;
@@ -22,8 +22,8 @@ public class ElevatorIOSpark implements ElevatorIO {
   private final Debouncer followerConnectedDebouncer = new Debouncer(0.5);
 
   public ElevatorIOSpark() {
-    leaderSpark = new SparkMax(leaderId, MotorType.kBrushless);
-    followerSpark = new SparkMax(followerId, MotorType.kBrushless);
+    leaderSpark = new SparkMax(13, MotorType.kBrushless);
+    followerSpark = new SparkMax(12, MotorType.kBrushless);
 
     encoder = leaderSpark.getEncoder();
     controller = leaderSpark.getClosedLoopController();

@@ -1,36 +1,37 @@
 package frc.robot.subsystems.dispenser;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.elevator.ElevatorState;
-import frc.robot.util.Debouncer;
+import frc.robot.FieldConstants.ReefLevel;
+import frc.robot.util.LoggedTracer;
 import frc.robot.util.LoggedTunableNumber;
-import java.util.function.Supplier;
-import lombok.Getter;
+import java.util.function.DoubleSupplier;
+import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class DispenserBase extends SubsystemBase {
-  private static final LoggedTunableNumber intakeVolts =
-      new LoggedTunableNumber("Dispenser/IntakeVolts", 6.0);
-  private static final LoggedTunableNumber ejectVolts =
-      new LoggedTunableNumber("Dispenser/EjectVolts", 1.3);
-  private static final LoggedTunableNumber ejectVoltsSlow =
-      new LoggedTunableNumber("Dispenser/EjectVoltsSlow", 1.3);
-
-  private static final LoggedTunableNumber holdingCoralPeriod =
-      new LoggedTunableNumber("Dispenser/HoldingCoralPeriodSecs", 0.5);
-
-  private static final LoggedTunableNumber ejectPeriod =
-      new LoggedTunableNumber("Dispenser/EjectPeriodSecs", 0.75);
+  public static final LoggedTunableNumber coralIntakeVolts =
+      new LoggedTunableNumber("Dispenser/CoralIntakeVolts", 4.0);
+  public static final LoggedTunableNumber coralIntakeWaitPeriod =
+      new LoggedTunableNumber("Dispenser/CoralIntakeWaitPeriod", 0.5);
+  public static final LoggedTunableNumber[] coralDispenseVolts = {
+    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L1", 1.75),
+    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L2", 2.5),
+    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L3", 2.5),
+    new LoggedTunableNumber("Dispenser/TunnelDispenseVolts/L4", 6.0)
+  };
 
   private final DispenserIO io;
   private final DispenserIOInputsAutoLogged inputs = new DispenserIOInputsAutoLogged();
 
-  @Getter private boolean holdingCoral;
+  @AutoLogOutput private boolean holdingCoral;
 
-  private final Debouncer holdingCoralDebouncer = new Debouncer(0);
+  private static final double coralDebounceTime = 0.1;
+  private final Debouncer holdingCoralDebouncer =
+      new Debouncer(coralDebounceTime, DebounceType.kRising);
 
   private final Alert disconnected =
       new Alert("Dispenser motor disconnected!", Alert.AlertType.kWarning);
@@ -46,33 +47,26 @@ public class DispenserBase extends SubsystemBase {
 
     disconnected.set(!inputs.connected);
 
-    if (holdingCoralPeriod.hasChanged()) {
-      holdingCoralDebouncer.setDebounceTime(holdingCoralPeriod.get());
-    }
-
     // Update if holding coral.
     holdingCoral = holdingCoralDebouncer.calculate(inputs.rearBeamBreakBroken);
+
+    // Record cycle time
+    LoggedTracer.record("Dispenser");
   }
 
-  public Command runRollers(double inputVolts) {
+  public boolean holdingCoral() {
+    return holdingCoral;
+  }
+
+  public Command runDispenser(double inputVolts) {
     return startEnd(() -> io.runVolts(inputVolts), io::stop);
   }
 
-  public Command intakeTillHolding() {
-    return startEnd(() -> io.runVolts(intakeVolts.get()), io::stop)
-        .raceWith(
-            Commands.sequence(
-                Commands.waitSeconds(0.25), Commands.waitUntil(this::isHoldingCoral)));
+  public Command runDispenser(DoubleSupplier inputVolts) {
+    return runEnd(() -> io.runVolts(inputVolts.getAsDouble()), io::stop);
   }
 
-  public Command eject(Supplier<ElevatorState> state) {
-    return startEnd(
-            () ->
-                io.runVolts(
-                    state.get() == ElevatorState.L1_CORAL
-                        ? ejectVoltsSlow.get()
-                        : ejectVolts.get()),
-            io::stop)
-        .withTimeout(ejectPeriod.get());
+  public static double getScoringVoltage(ReefLevel level) {
+    return coralDispenseVolts[level.ordinal()].get();
   }
 }

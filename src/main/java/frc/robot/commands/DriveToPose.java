@@ -1,6 +1,7 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -8,10 +9,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.PoseEstimator;
+import frc.robot.RobotState;
 import frc.robot.subsystems.drive.DriveBase;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.util.GeomUtil;
 import frc.robot.util.LoggedTunableNumber;
 import java.util.function.DoubleSupplier;
@@ -26,55 +30,114 @@ public class DriveToPose extends Command {
   private static final LoggedTunableNumber thetakD = new LoggedTunableNumber("DriveToPose/ThetakD");
   private static final LoggedTunableNumber driveMaxVelocity =
       new LoggedTunableNumber("DriveToPose/DriveMaxVelocity");
-  private static final LoggedTunableNumber driveMaxVelocitySlow =
-      new LoggedTunableNumber("DriveToPose/DriveMaxVelocitySlow");
+  private static final LoggedTunableNumber driveMaxVelocityTop =
+      new LoggedTunableNumber("DriveToPose/DriveMaxVelocityTop");
   private static final LoggedTunableNumber driveMaxAcceleration =
       new LoggedTunableNumber("DriveToPose/DriveMaxAcceleration");
+  private static final LoggedTunableNumber driveMaxAccelerationTop =
+      new LoggedTunableNumber("DriveToPose/DriveMaxAccelerationTop");
+  private static final LoggedTunableNumber driveMaxVelocityAuto =
+      new LoggedTunableNumber("DriveToPose/DriveMaxVelocityAuto");
+  private static final LoggedTunableNumber driveMaxVelocityAutoTop =
+      new LoggedTunableNumber("DriveToPose/DriveMaxVelocityAutoTop");
+  private static final LoggedTunableNumber driveMaxAccelerationAuto =
+      new LoggedTunableNumber("DriveToPose/DriveMaxAccelerationAuto");
+  private static final LoggedTunableNumber driveMaxAccelerationAutoTop =
+      new LoggedTunableNumber("DriveToPose/DriveMaxAccelerationAutoTop");
   private static final LoggedTunableNumber thetaMaxVelocity =
       new LoggedTunableNumber("DriveToPose/ThetaMaxVelocity");
+  private static final LoggedTunableNumber thetaMaxVelocityTop =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxVelocityTop");
   private static final LoggedTunableNumber thetaMaxAcceleration =
       new LoggedTunableNumber("DriveToPose/ThetaMaxAcceleration");
+  private static final LoggedTunableNumber thetaMaxAccelerationTop =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxAccelerationTop");
+  private static final LoggedTunableNumber thetaMaxVelocityAuto =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxVelocityAuto");
+  private static final LoggedTunableNumber thetaMaxVelocityAutoTop =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxVelocityAutoTop");
+  private static final LoggedTunableNumber thetaMaxAccelerationAuto =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxAccelerationAuto");
+  private static final LoggedTunableNumber thetaMaxAccelerationAutoTop =
+      new LoggedTunableNumber("DriveToPose/ThetaMaxAccelerationAutoTop");
+  private static final LoggedTunableNumber elevatorMinExtension =
+      new LoggedTunableNumber("DriveToPose/ElevatorMinExtension", 0.4);
   private static final LoggedTunableNumber driveTolerance =
       new LoggedTunableNumber("DriveToPose/DriveTolerance");
   private static final LoggedTunableNumber thetaTolerance =
       new LoggedTunableNumber("DriveToPose/ThetaTolerance");
-  private static final LoggedTunableNumber ffMinRadius =
-      new LoggedTunableNumber("DriveToPose/FFMinRadius");
-  private static final LoggedTunableNumber ffMaxRadius =
-      new LoggedTunableNumber("DriveToPose/FFMaxRadius");
+  private static final LoggedTunableNumber linearFFMinRadius =
+      new LoggedTunableNumber("DriveToPose/LinearFFMinRadius");
+  private static final LoggedTunableNumber linearFFMaxRadius =
+      new LoggedTunableNumber("DriveToPose/LinearFFMaxRadius");
+  private static final LoggedTunableNumber thetaFFMinError =
+      new LoggedTunableNumber("DriveToPose/ThetaFFMinError");
+  private static final LoggedTunableNumber thetaFFMaxError =
+      new LoggedTunableNumber("DriveToPose/ThetaFFMaxError");
+  private static final LoggedTunableNumber setpointMinVelocity =
+      new LoggedTunableNumber("DriveToPose/SetpointMinVelocity");
+  private static final LoggedTunableNumber minDistanceVelocityCorrection =
+      new LoggedTunableNumber("DriveToPose/MinDistanceVelocityCorrection");
+  private static final LoggedTunableNumber minLinearFFSReset =
+      new LoggedTunableNumber("DriveToPose/MinLinearFFSReset");
+  private static final LoggedTunableNumber minThetaFFSReset =
+      new LoggedTunableNumber("DriveToPose/MinThetaFFSReset");
 
   static {
-    drivekP.initDefault(0.1); // TODO
+    drivekP.initDefault(1.0);
     drivekD.initDefault(0.0);
-    thetakP.initDefault(1.0); // TODO
+    thetakP.initDefault(4.0);
     thetakD.initDefault(0.0);
-    driveMaxVelocity.initDefault(3.8); // TODO
-    driveMaxVelocitySlow.initDefault(1); // TODO
-    driveMaxAcceleration.initDefault(3.0); // TODO
+
+    driveMaxVelocity.initDefault(4.0);
+    driveMaxVelocityTop.initDefault(4.0);
+    driveMaxAcceleration.initDefault(3.5);
+    driveMaxAccelerationTop.initDefault(1.2);
+    driveMaxVelocityAuto.initDefault(4.0);
+    driveMaxVelocityAutoTop.initDefault(4.0);
+    driveMaxAccelerationAuto.initDefault(3.5);
+    driveMaxAccelerationAutoTop.initDefault(1.2);
 
     thetaMaxVelocity.initDefault(Units.degreesToRadians(360.0));
+    thetaMaxVelocityTop.initDefault(Units.degreesToRadians(200.0));
     thetaMaxAcceleration.initDefault(8.0);
+    thetaMaxAccelerationTop.initDefault(6.0);
+    thetaMaxVelocityAuto.initDefault(Units.degreesToRadians(360.0));
+    thetaMaxVelocityAutoTop.initDefault(Units.degreesToRadians(200.0));
+    thetaMaxAccelerationAuto.initDefault(8.0);
+    thetaMaxAccelerationAutoTop.initDefault(6.0);
+
     driveTolerance.initDefault(0.01);
     thetaTolerance.initDefault(Units.degreesToRadians(1.0));
-    ffMinRadius.initDefault(0.05);
-    ffMaxRadius.initDefault(0.1);
+    linearFFMinRadius.initDefault(0.01);
+    linearFFMaxRadius.initDefault(0.05);
+    thetaFFMinError.initDefault(0.0);
+    thetaFFMaxError.initDefault(0.0);
+
+    setpointMinVelocity.initDefault(-0.5);
+    minDistanceVelocityCorrection.initDefault(0.01);
+    minLinearFFSReset.initDefault(0.2);
+    minThetaFFSReset.initDefault(0.1);
   }
 
   private final DriveBase drive;
   private final Supplier<Pose2d> target;
 
-  private final ProfiledPIDController driveController =
-      new ProfiledPIDController(
-          0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), Constants.kLoopPeriodSecs);
+  private TrapezoidProfile driveProfile;
+  private final PIDController driveController =
+      new PIDController(0.0, 0.0, 0.0, Constants.kLoopPeriodSecs);
   private final ProfiledPIDController thetaController =
       new ProfiledPIDController(
           0.0, 0.0, 0.0, new TrapezoidProfile.Constraints(0.0, 0.0), Constants.kLoopPeriodSecs);
 
-  private Translation2d lastSetpointTranslation = new Translation2d();
+  private Translation2d lastSetpointTranslation = Translation2d.kZero;
+  private Translation2d lastSetpointVelocity = Translation2d.kZero;
+  private Rotation2d lastGoalRotation = Rotation2d.kZero;
+  private double lastTime = 0.0;
   private double driveErrorAbs = 0.0;
   private double thetaErrorAbs = 0.0;
   @Getter private boolean running = false;
-  private Supplier<Pose2d> robot = PoseEstimator.getInstance()::getEstimatedPose;
+  private Supplier<Pose2d> robot = RobotState.getInstance()::getEstimatedPose;
 
   private Supplier<Translation2d> linearFF = () -> Translation2d.kZero;
   private DoubleSupplier omegaFF = () -> 0.0;
@@ -108,27 +171,28 @@ public class DriveToPose extends Command {
   @Override
   public void initialize() {
     Pose2d currentPose = robot.get();
+    Pose2d targetPose = target.get();
     ChassisSpeeds fieldVelocity =
         ChassisSpeeds.fromRobotRelativeSpeeds(
-            drive.getChassisSpeeds(), PoseEstimator.getInstance().getRotation());
+            drive.getChassisSpeeds(), RobotState.getInstance().getRotation());
     Translation2d linearFieldVelocity =
         new Translation2d(fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
-    driveController.reset(
-        currentPose.getTranslation().getDistance(target.get().getTranslation()),
-        Math.min(
-            0.0,
-            -linearFieldVelocity
-                .rotateBy(
-                    target
-                        .get()
-                        .getTranslation()
-                        .minus(currentPose.getTranslation())
-                        .getAngle()
-                        .unaryMinus())
-                .getX()));
+
+    driveProfile =
+        new TrapezoidProfile(
+            DriverStation.isAutonomous()
+                ? new TrapezoidProfile.Constraints(
+                    driveMaxVelocityAuto.get(), driveMaxAccelerationAuto.get())
+                : new TrapezoidProfile.Constraints(
+                    driveMaxVelocity.get(), driveMaxAcceleration.get()));
+
+    driveController.reset();
     thetaController.reset(
         currentPose.getRotation().getRadians(), fieldVelocity.omegaRadiansPerSecond);
     lastSetpointTranslation = currentPose.getTranslation();
+    lastSetpointVelocity = linearFieldVelocity;
+    lastGoalRotation = targetPose.getRotation();
+    lastTime = Timer.getTimestamp();
   }
 
   @Override
@@ -136,82 +200,149 @@ public class DriveToPose extends Command {
     running = true;
 
     // Update from tunable numbers
-    if (driveMaxVelocity.hasChanged(hashCode())
-        || driveMaxVelocitySlow.hasChanged(hashCode())
-        || driveMaxAcceleration.hasChanged(hashCode())
-        || driveTolerance.hasChanged(hashCode())
-        || thetaMaxVelocity.hasChanged(hashCode())
-        || thetaMaxAcceleration.hasChanged(hashCode())
-        || thetaTolerance.hasChanged(hashCode())
-        || drivekP.hasChanged(hashCode())
-        || drivekD.hasChanged(hashCode())
-        || thetakP.hasChanged(hashCode())
-        || thetakD.hasChanged(hashCode())) {
-      driveController.setP(drivekP.get());
-      driveController.setD(drivekD.get());
-      driveController.setConstraints(
-          new TrapezoidProfile.Constraints(driveMaxVelocitySlow.get(), driveMaxAcceleration.get()));
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> driveController.setPID(drivekP.get(), 0, drivekD.get()),
+        true,
+        drivekP,
+        drivekD);
+    if (driveTolerance.hasChanged(hashCode())) {
       driveController.setTolerance(driveTolerance.get());
-      thetaController.setP(thetakP.get());
-      thetaController.setD(thetakD.get());
-      thetaController.setConstraints(
-          new TrapezoidProfile.Constraints(thetaMaxVelocity.get(), thetaMaxAcceleration.get()));
+    }
+    LoggedTunableNumber.ifChanged(
+        hashCode(),
+        () -> thetaController.setPID(thetakP.get(), 0, thetakD.get()),
+        true,
+        thetakP,
+        thetakD);
+    if (thetaTolerance.hasChanged(hashCode())) {
       thetaController.setTolerance(thetaTolerance.get());
     }
+
+    // Update constraints
+    double extensionS =
+        MathUtil.clamp(
+            (RobotState.getInstance().getElevatorExtensionPercent() - elevatorMinExtension.get())
+                / (1.0 - elevatorMinExtension.get()),
+            0.0,
+            1.0);
+    driveProfile =
+        new TrapezoidProfile(
+            DriverStation.isAutonomous()
+                ? new TrapezoidProfile.Constraints(
+                    MathUtil.interpolate(
+                        driveMaxVelocityAuto.get(), driveMaxVelocityAutoTop.get(), extensionS),
+                    MathUtil.interpolate(
+                        driveMaxAccelerationAuto.get(),
+                        driveMaxAccelerationAutoTop.get(),
+                        extensionS))
+                : new TrapezoidProfile.Constraints(
+                    MathUtil.interpolate(
+                        driveMaxVelocity.get(), driveMaxVelocityTop.get(), extensionS),
+                    MathUtil.interpolate(
+                        driveMaxAcceleration.get(), driveMaxAccelerationTop.get(), extensionS)));
+    thetaController.setConstraints(
+        new TrapezoidProfile.Constraints(
+            DriverStation.isAutonomous()
+                ? MathUtil.interpolate(
+                    thetaMaxVelocityAuto.get(), thetaMaxVelocityAutoTop.get(), extensionS)
+                : MathUtil.interpolate(
+                    thetaMaxVelocity.get(), thetaMaxVelocityTop.get(), extensionS),
+            DriverStation.isAutonomous()
+                ? MathUtil.interpolate(
+                    thetaMaxAccelerationAuto.get(), thetaMaxAccelerationAutoTop.get(), extensionS)
+                : MathUtil.interpolate(
+                    thetaMaxAcceleration.get(), thetaMaxAccelerationTop.get(), extensionS)));
 
     // Get current pose and target pose
     Pose2d currentPose = robot.get();
     Pose2d targetPose = target.get();
 
-    // Calculate drive speed
-    double currentDistance = currentPose.getTranslation().getDistance(targetPose.getTranslation());
-    double ffScaler =
+    Pose2d poseError = currentPose.relativeTo(targetPose);
+    driveErrorAbs = poseError.getTranslation().getNorm();
+    thetaErrorAbs = Math.abs(poseError.getRotation().getRadians());
+    double linearFFScaler =
         MathUtil.clamp(
-            (currentDistance - ffMinRadius.get()) / (ffMaxRadius.get() - ffMinRadius.get()),
+            (driveErrorAbs - linearFFMinRadius.get())
+                / (linearFFMaxRadius.get() - linearFFMinRadius.get()),
             0.0,
             1.0);
-    driveErrorAbs = currentDistance;
-    driveController.reset(
-        lastSetpointTranslation.getDistance(targetPose.getTranslation()),
-        driveController.getSetpoint().velocity);
+    double thetaFFScaler =
+        MathUtil.clamp(
+            (Units.radiansToDegrees(thetaErrorAbs) - thetaFFMinError.get())
+                / (thetaFFMaxError.get() - thetaFFMinError.get()),
+            0.0,
+            1.0);
+
+    // Calculate setpoint velocity towards target pose
+    var direction = targetPose.getTranslation().minus(lastSetpointTranslation).toVector();
+    double setpointVelocity =
+        direction.norm()
+                <= minDistanceVelocityCorrection
+                    .get() // Don't calculate velocity in direction when really close
+            ? lastSetpointVelocity.getNorm()
+            : lastSetpointVelocity.toVector().dot(direction) / direction.norm();
+    setpointVelocity = Math.max(setpointVelocity, setpointMinVelocity.get());
+    TrapezoidProfile.State driveSetpoint =
+        driveProfile.calculate(
+            Constants.kLoopPeriodSecs,
+            new TrapezoidProfile.State(
+                direction.norm(), -setpointVelocity), // Use negative as profile has zero at target
+            new TrapezoidProfile.State(0.0, 0.0));
     double driveVelocityScalar =
-        driveController.getSetpoint().velocity * ffScaler
-            + driveController.calculate(driveErrorAbs, 0.0);
-    if (currentDistance < driveController.getPositionTolerance()) driveVelocityScalar = 0.0;
+        driveController.calculate(driveErrorAbs, driveSetpoint.position)
+            + driveSetpoint.velocity * linearFFScaler;
+    if (driveErrorAbs < driveController.getErrorTolerance()) driveVelocityScalar = 0.0;
+    Rotation2d targetToCurrentAngle =
+        currentPose.getTranslation().minus(targetPose.getTranslation()).getAngle();
+    Translation2d driveVelocity = new Translation2d(driveVelocityScalar, targetToCurrentAngle);
     lastSetpointTranslation =
-        new Pose2d(
-                targetPose.getTranslation(),
-                currentPose.getTranslation().minus(targetPose.getTranslation()).getAngle())
-            .transformBy(GeomUtil.toTransform2d(driveController.getSetpoint().position, 0.0))
+        new Pose2d(targetPose.getTranslation(), targetToCurrentAngle)
+            .transformBy(GeomUtil.toTransform2d(driveSetpoint.position, 0.0))
             .getTranslation();
+    lastSetpointVelocity = new Translation2d(driveSetpoint.velocity, targetToCurrentAngle);
 
     // Calculate theta speed
+    double thetaSetpointVelocity =
+        Math.abs((targetPose.getRotation().minus(lastGoalRotation)).getDegrees()) < 10.0
+            ? (targetPose.getRotation().minus(lastGoalRotation)).getRadians()
+                / (Timer.getTimestamp() - lastTime)
+            : thetaController.getSetpoint().velocity;
     double thetaVelocity =
-        thetaController.getSetpoint().velocity * ffScaler
-            + thetaController.calculate(
-                currentPose.getRotation().getRadians(), targetPose.getRotation().getRadians());
-    thetaErrorAbs =
-        Math.abs(currentPose.getRotation().minus(targetPose.getRotation()).getRadians());
+        thetaController.calculate(
+                currentPose.getRotation().getRadians(),
+                new TrapezoidProfile.State(
+                    targetPose.getRotation().getRadians(), thetaSetpointVelocity))
+            + thetaController.getSetpoint().velocity * thetaFFScaler;
     if (thetaErrorAbs < thetaController.getPositionTolerance()) thetaVelocity = 0.0;
-
-    Translation2d driveVelocity =
-        new Pose2d(
-                new Translation2d(),
-                currentPose.getTranslation().minus(targetPose.getTranslation()).getAngle())
-            .transformBy(GeomUtil.toTransform2d(driveVelocityScalar, 0.0))
-            .getTranslation();
+    lastGoalRotation = targetPose.getRotation();
+    lastTime = Timer.getTimestamp();
 
     // Scale feedback velocities by input ff
-    final double linearS = linearFF.get().getNorm() * 3.0;
-    final double thetaS = Math.abs(omegaFF.getAsDouble()) * 3.0;
+    final double linearS = MathUtil.clamp(linearFF.get().getNorm() * 3.0, 0.0, 1.0);
+    final double thetaS = MathUtil.clamp(Math.abs(omegaFF.getAsDouble()) * 3.0, 0.0, 1.0);
     driveVelocity =
         driveVelocity.interpolate(
-            linearFF.get().times(DriveBase.getMaxLinearVelocityMetersPerSecond()), linearS);
+            linearFF.get().times(DriveConstants.maxLinearVelocityMetersPerSec), linearS);
     thetaVelocity =
         MathUtil.interpolate(
             thetaVelocity,
-            omegaFF.getAsDouble() * DriveBase.getMaxLinearVelocityMetersPerSecond(),
+            omegaFF.getAsDouble() * DriveConstants.maxAngularVelocityRadPerSec,
             thetaS);
+    // Reset profiles if enough input
+    ChassisSpeeds fieldVelocity =
+        ChassisSpeeds.fromRobotRelativeSpeeds(
+            drive.getChassisSpeeds(), RobotState.getInstance().getRotation());
+    Translation2d linearFieldVelocity =
+        new Translation2d(fieldVelocity.vxMetersPerSecond, fieldVelocity.vyMetersPerSecond);
+    if (linearS >= minLinearFFSReset.get()) {
+      lastSetpointTranslation = currentPose.getTranslation();
+      lastSetpointVelocity = linearFieldVelocity;
+    }
+    if (thetaS >= minThetaFFSReset.get()) {
+      thetaController.reset(
+          currentPose.getRotation().getRadians(), fieldVelocity.omegaRadiansPerSecond);
+    }
 
     // Command speeds
     drive.runVelocity(
@@ -219,8 +350,15 @@ public class DriveToPose extends Command {
             driveVelocity.getX(), driveVelocity.getY(), thetaVelocity, currentPose.getRotation()));
 
     // Log data
-    Logger.recordOutput("DriveToPose/DistanceMeasured", currentDistance);
-    Logger.recordOutput("DriveToPose/DistanceSetpoint", driveController.getSetpoint().position);
+    Logger.recordOutput("DriveToPose/DistanceMeasured", driveErrorAbs);
+    Logger.recordOutput("DriveToPose/DistanceSetpoint", driveSetpoint.position);
+    Logger.recordOutput(
+        "DriveToPose/VelocityMeasured",
+        -linearFieldVelocity
+                .toVector()
+                .dot(targetPose.getTranslation().minus(currentPose.getTranslation()).toVector())
+            / driveErrorAbs);
+    Logger.recordOutput("DriveToPose/VelocitySetpoint", driveSetpoint.velocity);
     Logger.recordOutput("DriveToPose/ThetaMeasured", currentPose.getRotation().getRadians());
     Logger.recordOutput("DriveToPose/ThetaSetpoint", thetaController.getSetpoint().position);
     Logger.recordOutput(
@@ -231,8 +369,6 @@ public class DriveToPose extends Command {
               Rotation2d.fromRadians(thetaController.getSetpoint().position))
         });
     Logger.recordOutput("DriveToPose/Goal", new Pose2d[] {targetPose});
-
-    if (atGoal()) end(false);
   }
 
   @Override
@@ -242,11 +378,6 @@ public class DriveToPose extends Command {
     // Clear logs
     Logger.recordOutput("DriveToPose/Setpoint", new Pose2d[] {});
     Logger.recordOutput("DriveToPose/Goal", new Pose2d[] {});
-  }
-
-  /** Checks if the robot is stopped at the final pose. */
-  public boolean atGoal() {
-    return running && driveController.atGoal() && thetaController.atGoal();
   }
 
   /** Checks if the robot pose is within the allowed drive and theta tolerances. */

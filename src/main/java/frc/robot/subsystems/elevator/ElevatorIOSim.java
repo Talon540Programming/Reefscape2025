@@ -16,10 +16,10 @@ public class ElevatorIOSim implements ElevatorIO {
           carriageMassKg + stagesMassKg,
           drumRadius,
           0,
-          maxTravel,
+          elevatorMaxTravel,
           true,
           0,
-          0.01,
+          0.0035,
           0.0);
 
   private final PIDController controller = new PIDController(0, 0, 0);

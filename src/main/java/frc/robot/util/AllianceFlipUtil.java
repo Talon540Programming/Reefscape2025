@@ -1,11 +1,13 @@
 package frc.robot.util;
 
+import choreo.trajectory.SwerveSample;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.FieldConstants;
+import java.util.Arrays;
 import java.util.function.Function;
 
 public class AllianceFlipUtil {
@@ -18,12 +20,12 @@ public class AllianceFlipUtil {
   }
 
   private static Translation2d applyTranslation(Translation2d translation2d) {
-    return new Translation2d(applyX(translation2d.getX()), translation2d.getY());
+    return new Translation2d(applyX(translation2d.getX()), applyY(translation2d.getY()));
   }
 
   private static Translation3d applyTranslation(Translation3d translation3d) {
     return new Translation3d(
-        applyX(translation3d.getX()), translation3d.getY(), translation3d.getZ());
+        applyX(translation3d.getX()), applyY(translation3d.getY()), translation3d.getZ());
   }
 
   private static Rotation2d applyRotation(Rotation2d rotation2d) {
@@ -41,6 +43,22 @@ public class AllianceFlipUtil {
   private static Pose3d applyPose(Pose3d pose3d) {
     return new Pose3d(
         applyTranslation(pose3d.getTranslation()), applyRotation(pose3d.getRotation()));
+  }
+
+  private static SwerveSample applySwerveSample(SwerveSample sample) {
+    return new SwerveSample(
+        sample.t,
+        applyX(sample.x),
+        applyY(sample.y),
+        apply(Rotation2d.fromRadians(sample.heading)).getRadians(),
+        -sample.vx,
+        -sample.vy,
+        sample.omega,
+        -sample.ax,
+        -sample.ay,
+        sample.alpha,
+        Arrays.stream(sample.moduleForcesX()).map(x -> -x).toArray(),
+        Arrays.stream(sample.moduleForcesY()).map(y -> -y).toArray());
   }
 
   public static boolean shouldFlip() {
@@ -74,6 +92,10 @@ public class AllianceFlipUtil {
 
   public static Pose3d apply(Pose3d pose3d) {
     return shouldFlip() ? applyPose(pose3d) : pose3d;
+  }
+
+  public static SwerveSample apply(SwerveSample swerveSample) {
+    return shouldFlip() ? applySwerveSample(swerveSample) : swerveSample;
   }
 
   public static class AllianceRelative<T> {

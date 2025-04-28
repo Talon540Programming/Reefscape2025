@@ -7,7 +7,7 @@ import edu.wpi.first.math.MatBuilder;
 import edu.wpi.first.math.Nat;
 import frc.robot.Constants;
 import frc.robot.FieldConstants;
-import frc.robot.PoseEstimator;
+import frc.robot.RobotState;
 import java.io.IOException;
 import java.nio.file.Path;
 import org.photonvision.simulation.PhotonCameraSim;
@@ -20,7 +20,7 @@ public class VisionIOSim extends VisionIOPhotonCamera {
   static {
     if (Constants.getRobot() == Constants.RobotType.SIMBOT) {
       m_visionSystemSim = new VisionSystemSim("main");
-      m_visionSystemSim.addAprilTags(FieldConstants.fieldLayout);
+      m_visionSystemSim.addAprilTags(FieldConstants.defaultAprilTagType.getLayout());
     }
   }
 
@@ -51,8 +51,13 @@ public class VisionIOSim extends VisionIOPhotonCamera {
 
   @Override
   public void updateInputs(VisionIOInputs inputs) {
-    m_visionSystemSim.update(PoseEstimator.getInstance().getEstimatedPose());
+    m_visionSystemSim.update(RobotState.getInstance().getEstimatedPose());
     super.updateInputs(inputs);
+  }
+
+  @Override
+  public void setAprilTagFieldLayout(FieldConstants.AprilTagLayoutType layoutType) {
+    m_visionSystemSim.addAprilTags(layoutType.getLayout());
   }
 
   private void setCalibrationFromConfig(
