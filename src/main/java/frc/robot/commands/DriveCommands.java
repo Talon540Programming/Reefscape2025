@@ -24,9 +24,9 @@ public class DriveCommands {
   public static final double DEADBAND = 0.1;
 
   private static final LoggedTunableNumber teleopLinearScalar =
-      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 1.0);
+      new LoggedTunableNumber("TeleopDrive/LinearVelocityScalar", 0.1);
   private static final LoggedTunableNumber teleopAngularScalar =
-      new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 1.0);
+      new LoggedTunableNumber("TeleopDrive/AngularVelocityScalar", 0.1);
 
   private static final double ANGLE_KP = 5.0;
   private static final double ANGLE_KD = 0.4;

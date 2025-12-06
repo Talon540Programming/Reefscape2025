@@ -28,8 +28,6 @@ import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.leds.LEDBase;
 import frc.robot.subsystems.vision.*;
 import frc.robot.util.*;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
@@ -166,46 +164,46 @@ public class RobotContainer {
 
     // ***** DRIVER CONTROLLER *****
     // Bind coral score function
-    BiConsumer<Trigger, Boolean> bindAutoAlign =
-        (trigger, isLeftSide) -> {
-          Supplier<Optional<ReefLevel>> levelSupplier =
-              () ->
-                  switch (elevatorBase.getGoal()) {
-                    case L1_CORAL -> Optional.of(ReefLevel.L1);
-                    case L2_CORAL -> Optional.of(ReefLevel.L2);
-                    case L3_CORAL -> Optional.of(ReefLevel.L3);
-                    case L4_CORAL -> Optional.of(ReefLevel.L4);
-                    default -> Optional.empty();
-                  };
+    /* BiConsumer<Trigger, Boolean> bindAutoAlign =
+    (trigger, isLeftSide) -> {
+      Supplier<Optional<ReefLevel>> levelSupplier =
+          () ->
+              switch (elevatorBase.getGoal()) {
+                case L1_CORAL -> Optional.of(ReefLevel.L1);
+                case L2_CORAL -> Optional.of(ReefLevel.L2);
+                case L3_CORAL -> Optional.of(ReefLevel.L3);
+                case L4_CORAL -> Optional.of(ReefLevel.L4);
+                default -> Optional.empty();
+              };
 
-          trigger.whileTrue(
-              AutoScoreCommands.autoAlign(
-                  driveBase,
-                  () -> {
-                    var robot = RobotState.getInstance().getEstimatedPose();
-                    var reefFaces =
-                        Arrays.stream(FieldConstants.Reef.centerFaces)
-                            .map(AllianceFlipUtil::apply)
-                            .toList();
+      trigger.whileTrue(
+          AutoScoreCommands.autoAlign(
+              driveBase,
+              () -> {
+                var robot = RobotState.getInstance().getEstimatedPose();
+                var reefFaces =
+                    Arrays.stream(FieldConstants.Reef.centerFaces)
+                        .map(AllianceFlipUtil::apply)
+                        .toList();
 
-                    var closestReefFace = robot.nearest(reefFaces);
-                    int closestIndex = reefFaces.indexOf(closestReefFace);
+                var closestReefFace = robot.nearest(reefFaces);
+                int closestIndex = reefFaces.indexOf(closestReefFace);
 
-                    return Optional.of(
-                        new FieldConstants.CoralObjective(
-                            closestIndex * 2 + (isLeftSide ? 1 : 0),
-                            // Default L4 ig
-                            levelSupplier.get().orElse(ReefLevel.L4)));
-                  },
-                  driverX,
-                  driverY,
-                  driverOmega));
-        };
+                return Optional.of(
+                    new FieldConstants.CoralObjective(
+                        closestIndex * 2 + (isLeftSide ? 1 : 0),
+                        // Default L4 ig
+                        levelSupplier.get().orElse(ReefLevel.L4)));
+              },
+              driverX,
+              driverY,
+              driverOmega));
+    } ;*/
 
     // Auto-align Left Side
-    bindAutoAlign.accept(controller.leftBumper(), true);
+    // bindAutoAlign.accept(controller.leftBumper(), true);
     // Auto-align Right Side
-    bindAutoAlign.accept(controller.rightBumper(), false);
+    // bindAutoAlign.accept(controller.rightBumper(), false);
 
     // Handle Coral Score
     BiConsumer<Trigger, FieldConstants.ReefLevel> bindCoralScore =
@@ -254,16 +252,16 @@ public class RobotContainer {
                 .withName("Operator Coral Eject"));
 
     // Coral intake
-    controller
-        .leftTrigger()
-        .whileTrue(
-            Commands.either(
-                    joystickDriveCommandFactory.get(),
-                    new DriveToStation(driveBase, driverX, driverY, driverOmega, false),
-                    disableCoralStationAutoAlign::get)
-                .alongWith(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase))
-                .withName("Coral Station Intake"));
-
+    /*  controller
+            .leftTrigger()
+            .whileTrue(
+                Commands.either(
+                        joystickDriveCommandFactory.get(),
+                        new DriveToStation(driveBase, driverX, driverY, driverOmega, false),
+                        disableCoralStationAutoAlign::get)
+                    .alongWith(IntakeCommands.intake(elevatorBase, intakeBase, dispenserBase))
+                    .withName("Coral Station Intake"));
+    */
     // Strobe at Human Player
     controller
         .y()
